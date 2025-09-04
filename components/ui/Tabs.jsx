@@ -6,18 +6,14 @@ export function Tabs({ defaultValue, children }) {
   const [value, setValue] = useState(defaultValue);
   return (
     <TabsContext.Provider value={{ value, setValue }}>
-      {children}
+      <div>{children}</div>
     </TabsContext.Provider>
   );
 }
 
 export function TabList({ className = "", ...props }) {
   return (
-    <div
-      role="tablist"
-      className={`flex border-b border-border ${className}`}
-      {...props}
-    />
+    <div role="tablist" className={["flex gap-4 border-b border-border", className].join(" ")} {...props} />
   );
 }
 
@@ -28,13 +24,12 @@ export function Tab({ value, children, className = "" }) {
     <button
       role="tab"
       aria-selected={selected}
-      tabIndex={selected ? 0 : -1}
       onClick={() => setValue(value)}
-      className={`h-10 px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring ${
-        selected
-          ? "border-b-2 border-primary text-primary"
-          : "text-text hover:text-primary"
-      } ${className}`}
+      className={[
+        "h-10 px-4 text-sm font-medium -mb-px",
+        selected ? "border-b-2 border-primary text-primary" : "text-text hover:text-primary",
+        className
+      ].join(" ")}
     >
       {children}
     </button>
@@ -44,9 +39,5 @@ export function Tab({ value, children, className = "" }) {
 export function TabPanel({ value, children, className = "" }) {
   const { value: active } = useContext(TabsContext);
   if (active !== value) return null;
-  return (
-    <div role="tabpanel" className={className}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }
