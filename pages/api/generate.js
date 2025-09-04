@@ -104,57 +104,18 @@ ${coverText}
     }
 
     const resumeData = normalizeResumeData(json.resumeData || {});
-    let coverLetter = String(json.coverLetterText || "");
+    const coverLetter = String(json.coverLetterText || "");
 
     // Ensure we don't introduce skills or header details not present in the original resume
     const resumeLC = resumeText.toLowerCase();
     const inResume = (v) => v && resumeLC.includes(String(v).toLowerCase());
 
-    // Filter skills to those present in the original resume text
     resumeData.skills = Array.isArray(resumeData.skills)
       ? resumeData.skills.filter((s) => inResume(s))
       : [];
 
     if (resumeData.title && !inResume(resumeData.title)) delete resumeData.title;
     if (resumeData.location && !inResume(resumeData.location)) delete resumeData.location;
-
-    // Filter out sentences in the cover letter (and summary/bullets) that mention
-    // words only found in the job description.
-    const tokenize = (txt) => String(txt).toLowerCase().match(/[a-z0-9.+#-]+/g) || [];
-    const resumeWords = new Set(tokenize(resumeText));
-    const jobWords = new Set(tokenize(jobDesc));
-    const stopWords = new Set([
-      "the","and","a","to","in","for","of","on","with","is","are","as","at","an","be","by",
-      "from","or","that","this","it","you","your","will","our","we","i","my","me"
-    ]);
-    const disallowed = [...jobWords].filter((w) => !resumeWords.has(w) && !stopWords.has(w));
-
-    const removeSentencesWith = (text) => {
-      const sentences = String(text).split(/(?<=[.!?])\s+/);
-      return sentences
-        .filter((s) => {
-          const lower = s.toLowerCase();
-          return !disallowed.some((dw) => lower.includes(dw));
-        })
-        .join(" ")
-        .trim();
-    };
-
-    coverLetter = removeSentencesWith(coverLetter);
-    if (resumeData.summary) {
-      resumeData.summary = removeSentencesWith(resumeData.summary);
-    }
-    if (Array.isArray(resumeData.experience)) {
-      resumeData.experience = resumeData.experience.map((exp) => ({
-        ...exp,
-        bullets: Array.isArray(exp.bullets)
-          ? exp.bullets.filter((b) => {
-              const lower = b.toLowerCase();
-              return !disallowed.some((dw) => lower.includes(dw));
-            })
-          : [],
-      }));
-    }
 
     return res.status(200).json({ coverLetter, resumeData });
   } catch (err) {
