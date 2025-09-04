@@ -88,11 +88,13 @@ ${resumePref}`;
     // ==== Scrub JD-only claims (FREE, deterministic) ====
     const coverRaw = String(json.coverLetterText || "");
     const resumeRaw = json.resumeData || {};
-    const coverLetter = scrubSentences(coverRaw, block);
+
+    // use allow + block to avoid nuking mixed sentences/bullets
+    const coverLetter = scrubSentences(coverRaw, block, allow);
     if (Array.isArray(resumeRaw.experience)) {
       resumeRaw.experience = resumeRaw.experience.map(x => ({
         ...x,
-        bullets: scrubBullets(x?.bullets || [], block)
+        bullets: scrubBullets(x?.bullets || [], block, allow)
       }));
     }
 

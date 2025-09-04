@@ -1,6 +1,5 @@
 export default function TwoCol({ data = {} }) {
   const fmt = (s) => (s ? String(s).replace(/-/g, "–") : "");
-  const links = Array.isArray(data.links) ? data.links : [];
   const skills = Array.isArray(data.skills) ? data.skills : [];
   const exp = Array.isArray(data.experience) ? data.experience : [];
   const edu = Array.isArray(data.education) ? data.education : [];
@@ -14,9 +13,9 @@ export default function TwoCol({ data = {} }) {
             {[data.title, data.location].filter(Boolean).join(" • ")}
           </div>
         )}
-        {(data.email || data.phone || links.length) && (
+        {(data.email || data.phone || (Array.isArray(data.links) && data.links.length)) && (
           <div className="muted" style={{marginBottom:8}}>
-            {[data.email, data.phone, ...links.map((l)=>l?.url).filter(Boolean)].join(" · ")}
+            {[data.email, data.phone, ...(Array.isArray(data.links)?data.links:[]).map(l=>l?.url).filter(Boolean)].join(" · ")}
           </div>
         )}
 
