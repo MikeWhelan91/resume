@@ -1,242 +1,142 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Head from "next/head";
-import Button from "../components/ui/Button";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
-import { Tabs, TabList, Tab, TabPanel } from "../components/ui/Tabs";
-import Textarea from "../components/ui/Textarea";
-import FileInput from "../components/ui/FileInput";
-import ToggleTheme from "../components/ui/ToggleTheme";
-import Skeleton from "../components/ui/Skeleton";
-import { useToast } from "../components/ui/Toast";
+import Classic from "../components/templates/Classic";
+import TwoCol from "../components/templates/TwoCol";
+import { useReactToPrint } from "react-to-print";
 
 export default function Home() {
   const [resume, setResume] = useState(null);
   const [coverLetter, setCoverLetter] = useState(null);
   const [jobDesc, setJobDesc] = useState("");
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(null);          // { coverLetter, resumeData }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState("ats");       // "default" | "ats"
-  const [tighten, setTighten] = useState(1);     // 0..2
-  const [coverage, setCoverage] = useState({ pct: 0, covered: [], missing: [] });
-  const { show: toast, Toast } = useToast();
 
-  function extractKeywords(text) {
-    return Array.from(
-      new Set(
-        String(text || "")
-          .toLowerCase()
-          .replace(/[^a-z0-9+.#/\s-]/g, " ")
-          .split(/\s+/)
-          .filter((w) => w.length > 2 && !["with","and","for","the","you","our","this","that","are","from"].includes(w))
-      )
-    );
-  }
-  function computeCoverage(jd, out) {
-    const jdT = extractKeywords(jd);
-    const outT = extractKeywords(out);
-    const covered = jdT.filter((t) => outT.includes(t));
-    const missing = jdT.filter((t) => !outT.includes(t)).slice(0, 15);
-    const pct = Math.round((covered.length / Math.max(1, jdT.length)) * 100);
-    return { pct, covered, missing };
+  const [template, setTemplate] = useState("classic"); // "classic" | "twoCol"
+  const [useMyLayout, setUseMyLayout] = useState(true);
+  const [exportType, setExportType] = useState("pdf"); // "pdf" | "docx"
+
+  const compRef = useRef(null);
+  const handlePrint = useReactToPrint({ content: () => compRef.current });
+
+  async function inferTemplateIfNeeded() {
+    if (!useMyLayout || !resume) return;
+    const formData = new FormData();
+    formData.append("resume", resume);
+    try{
+      const r = await fetch("/api/infer-layout", { method:"POST", body: formData });
+      const j = await r.json();
+      if (j?.template === "twoCol" || j?.template === "classic") setTemplate(j.template);
+    }catch(_) {}
   }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e){
     e.preventDefault();
-    setError("");
-    setResult(null);
-    setCoverage({ pct: 0, covered: [], missing: [] });
+    setError(""); setResult(null);
 
     if (!resume) return setError("Please upload a resume (PDF or DOCX).");
     if (!jobDesc.trim()) return setError("Please paste a job description.");
 
-    try {
+    await inferTemplateIfNeeded();
+
+    try{
       setLoading(true);
       const formData = new FormData();
       formData.append("resume", resume);
       if (coverLetter) formData.append("coverLetter", coverLetter);
       formData.append("jobDesc", jobDesc);
-      formData.append("mode", mode);
-      formData.append("tighten", String(tighten));
 
-      const res = await fetch("/api/generate", { method: "POST", body: formData });
+      const res = await fetch("/api/generate", { method:"POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Generation failed");
+
       setResult(data);
-      const allOut = (data.coverLetter || "") + "\n" + (data.resume || "");
-      setCoverage(computeCoverage(jobDesc, allOut));
-    } catch (err) {
+    }catch(err){
       setError(String(err.message || err));
-    } finally {
+    }finally{
       setLoading(false);
     }
-  };
+  }
 
-  const copyText = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text || "");
-      toast("Copied to clipboard");
-    } catch (_) {}
-  };
-
-  const downloadDocx = async (content, filename) => {
-    const res = await fetch("/api/export-docx", {
+  async function downloadDocx() {
+    if (!result?.resumeData) return;
+    const r = await fetch("/api/export-docx-structured", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename, content }),
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ data: result.resumeData, filename: `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}` })
     });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      setError(d?.error || "Download failed");
-      return;
-    }
-    const blob = await res.blob();
+    if (!r.ok) return alert("Export failed");
+    const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast("Download started");
-  };
+    a.href = url; a.download = `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}.docx`;
+    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  }
+
+  const TemplateView = useMemo(()=> template === "twoCol" ? TwoCol : Classic, [template]);
 
   return (
-    <div className="app-container">
+    <>
       <Head>
-        <title>TailorCV - ATS Resume & Cover Letter Generator</title>
-        <meta
-          name="description"
-          content="Generate ATS-friendly resumes and cover letters with keyword coverage and conciseness control using TailorCV's AI tool."
-        />
-        <meta
-          name="keywords"
-          content="ATS resume, cover letter, AI resume generator, keyword coverage, conciseness slider"
-        />
+        <title>TailorCV - AI Résumé + Cover Letter</title>
+        <meta name="description" content="Generate tailored, ATS-friendly resumes and cover letters with PDF and DOCX export options." />
+        <meta name="keywords" content="AI resume, cover letter, ATS, PDF, DOCX, templates" />
       </Head>
-      <div className="container">
-        <header className="header">
-          <h1>TailorCV</h1>
-          <ToggleTheme />
-        </header>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid-two">
-                <FileInput
-                  id="resume"
-                  label="Resume (PDF or DOCX)"
-                  accept=".pdf,.docx"
-                  onChange={(e) => setResume(e.target.files[0] || null)}
-                  helper="Required"
-                  disabled={loading}
-                />
-                <FileInput
-                  id="coverLetter"
-                  label="Existing Cover Letter (optional)"
-                  accept=".docx,.txt"
-                  onChange={(e) => setCoverLetter(e.target.files[0] || null)}
-                  helper="Optional"
-                  disabled={loading}
-                />
-              </div>
-              <Textarea
-                id="jobDesc"
-                label="Job Description"
-                value={jobDesc}
-                onChange={(e) => setJobDesc(e.target.value)}
-                rows={8}
-                helper="Paste job description"
-                showCount
-                disabled={loading}
-              />
-              <label className="block text-sm font-medium mb-1">Mode</label>
-              <div className="flex gap-3 mb-4">
-                <label><input type="radio" name="mode" checked={mode==="ats"} onChange={()=>setMode("ats")} /> ATS</label>
-                <label><input type="radio" name="mode" checked={mode==="default"} onChange={()=>setMode("default")} /> Default</label>
-              </div>
+      <main style={{maxWidth:980, margin:"24px auto", padding:"0 12px"}}>
+        <h1 style={{fontSize:24, marginBottom:8}}>AI Résumé + Cover Letter</h1>
 
-              <label className="block text-sm font-medium mb-1">Conciseness</label>
-              <input type="range" min="0" max="2" value={tighten} onChange={e=>setTighten(Number(e.target.value))} />
-              <Button type="submit" loading={loading} className="full-width">
-                Generate
-              </Button>
-              {error && (
-                <p className="error" role="alert">
-                  {error}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+        <form onSubmit={handleSubmit} style={{display:"grid", gap:12, marginBottom:16}}>
+          <div>
+            <label>Upload resume (PDF/DOCX): </label>
+            <input type="file" accept=".pdf,.docx,.txt" onChange={e=>setResume(e.target.files?.[0]||null)} />
+          </div>
+          <div>
+            <label>Optional previous cover letter: </label>
+            <input type="file" accept=".pdf,.docx,.txt" onChange={e=>setCoverLetter(e.target.files?.[0]||null)} />
+          </div>
+          <div>
+            <label>Job description:</label>
+            <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} rows={8} style={{width:"100%"}} />
+          </div>
+
+          <div style={{display:"flex", gap:16, alignItems:"center"}}>
+            <label><input type="checkbox" checked={useMyLayout} onChange={e=>setUseMyLayout(e.target.checked)} /> Use my CV layout (auto-detect)</label>
+            <span style={{opacity:.6}}>Detected/Chosen template:</span>
+            <select value={template} onChange={e=>setTemplate(e.target.value)}>
+              <option value="classic">Classic (ATS)</option>
+              <option value="twoCol">Two-Column</option>
+            </select>
+            <span style={{marginLeft:12, opacity:.6}}>Export:</span>
+            <select value={exportType} onChange={e=>setExportType(e.target.value)}>
+              <option value="pdf">PDF</option>
+              <option value="docx">DOCX</option>
+            </select>
+            <button type="submit" disabled={loading}>{loading ? "Generating..." : "Generate"}</button>
+          </div>
         </form>
 
-        {loading && (
-          <div style={{ marginTop: "2rem" }}>
-            <Skeleton className="full-width" style={{ height: "16rem" }} />
-          </div>
-        )}
+        {error && <div style={{color:"#b91c1c", marginBottom:8}}>{error}</div>}
 
-        {!loading && result && (
-          <section style={{ marginTop: "2rem" }}>
-            {(result && (result.coverLetter || result.resume)) && (
-              <div className="my-4 p-3 border rounded">
-                <div>Keyword coverage: <strong>{coverage.pct}%</strong></div>
-                {coverage.missing.length > 0 && (
-                  <div className="text-xs opacity-80 mt-1">Top missing: {coverage.missing.slice(0,8).join(", ")}</div>
-                )}
-              </div>
-            )}
-            <Tabs defaultValue="cl">
-              <TabList>
-                <Tab value="cl">Cover Letter</Tab>
-                <Tab value="cv">Resume</Tab>
-              </TabList>
-              <TabPanel value="cl">
-                <Card style={{ marginTop: "1rem" }}>
-                  <CardContent>
-                    <div className="actions">
-                      <Button variant="outline" onClick={() => copyText(result.coverLetter)}>
-                        Copy
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => downloadDocx(result.coverLetter, "Cover-Letter.docx")}
-                      >
-                        Download .docx
-                      </Button>
-                    </div>
-                    <pre>{result.coverLetter}</pre>
-                  </CardContent>
-                </Card>
-              </TabPanel>
-              <TabPanel value="cv">
-                <Card style={{ marginTop: "1rem" }}>
-                  <CardContent>
-                    <div className="actions">
-                      <Button variant="outline" onClick={() => copyText(result.resume)}>
-                        Copy
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => downloadDocx(result.resume, "Tailored-Resume.docx")}
-                      >
-                        Download .docx
-                      </Button>
-                    </div>
-                    <pre>{result.resume}</pre>
-                  </CardContent>
-                </Card>
-              </TabPanel>
-            </Tabs>
+        {result?.resumeData && (
+          <section style={{border:"1px solid #e5e7eb", borderRadius:8, padding:12, background:"#fff"}}>
+            <div ref={compRef}><TemplateView data={result.resumeData} /></div>
+            <div style={{display:"flex", gap:8, marginTop:10}}>
+              <button onClick={() => exportType==="pdf" ? handlePrint() : downloadDocx()}>
+                {exportType==="pdf" ? "Download PDF" : "Download DOCX"}
+              </button>
+              <button onClick={handlePrint}>Print</button>
+            </div>
           </section>
         )}
-      </div>
-      <Toast />
-    </div>
+
+        {result?.coverLetter && (
+          <section style={{marginTop:18}}>
+            <h2>Cover Letter</h2>
+            <textarea readOnly value={result.coverLetter} rows={10} style={{width:"100%"}} />
+          </section>
+        )}
+      </main>
+    </>
   );
 }
