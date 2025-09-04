@@ -1,5 +1,6 @@
 // pages/index.js
 import { useState } from "react";
+import Head from "next/head";
 
 function Tabs({ active, setActive }) {
   return (
@@ -83,26 +84,74 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-4">TailorCV</h1>
+  const previewHtml = (text) =>
+    `<!DOCTYPE html><html><head><style>body{font-family:Arial, sans-serif;padding:1rem;white-space:pre-wrap;}</style></head><body>${
+      (text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br/>")
+    }</body></html>`;
 
-      <form onSubmit={handleSubmit} className="space-y-3 bg-white p-4 rounded border max-w-3xl">
-        <div className="flex gap-3">
-          <input type="file" accept=".pdf,.docx" onChange={(e) => setResume(e.target.files[0] || null)} />
-          <input type="file" accept=".docx,.txt" onChange={(e) => setCoverLetter(e.target.files[0] || null)} />
-        </div>
-        <textarea
-          className="w-full p-2 border rounded"
-          rows={6}
-          placeholder="Paste job description here"
-          value={jobDesc}
-          onChange={(e) => setJobDesc(e.target.value)}
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <Head>
+        <title>TailorCV - AI Resume & Cover Letter Generator</title>
+        <meta
+          name="description"
+          content="Generate a tailored resume and cover letter for any job using TailorCV's simple AI-powered tool."
         />
+      </Head>
+      <h1 className="text-4xl font-bold text-center mb-8">TailorCV</h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 bg-white p-6 rounded border max-w-3xl mx-auto"
+      >
+        <h2 className="text-xl font-semibold">Upload Documents</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block mb-1 font-medium" htmlFor="resume">
+              Resume (PDF or DOCX)
+            </label>
+            <input
+              id="resume"
+              className="w-full p-2 border rounded"
+              type="file"
+              accept=".pdf,.docx"
+              onChange={(e) => setResume(e.target.files[0] || null)}
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium" htmlFor="coverLetter">
+              Existing Cover Letter (optional)
+            </label>
+            <input
+              id="coverLetter"
+              className="w-full p-2 border rounded"
+              type="file"
+              accept=".docx,.txt"
+              onChange={(e) => setCoverLetter(e.target.files[0] || null)}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium" htmlFor="jobDesc">
+            Job Description
+          </label>
+          <textarea
+            id="jobDesc"
+            className="w-full p-3 border rounded"
+            rows={8}
+            placeholder="Paste job description here"
+            value={jobDesc}
+            onChange={(e) => setJobDesc(e.target.value)}
+          />
+        </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
+          className="px-6 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
         >
           {loading ? "Generating..." : "Generate"}
         </button>
@@ -110,11 +159,12 @@ export default function Home() {
       </form>
 
       {result && (
-        <div className="max-w-5xl">
+        <section className="max-w-5xl mx-auto">
           <Tabs active={tab} setActive={setTab} />
           <div className="mt-3 bg-white p-4 rounded border">
             {tab === "cl" ? (
               <>
+                <h2 className="text-lg font-semibold mb-2">Cover Letter Preview</h2>
                 <div className="flex gap-2 mb-3">
                   <button
                     className="px-3 py-1 border rounded"
@@ -129,12 +179,19 @@ export default function Home() {
                     Download .docx
                   </button>
                 </div>
-                <pre className="whitespace-pre-wrap">{result.coverLetter || "(empty)"}</pre>
+                <iframe
+                  className="w-full h-96 border rounded"
+                  srcDoc={previewHtml(result.coverLetter)}
+                />
               </>
             ) : (
               <>
+                <h2 className="text-lg font-semibold mb-2">Resume Preview</h2>
                 <div className="flex gap-2 mb-3">
-                  <button className="px-3 py-1 border rounded" onClick={() => copyText(result.resume)}>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={() => copyText(result.resume)}
+                  >
                     Copy
                   </button>
                   <button
@@ -144,11 +201,14 @@ export default function Home() {
                     Download .docx
                   </button>
                 </div>
-                <pre className="whitespace-pre-wrap">{result.resume || "(empty)"}</pre>
+                <iframe
+                  className="w-full h-96 border rounded"
+                  srcDoc={previewHtml(result.resume)}
+                />
               </>
             )}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
