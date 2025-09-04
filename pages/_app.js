@@ -1,16 +1,16 @@
 import '../styles/globals.css';
 import Head from 'next/head';
 
-function MyApp({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps }) {
   return (
     <>
       <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="robots" content="index,follow" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>TailorCV</title>
       </Head>
-      <Component {...pageProps} />
+      <div className="min-h-screen bg-bg text-text">
+        <Component {...pageProps} />
+      </div>
     </>
   );
 }
-
-export default MyApp;
