@@ -1,0 +1,21 @@
+{
+  "name": "tailorcv",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "docx": "^9.0.3",
+    "formidable": "^3.5.0",
+    "mammoth": "^1.10.0",
+    "next": "latest",
+    "openai": "^4.0.0",
+    "pdf-parse": "^1.1.1",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "latest"
+  }
+}
