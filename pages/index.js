@@ -46,6 +46,9 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Generation failed");
       setResult(data);
+      // Optional toast/debug:
+      // const v = data.violations || [];
+      // if (v.length) console.warn("Model tried to use blocked terms:", v);
     }catch(err){
       setError(String(err.message || err));
     }finally{

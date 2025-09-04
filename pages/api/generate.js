@@ -5,6 +5,7 @@ import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import OpenAI from "openai";
 import { normalizeResumeData } from "../../lib/normalizeResume";
+import { extractAllowed, findViolations, sanitizeOutput } from "../../lib/facts";
 
 export const config = { api: { bodyParser: false } };
 
@@ -54,6 +55,9 @@ export default async function handler(req, res) {
     const coverText  = await extractTextFromFile(files?.coverLetter);
     const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
 
+    const allowed = extractAllowed(resumeText); // Set<string>
+    const allowedList = Array.from(allowed).sort().join(", ");
+
     if (!resumeText && !coverText) {
       return res.status(400).json({ error: "No readable files", code: "E_NO_FILES" });
     }
@@ -64,13 +68,14 @@ export default async function handler(req, res) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const system = `You output ONLY JSON with keys: coverLetterText (string) and resumeData (object).
-resumeData should contain fields like:
-- name, title?, email?, phone?, location?, summary?
-- links: array (items may be {label,url} or strings)
-- skills: array of strings
-- experience: array of { company, role, start, end|null, bullets[], location? }
-- education: array of { school, degree, start, end }
-Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose, no markdown fences.`;
+RULES:
+- You may assert ONLY skills/tools/technologies present in ALLOWED_SKILLS.
+- If the job description mentions skills not in ALLOWED_SKILLS, you may acknowledge interest or willingness to learn, but NEVER claim prior use.
+- Do NOT invent employers, dates, or certifications.
+Return also a field "violations": string[] listing any tokens you attempted to use that were outside ALLOWED_SKILLS.
+ALLOWED_SKILLS: ${allowedList}
+resumeData format (loose): { name?, title?, email?, phone?, location?, links?, summary?, skills: string[], experience: [{ company?, role?, start?, end?, bullets: string[], location? }], education?: [...] }
+No prose outside JSON.`;
 
     const user = `
 Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
@@ -100,10 +105,22 @@ ${coverText}
       return res.status(502).json({ error: "Bad model output", code: "E_BAD_MODEL_OUTPUT", raw });
     }
 
-    const resumeData = normalizeResumeData(json.resumeData || {});
-    const coverLetter = String(json.coverLetterText || "");
+    const coverRaw = String(json.coverLetterText || "");
+    const resumeRaw = json.resumeData || {};
+    const combinedOut = coverRaw + "\n" + JSON.stringify(resumeRaw);
 
-    return res.status(200).json({ coverLetter, resumeData });
+    const sanitizedCover = sanitizeOutput(coverRaw, allowed, jobDesc);
+    if (Array.isArray(resumeRaw.experience)) {
+      resumeRaw.experience = resumeRaw.experience.map(x => ({
+        ...x,
+        bullets: Array.isArray(x.bullets) ? sanitizeOutput(x.bullets.join("\n"), allowed, jobDesc).split("\n").filter(Boolean) : []
+      }));
+    }
+
+    const resumeData = normalizeResumeData(resumeRaw);
+    const violations = findViolations(combinedOut, allowed, jobDesc);
+
+    return res.status(200).json({ coverLetter: sanitizedCover, resumeData, violations });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error", detail: String(err?.message || err) });
