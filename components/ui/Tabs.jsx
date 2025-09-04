@@ -12,9 +12,7 @@ export function Tabs({ defaultValue, children }) {
 }
 
 export function TabList({ className = "", ...props }) {
-  return (
-    <div role="tablist" className={["flex gap-4 border-b border-border", className].join(" ")} {...props} />
-  );
+  return <div role="tablist" className={["tabs", className].join(" ")} {...props} />;
 }
 
 export function Tab({ value, children, className = "" }) {
@@ -25,11 +23,7 @@ export function Tab({ value, children, className = "" }) {
       role="tab"
       aria-selected={selected}
       onClick={() => setValue(value)}
-      className={[
-        "h-10 px-4 text-sm font-medium -mb-px",
-        selected ? "border-b-2 border-primary text-primary" : "text-text hover:text-primary",
-        className
-      ].join(" ")}
+      className={["tab", selected ? "active" : "", className].join(" ")}
     >
       {children}
     </button>

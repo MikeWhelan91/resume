@@ -75,7 +75,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="app-container">
       <Head>
         <title>TailorCV - AI Resume & Cover Letter Generator</title>
         <meta
@@ -83,19 +83,19 @@ export default function Home() {
           content="Generate a tailored resume and cover letter for any job using TailorCV's simple AI-powered tool."
         />
       </Head>
-      <div className="mx-auto max-w-3xl p-4">
-        <header className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">TailorCV</h1>
+      <div className="container">
+        <header className="header">
+          <h1>TailorCV</h1>
           <ToggleTheme />
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
               <CardTitle>Upload Documents</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <CardContent>
+              <div className="grid-two">
                 <FileInput
                   id="resume"
                   label="Resume (PDF or DOCX)"
@@ -123,11 +123,11 @@ export default function Home() {
                 showCount
                 disabled={loading}
               />
-              <Button type="submit" loading={loading} className="w-full">
+              <Button type="submit" loading={loading} className="full-width">
                 Generate
               </Button>
               {error && (
-                <p className="text-sm text-red-600" role="alert">
+                <p className="error" role="alert">
                   {error}
                 </p>
               )}
@@ -136,59 +136,51 @@ export default function Home() {
         </form>
 
         {loading && (
-          <div className="mt-8">
-            <Skeleton className="h-64" />
+          <div style={{ marginTop: "2rem" }}>
+            <Skeleton className="full-width" style={{ height: "16rem" }} />
           </div>
         )}
 
         {!loading && result && (
-          <section className="mt-8">
+          <section style={{ marginTop: "2rem" }}>
             <Tabs defaultValue="cl">
               <TabList>
                 <Tab value="cl">Cover Letter</Tab>
                 <Tab value="cv">Resume</Tab>
               </TabList>
               <TabPanel value="cl">
-                <Card className="mt-4">
-                  <CardContent className="p-0">
-                    <div className="sticky top-0 flex justify-end gap-2 border-b border-border bg-card p-2">
+                <Card style={{ marginTop: "1rem" }}>
+                  <CardContent>
+                    <div className="actions">
                       <Button variant="outline" onClick={() => copyText(result.coverLetter)}>
                         Copy
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() =>
-                          downloadDocx(result.coverLetter, "Cover-Letter.docx")
-                        }
+                        onClick={() => downloadDocx(result.coverLetter, "Cover-Letter.docx")}
                       >
                         Download .docx
                       </Button>
                     </div>
-                    <pre className="max-h-[70vh] overflow-auto p-4 font-mono text-sm">
-                      {result.coverLetter}
-                    </pre>
+                    <pre>{result.coverLetter}</pre>
                   </CardContent>
                 </Card>
               </TabPanel>
               <TabPanel value="cv">
-                <Card className="mt-4">
-                  <CardContent className="p-0">
-                    <div className="sticky top-0 flex justify-end gap-2 border-b border-border bg-card p-2">
+                <Card style={{ marginTop: "1rem" }}>
+                  <CardContent>
+                    <div className="actions">
                       <Button variant="outline" onClick={() => copyText(result.resume)}>
                         Copy
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() =>
-                          downloadDocx(result.resume, "Tailored-Resume.docx")
-                        }
+                        onClick={() => downloadDocx(result.resume, "Tailored-Resume.docx")}
                       >
                         Download .docx
                       </Button>
                     </div>
-                    <pre className="max-h-[70vh] overflow-auto p-4 font-mono text-sm">
-                      {result.resume}
-                    </pre>
+                    <pre>{result.resume}</pre>
                   </CardContent>
                 </Card>
               </TabPanel>
