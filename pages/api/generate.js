@@ -70,7 +70,10 @@ resumeData should contain fields like:
 - skills: array of strings
 - experience: array of { company, role, start, end|null, bullets[], location? }
 - education: array of { school, degree, start, end }
-Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose, no markdown fences.`;
+Use the job description only to prioritize what existing resume content to highlight.
+Do NOT introduce skills, titles, or locations that are absent from the extracted resume text.
+The cover letter must also avoid mentioning skills not found in the resume.
+Never fabricate employers, dates, credentials, or numbers. If unsure, omit. No prose, no markdown fences.`;
 
     const user = `
 Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
@@ -102,6 +105,17 @@ ${coverText}
 
     const resumeData = normalizeResumeData(json.resumeData || {});
     const coverLetter = String(json.coverLetterText || "");
+
+    // Ensure we don't introduce skills or header details not present in the original resume
+    const resumeLC = resumeText.toLowerCase();
+    const inResume = (v) => v && resumeLC.includes(String(v).toLowerCase());
+
+    resumeData.skills = Array.isArray(resumeData.skills)
+      ? resumeData.skills.filter((s) => inResume(s))
+      : [];
+
+    if (resumeData.title && !inResume(resumeData.title)) delete resumeData.title;
+    if (resumeData.location && !inResume(resumeData.location)) delete resumeData.location;
 
     return res.status(200).json({ coverLetter, resumeData });
   } catch (err) {

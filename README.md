@@ -7,3 +7,4 @@ Notes:
 - We do NOT store your documents. Server logs exclude document text.
 - 20MB upload limit; supported: PDF, DOCX, TXT.
 - API is rate-limited (10 req/min/IP).
+- Generated resumes only include skills, titles, and locations that appear in your uploaded resume.
