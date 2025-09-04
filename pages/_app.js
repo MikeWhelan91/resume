@@ -6,11 +6,10 @@ export default function MyApp({ Component, pageProps }) {
     <>
       <Head>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="description" content="TailorCV helps you generate tailored resumes and cover letters." />
         <title>TailorCV</title>
       </Head>
-      <div className="min-h-screen bg-bg text-text">
-        <Component {...pageProps} />
-      </div>
+      <Component {...pageProps} />
     </>
   );
 }

@@ -14,12 +14,7 @@ export default function ToggleTheme() {
   };
 
   return (
-    <button
-      type="button"
-      aria-label="Toggle dark mode"
-      onClick={toggle}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card"
-    >
+    <button type="button" aria-label="Toggle dark mode" onClick={toggle}>
       {dark ? "☀️" : "🌙"}
     </button>
   );
