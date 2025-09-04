@@ -1,25 +1,13 @@
-// pages/index.js
 import { useState } from "react";
 import Head from "next/head";
-
-function Tabs({ active, setActive }) {
-  return (
-    <div className="mt-6 inline-flex rounded border overflow-hidden">
-      <button
-        onClick={() => setActive("cl")}
-        className={`px-4 py-2 ${active === "cl" ? "bg-blue-600 text-white" : "bg-white"}`}
-      >
-        Cover Letter
-      </button>
-      <button
-        onClick={() => setActive("cv")}
-        className={`px-4 py-2 border-l ${active === "cv" ? "bg-blue-600 text-white" : "bg-white"}`}
-      >
-        Resume
-      </button>
-    </div>
-  );
-}
+import Button from "../components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
+import { Tabs, TabList, Tab, TabPanel } from "../components/ui/Tabs";
+import Textarea from "../components/ui/Textarea";
+import FileInput from "../components/ui/FileInput";
+import ToggleTheme from "../components/ui/ToggleTheme";
+import Skeleton from "../components/ui/Skeleton";
+import { useToast } from "../components/ui/Toast";
 
 export default function Home() {
   const [resume, setResume] = useState(null);
@@ -28,7 +16,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState("cl");
+  const { show: toast, Toast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,6 +47,7 @@ export default function Home() {
   const copyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text || "");
+      toast("Copied to clipboard");
     } catch (_) {}
   };
 
@@ -82,19 +71,11 @@ export default function Home() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    toast("Download started");
   };
 
-  const previewHtml = (text) =>
-    `<!DOCTYPE html><html><head><style>body{font-family:Arial, sans-serif;padding:1rem;white-space:pre-wrap;}</style></head><body>${
-      (text || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\n/g, "<br/>")
-    }</body></html>`;
-
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-bg">
       <Head>
         <title>TailorCV - AI Resume & Cover Letter Generator</title>
         <meta
@@ -102,114 +83,120 @@ export default function Home() {
           content="Generate a tailored resume and cover letter for any job using TailorCV's simple AI-powered tool."
         />
       </Head>
-      <h1 className="text-4xl font-bold text-center mb-8">TailorCV</h1>
+      <div className="mx-auto max-w-3xl p-4">
+        <header className="mb-8 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">TailorCV</h1>
+          <ToggleTheme />
+        </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 bg-white p-6 rounded border max-w-3xl mx-auto"
-      >
-        <h2 className="text-xl font-semibold">Upload Documents</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block mb-1 font-medium" htmlFor="resume">
-              Resume (PDF or DOCX)
-            </label>
-            <input
-              id="resume"
-              className="w-full p-2 border rounded"
-              type="file"
-              accept=".pdf,.docx"
-              onChange={(e) => setResume(e.target.files[0] || null)}
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium" htmlFor="coverLetter">
-              Existing Cover Letter (optional)
-            </label>
-            <input
-              id="coverLetter"
-              className="w-full p-2 border rounded"
-              type="file"
-              accept=".docx,.txt"
-              onChange={(e) => setCoverLetter(e.target.files[0] || null)}
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium" htmlFor="jobDesc">
-            Job Description
-          </label>
-          <textarea
-            id="jobDesc"
-            className="w-full p-3 border rounded"
-            rows={8}
-            placeholder="Paste job description here"
-            value={jobDesc}
-            onChange={(e) => setJobDesc(e.target.value)}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
-        >
-          {loading ? "Generating..." : "Generate"}
-        </button>
-        {error && <p className="text-red-600">{error}</p>}
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Documents</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FileInput
+                  id="resume"
+                  label="Resume (PDF or DOCX)"
+                  accept=".pdf,.docx"
+                  onChange={(e) => setResume(e.target.files[0] || null)}
+                  helper="Required"
+                  disabled={loading}
+                />
+                <FileInput
+                  id="coverLetter"
+                  label="Existing Cover Letter (optional)"
+                  accept=".docx,.txt"
+                  onChange={(e) => setCoverLetter(e.target.files[0] || null)}
+                  helper="Optional"
+                  disabled={loading}
+                />
+              </div>
+              <Textarea
+                id="jobDesc"
+                label="Job Description"
+                value={jobDesc}
+                onChange={(e) => setJobDesc(e.target.value)}
+                rows={8}
+                helper="Paste job description"
+                showCount
+                disabled={loading}
+              />
+              <Button type="submit" loading={loading} className="w-full">
+                Generate
+              </Button>
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </form>
 
-      {result && (
-        <section className="max-w-5xl mx-auto">
-          <Tabs active={tab} setActive={setTab} />
-          <div className="mt-3 bg-white p-4 rounded border">
-            {tab === "cl" ? (
-              <>
-                <h2 className="text-lg font-semibold mb-2">Cover Letter Preview</h2>
-                <div className="flex gap-2 mb-3">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => copyText(result.coverLetter)}
-                  >
-                    Copy
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => downloadDocx(result.coverLetter, "Cover-Letter.docx")}
-                  >
-                    Download .docx
-                  </button>
-                </div>
-                <iframe
-                  className="w-full h-96 border rounded"
-                  srcDoc={previewHtml(result.coverLetter)}
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-semibold mb-2">Resume Preview</h2>
-                <div className="flex gap-2 mb-3">
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => copyText(result.resume)}
-                  >
-                    Copy
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded"
-                    onClick={() => downloadDocx(result.resume, "Tailored-Resume.docx")}
-                  >
-                    Download .docx
-                  </button>
-                </div>
-                <iframe
-                  className="w-full h-96 border rounded"
-                  srcDoc={previewHtml(result.resume)}
-                />
-              </>
-            )}
+        {loading && (
+          <div className="mt-8">
+            <Skeleton className="h-64" />
           </div>
-        </section>
-      )}
+        )}
+
+        {!loading && result && (
+          <section className="mt-8">
+            <Tabs defaultValue="cl">
+              <TabList>
+                <Tab value="cl">Cover Letter</Tab>
+                <Tab value="cv">Resume</Tab>
+              </TabList>
+              <TabPanel value="cl">
+                <Card className="mt-4">
+                  <CardContent className="p-0">
+                    <div className="sticky top-0 flex justify-end gap-2 border-b border-border bg-card p-2">
+                      <Button variant="outline" onClick={() => copyText(result.coverLetter)}>
+                        Copy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          downloadDocx(result.coverLetter, "Cover-Letter.docx")
+                        }
+                      >
+                        Download .docx
+                      </Button>
+                    </div>
+                    <pre className="max-h-[70vh] overflow-auto p-4 font-mono text-sm">
+                      {result.coverLetter}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </TabPanel>
+              <TabPanel value="cv">
+                <Card className="mt-4">
+                  <CardContent className="p-0">
+                    <div className="sticky top-0 flex justify-end gap-2 border-b border-border bg-card p-2">
+                      <Button variant="outline" onClick={() => copyText(result.resume)}>
+                        Copy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          downloadDocx(result.resume, "Tailored-Resume.docx")
+                        }
+                      >
+                        Download .docx
+                      </Button>
+                    </div>
+                    <pre className="max-h-[70vh] overflow-auto p-4 font-mono text-sm">
+                      {result.resume}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </TabPanel>
+            </Tabs>
+          </section>
+        )}
+      </div>
+      <Toast />
     </div>
   );
 }

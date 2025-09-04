@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #F7F7F8;
+  --card: #ffffff;
+  --border: #E5E7EB;
+  --text: #0F172A;
+  --primary: #2563EB;
+  --primary-foreground: #ffffff;
+}
+
+.dark {
+  --bg: #0B1220;
+  --card: #0F172A;
+  --border: #1F2937;
+  --text: #E5EAF6;
+  --primary: #3B82F6;
+}
+
+body {
+  @apply bg-bg text-text font-sans;
+}
+
+:focus-visible {
+  @apply outline-none ring-2 ring-primary;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded;
+}
+
+.prose pre {
+  @apply bg-transparent p-0 text-current whitespace-pre-wrap;
+}
