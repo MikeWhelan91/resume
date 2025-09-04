@@ -48,9 +48,11 @@ export default function Home() {
 
       const res = await fetch("/api/generate", { method:"POST", body: formData });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Generation failed");
-
-      setResult(data);
+      if (!res.ok) {
+        setError(`${data?.code || "E_UNKNOWN"}: ${data?.error || "Request failed"}`);
+        return;
+      }
+      setResult(data); // { coverLetter, resumeData }
     }catch(err){
       setError(String(err.message || err));
     }finally{
