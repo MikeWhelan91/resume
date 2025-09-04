@@ -1,42 +1,60 @@
-export default function Classic({ data }) {
-  const fmt = (s) => (s ? s.replace(/-/g, "–") : "");
+export default function Classic({ data = {} }) {
+  const fmt = (s) => (s ? String(s).replace(/-/g, "–") : "");
+  const links = Array.isArray(data.links) ? data.links : [];
+  const skills = Array.isArray(data.skills) ? data.skills : [];
+  const exp = Array.isArray(data.experience) ? data.experience : [];
+  const edu = Array.isArray(data.education) ? data.education : [];
+
   return (
     <div className="resume">
       <header>
-        <h1>{data.name}</h1>
-        <div className="muted">{[data.title, data.location].filter(Boolean).join(" • ")}</div>
-        <div className="muted">
-          {[data.email, data.phone, ...(data.links||[]).map(l=>l.url)].filter(Boolean).join(" · ")}
-        </div>
+        {data.name && <h1>{data.name}</h1>}
+        {(data.title || data.location) && (
+          <div className="muted">{[data.title, data.location].filter(Boolean).join(" • ")}</div>
+        )}
+        {(data.email || data.phone || links.length) && (
+          <div className="muted">
+            {[data.email, data.phone, ...links.map((l) => l?.url).filter(Boolean)].join(" · ")}
+          </div>
+        )}
         <div className="rule" />
       </header>
 
       {data.summary && (<><h2>Profile</h2><p>{data.summary}</p></>)}
 
-      {Array.isArray(data.skills) && data.skills.length > 0 && (
+      {skills.length > 0 && (
         <>
           <h2>Skills</h2>
-          <div>{data.skills.map((s, i) => <span className="pill" key={i}>{s}</span>)}</div>
+          <div>{skills.map((s, i) => <span className="pill" key={i}>{s}</span>)}</div>
         </>
       )}
 
-      <h2>Experience</h2>
-      {data.experience.map((x, i) => (
+      {exp.length > 0 && <h2>Experience</h2>}
+      {exp.map((x, i) => (
         <section key={i}>
-          <div className="row"><strong>{x.company} — {x.role}</strong><span className="muted">{fmt(x.start)} – {x.end ? fmt(x.end) : "Present"}</span></div>
+          {(x.company || x.role || x.start || x.end) && (
+            <div className="row">
+              <strong>{[x.company, x.role].filter(Boolean).join(" — ")}</strong>
+              {(x.start || x.end != null) && (
+                <span className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</span>
+              )}
+            </div>
+          )}
           {x.location && <div className="muted">{x.location}</div>}
-          <ul>{x.bullets.map((b, j) => <li key={j}>{b}</li>)}</ul>
+          {Array.isArray(x.bullets) && x.bullets.length > 0 && (
+            <ul>{x.bullets.map((b, j) => <li key={j}>{b}</li>)}</ul>
+          )}
         </section>
       ))}
 
-      {data.education?.length > 0 && (
-        <>
-          <h2>Education</h2>
-          {data.education.map((e, i) => (
-            <div className="row" key={i}><div><strong>{e.school}</strong> — {e.degree}</div><div className="muted">{fmt(e.start)} – {fmt(e.end)}</div></div>
-          ))}
-        </>
-      )}
+      {edu.length > 0 && <h2>Education</h2>}
+      {edu.map((e, i) => (
+        <div className="row" key={i}>
+          <div><strong>{e.school}</strong>{e.degree ? ` — ${e.degree}` : ""}</div>
+          {(e.start || e.end) && <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>}
+        </div>
+      ))}
     </div>
   );
 }
+
