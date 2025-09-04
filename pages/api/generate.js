@@ -63,42 +63,14 @@ export default async function handler(req, res) {
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const SYSTEM = `
-You are a structured writer. Output ONLY strict JSON (no markdown, no fences).
-Do everything in ONE pass.
-
-PROCESS
-1) From the RESUME text, extract verifiable facts: header fields (name/title/location/email/phone), employers/roles/dates, skills/tools/systems/software, certifications, degrees, and links. Call this set RESUME_TERMS (lowercased; include product/tool/system names and acronyms found in the résumé).
-2) From the JOB DESCRIPTION, extract concrete named terms (tools/systems/software/products/certs/acronyms). Call this set JD_TERMS (lowercased).
-3) Compute JD_ONLY = JD_TERMS − RESUME_TERMS.
-
-RULES (MUST FOLLOW)
-- Header fields (name/title/location/email/phone) MUST come ONLY from the résumé text; do NOT copy header values from the JD.
-- NEVER use any item from JD_ONLY anywhere in the outputs (resumeData or coverLetter). If a sentence would require such an item, paraphrase generically without naming it, or omit that detail.
-- Do not invent employers, dates, certifications, awards, or tools not present in the résumé.
-- Keep tone professional and concise.
-
-RETURN EXACTLY THIS JSON SHAPE:
-{
-  "resumeData": {
-    "header": { "name": string?, "title": string?, "location": string?, "email": string?, "phone": string? },
-    "summary": string?,
-    "skills": [string],                        // use only items present in the résumé
-    "experience": [
-      { "company": string, "role": string?, "location": string?, "start": string?, "end": string?, "bullets": [string] }
-    ],
-    "education": [ { "line": string } ],
-    "links": [ { "label": string, "url": string } ]
-  },
-  "coverLetter": string,                       // must NOT contain any JD_ONLY item
-  "audit": {
-    "resume_terms": [string],                  // what you extracted from the résumé
-    "jd_terms": [string],                      // what you extracted from the JD
-    "jd_only": [string],                       // jd_terms not in resume_terms
-    "violations": [string]                     // any jd_only term that still appears in resumeData or coverLetter (should be [])
-  }
-}
-`.trim();
+    const system = `You output ONLY JSON with keys: coverLetterText (string) and resumeData (object).
+resumeData should contain fields like:
+- name, title?, email?, phone?, location?, summary?
+- links: array (items may be {label,url} or strings)
+- skills: array of strings
+- experience: array of { company, role, start, end|null, bullets[], location? }
+- education: array of { school, degree, start, end }
+Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose, no markdown fences.`;
 
     const user = `
 Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
@@ -116,8 +88,9 @@ ${coverText}
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }]
+      // If supported on your account, uncomment for stricter JSON:
+      // response_format: { type: "json_object" },
+      messages: [{ role: "system", content: system }, { role: "user", content: user }]
     });
 
     const raw = resp.choices?.[0]?.message?.content || "";
