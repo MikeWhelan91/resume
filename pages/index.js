@@ -16,12 +16,36 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState("ats");       // "default" | "ats"
+  const [tighten, setTighten] = useState(1);     // 0..2
+  const [coverage, setCoverage] = useState({ pct: 0, covered: [], missing: [] });
   const { show: toast, Toast } = useToast();
+
+  function extractKeywords(text) {
+    return Array.from(
+      new Set(
+        String(text || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9+.#/\s-]/g, " ")
+          .split(/\s+/)
+          .filter((w) => w.length > 2 && !["with","and","for","the","you","our","this","that","are","from"].includes(w))
+      )
+    );
+  }
+  function computeCoverage(jd, out) {
+    const jdT = extractKeywords(jd);
+    const outT = extractKeywords(out);
+    const covered = jdT.filter((t) => outT.includes(t));
+    const missing = jdT.filter((t) => !outT.includes(t)).slice(0, 15);
+    const pct = Math.round((covered.length / Math.max(1, jdT.length)) * 100);
+    return { pct, covered, missing };
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setResult(null);
+    setCoverage({ pct: 0, covered: [], missing: [] });
 
     if (!resume) return setError("Please upload a resume (PDF or DOCX).");
     if (!jobDesc.trim()) return setError("Please paste a job description.");
@@ -32,11 +56,15 @@ export default function Home() {
       formData.append("resume", resume);
       if (coverLetter) formData.append("coverLetter", coverLetter);
       formData.append("jobDesc", jobDesc);
+      formData.append("mode", mode);
+      formData.append("tighten", String(tighten));
 
       const res = await fetch("/api/generate", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Generation failed");
       setResult(data);
+      const allOut = (data.coverLetter || "") + "\n" + (data.resume || "");
+      setCoverage(computeCoverage(jobDesc, allOut));
     } catch (err) {
       setError(String(err.message || err));
     } finally {
@@ -77,10 +105,14 @@ export default function Home() {
   return (
     <div className="app-container">
       <Head>
-        <title>TailorCV - AI Resume & Cover Letter Generator</title>
+        <title>TailorCV - ATS Resume & Cover Letter Generator</title>
         <meta
           name="description"
-          content="Generate a tailored resume and cover letter for any job using TailorCV's simple AI-powered tool."
+          content="Generate ATS-friendly resumes and cover letters with keyword coverage and conciseness control using TailorCV's AI tool."
+        />
+        <meta
+          name="keywords"
+          content="ATS resume, cover letter, AI resume generator, keyword coverage, conciseness slider"
         />
       </Head>
       <div className="container">
@@ -123,6 +155,14 @@ export default function Home() {
                 showCount
                 disabled={loading}
               />
+              <label className="block text-sm font-medium mb-1">Mode</label>
+              <div className="flex gap-3 mb-4">
+                <label><input type="radio" name="mode" checked={mode==="ats"} onChange={()=>setMode("ats")} /> ATS</label>
+                <label><input type="radio" name="mode" checked={mode==="default"} onChange={()=>setMode("default")} /> Default</label>
+              </div>
+
+              <label className="block text-sm font-medium mb-1">Conciseness</label>
+              <input type="range" min="0" max="2" value={tighten} onChange={e=>setTighten(Number(e.target.value))} />
               <Button type="submit" loading={loading} className="full-width">
                 Generate
               </Button>
@@ -143,6 +183,14 @@ export default function Home() {
 
         {!loading && result && (
           <section style={{ marginTop: "2rem" }}>
+            {(result && (result.coverLetter || result.resume)) && (
+              <div className="my-4 p-3 border rounded">
+                <div>Keyword coverage: <strong>{coverage.pct}%</strong></div>
+                {coverage.missing.length > 0 && (
+                  <div className="text-xs opacity-80 mt-1">Top missing: {coverage.missing.slice(0,8).join(", ")}</div>
+                )}
+              </div>
+            )}
             <Tabs defaultValue="cl">
               <TabList>
                 <Tab value="cl">Cover Letter</Tab>
