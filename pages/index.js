@@ -81,8 +81,8 @@ export default function Home() {
     <>
       <Head>
         <title>TailorCV - AI Résumé + Cover Letter</title>
-        <meta name="description" content="Generate tailored, ATS-friendly resumes and cover letters with PDF and DOCX export options." />
-        <meta name="keywords" content="AI resume, cover letter, ATS, PDF, DOCX, templates" />
+        <meta name="description" content="Generate tailored, ATS-friendly resumes and cover letters with transferable skill mapping and PDF and DOCX export options." />
+        <meta name="keywords" content="AI resume, cover letter, ATS, PDF, DOCX, templates, transferable skills" />
       </Head>
 
       {/* Two-column screen layout: controls left, results right */}
@@ -152,6 +152,23 @@ export default function Home() {
                 <div style={{marginTop:18}}>
                   <h2>Cover Letter</h2>
                   <textarea readOnly value={result.coverLetter} rows={10} style={{width:"100%"}} />
+                </div>
+              )}
+              {Array.isArray(result?.transferables) && result.transferables.length > 0 && (
+                <div style={{marginTop:18}}>
+                  <h2>Transferable Skills</h2>
+                  <div style={{fontSize:14, opacity:0.85, marginBottom:6}}>
+                    These map required JD skills to what the candidate already has.
+                  </div>
+                  <ul style={{display:"grid", gap:8, paddingLeft:18}}>
+                    {result.transferables.map((t, i) => (
+                      <li key={i} style={{border:"1px solid #e5e7eb", borderRadius:6, padding:"8px 10px", background:"#fafafa"}}>
+                        <div><strong>Required:</strong> {t.requiredSkill}</div>
+                        <div><strong>Mapped from:</strong> {(t.mappedFrom||[]).join(", ")}</div>
+                        <div style={{marginTop:4}}><strong>Why:</strong> {t.rationale}</div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </>
