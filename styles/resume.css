@@ -1,8 +1,8 @@
 :root {
-  --ink: #0f172a;      /* text */
-  --muted: #64748b;    /* secondary text */
-  --rule: #e2e8f0;     /* borders */
-  --accent: #1a73e8;   /* link color */
+  --ink: #0f172a;
+  --muted: #64748b;
+  --rule: #e2e8f0;
+  --accent: #1a73e8;
   --bg: #ffffff;
 }
 .resume {
@@ -22,12 +22,18 @@
 .resume a { color: var(--accent); text-decoration: none; }
 .resume .rule { border-top: 1px solid var(--rule); margin: 10px 0; }
 
-/* Two-column template layout */
-.resumeGrid {
-  display: grid; grid-template-columns: 240px 1fr; gap: 18px;
-}
+/* Two-column base */
+.resumeGrid { display: grid; grid-template-columns: 240px 1fr; gap: 18px; }
 .sidebar h2 { margin-top: 0; }
 .sidebar .pill { display:block; margin: 3px 0; }
+
+/* Centered header variant */
+.centeredHeader header { text-align: center; }
+.centeredHeader .rule { margin: 12px auto; width: 96%; }
+
+/* Sidebar variant small vertical divider */
+.sidebarMain { position: relative; }
+.sidebarMain::before { content:""; position:absolute; left:-9px; top:0; bottom:0; width:1px; background: var(--rule); }
 
 @media print {
   @page { margin: 14mm; }
