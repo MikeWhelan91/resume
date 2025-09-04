@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "docx": "^9.0.3",
     "formidable": "^3.5.0",
     "mammoth": "^1.10.0",
@@ -16,10 +17,10 @@
     "pdf-parse": "^1.1.1",
     "react": "latest",
     "react-dom": "latest",
-    "tailwindcss": "latest"
+    "tailwindcss": "^4.1.13"
   },
   "devDependencies": {
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.5.6"
   }
 }
