@@ -150,14 +150,15 @@ export default function Home() {
     // pick the paper element or fallback to node
     const paper = node.querySelector("[data-paper]") || node;
 
-    // measure the live paper width and size the offscreen shell to match
-    const liveRect = paper.getBoundingClientRect();
-    console.log("Live paper width:", liveRect.width);
+    // measure the live paper size without any preview scaling
+    const liveWidth = paper.offsetWidth;
+    const liveHeight = paper.offsetHeight;
+    console.log("Live paper size:", liveWidth, liveHeight);
 
     // clone into a clean, offscreen print container
     const shell = document.createElement("div");
     shell.className = "print-root";
-    shell.style.width = `${liveRect.width}px`;
+    shell.style.width = `${liveWidth}px`;
     const clone = paper.cloneNode(true);
     shell.appendChild(clone);
     document.body.appendChild(shell);
@@ -173,13 +174,14 @@ export default function Home() {
       )
     );
 
-    // log the width of the clone for parity with the live paper
-    const cloneRect = clone.getBoundingClientRect();
-    console.log("Clone width:", cloneRect.width);
+    // log the clone's dimensions for parity with the live paper
+    const cloneWidth = clone.offsetWidth;
+    const cloneHeight = clone.offsetHeight;
+    console.log("Clone size:", cloneWidth, cloneHeight);
 
     try {
       const dpr = Math.min(2, window.devicePixelRatio || 1); // crisp without bloat
-      const rect = cloneRect;
+      const rect = { width: cloneWidth, height: cloneHeight };
 
       const canvas = await html2canvas(clone, {
         backgroundColor: "#ffffff",
