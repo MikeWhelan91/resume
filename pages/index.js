@@ -263,11 +263,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly resumes and matching cover letters with quick PDF and DOCX downloads, complete with live template previews."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads, complete with live template previews."
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview"
+            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview"
           />
       </Head>
       <main className="tc-container tc-page">
@@ -314,12 +314,18 @@ export default function Home() {
         {phase === 'results' && result && (
           <section className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="tc-paper cursor-pointer" onClick={()=>setFullScreen('resume')}>
-                <div ref={resumeScrollRef}>
-                  <TemplateView data={result.resumeData} />
+              <div className="tc-paper cursor-pointer" onClick={() => setFullScreen('resume')}>
+                <div className="a4-scale">
+                  <div className="a4">
+                    <div className="a4-inner">
+                      <div className="a4-scroll" ref={resumeScrollRef}>
+                        <TemplateView data={result.resumeData} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="tc-card cursor-pointer" onClick={()=>setFullScreen('cover')}>
+              <div className="tc-card cursor-pointer" onClick={() => setFullScreen('cover')}>
                 <div ref={coverRef} className="whitespace-pre-wrap leading-6">
                   {result.coverLetter || <div className="opacity-60">No cover letter returned.</div>}
                 </div>
