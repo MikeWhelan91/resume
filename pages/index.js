@@ -147,17 +147,26 @@ export default function Home() {
       import("html2canvas").then((m) => m.default || m),
     ]);
 
-    // pick the paper element or fallback to node
+    // pick the core resume element
     const paper = node.querySelector("[data-paper]") || node;
 
-    // measure the live paper width and size the offscreen shell to match
-    const liveRect = paper.getBoundingClientRect();
-    console.log("Live paper width:", liveRect.width);
+    // measure the live paper size without any preview scaling
+    const liveWidth = paper.offsetWidth;
+    const liveHeight = paper.offsetHeight;
+    console.log("Live paper size:", liveWidth, liveHeight);
+
+    // detect preview padding (e.g., the .a4-scroll margin)
+    const scroll = paper.closest(".a4-scroll");
+    const pad = scroll ? getComputedStyle(scroll) : null;
+    const padTop = pad ? parseFloat(pad.paddingTop) || 0 : 0;
+    const padRight = pad ? parseFloat(pad.paddingRight) || 0 : 0;
+    const padBottom = pad ? parseFloat(pad.paddingBottom) || 0 : 0;
+    const padLeft = pad ? parseFloat(pad.paddingLeft) || 0 : 0;
 
     // clone into a clean, offscreen print container
     const shell = document.createElement("div");
     shell.className = "print-root";
-    shell.style.width = `${liveRect.width}px`;
+    shell.style.width = `${liveWidth}px`;
     const clone = paper.cloneNode(true);
     shell.appendChild(clone);
     document.body.appendChild(shell);
@@ -173,13 +182,14 @@ export default function Home() {
       )
     );
 
-    // log the width of the clone for parity with the live paper
-    const cloneRect = clone.getBoundingClientRect();
-    console.log("Clone width:", cloneRect.width);
+    // log the clone's dimensions for parity with the live paper
+    const cloneWidth = clone.offsetWidth;
+    const cloneHeight = clone.offsetHeight;
+    console.log("Clone size:", cloneWidth, cloneHeight);
 
     try {
       const dpr = Math.min(2, window.devicePixelRatio || 1); // crisp without bloat
-      const rect = cloneRect;
+      const rect = { width: cloneWidth, height: cloneHeight };
 
       const canvas = await html2canvas(clone, {
         backgroundColor: "#ffffff",
@@ -195,13 +205,21 @@ export default function Home() {
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
 
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
+      // scale the resume so that preview padding becomes PDF margins
+      const totalWidth = liveWidth + padLeft + padRight;
+      const scale = pageW / totalWidth;
+      const marginLeft = padLeft * scale;
+      const marginRight = padRight * scale;
+      const marginTop = padTop * scale;
+      const marginBottom = padBottom * scale;
+      const imgW = liveWidth * scale;
+      const imgH = liveHeight * scale;
+      const pageHeight = pageH - marginTop - marginBottom;
 
       let y = 0;
       while (y < imgH) {
         if (y > 0) pdf.addPage();
-        const sliceH = Math.min(pageH, imgH - y);
+        const sliceH = Math.min(pageHeight, imgH - y);
 
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = canvas.width;
@@ -220,7 +238,7 @@ export default function Home() {
           pageCanvas.height
         );
 
-        pdf.addImage(pageCanvas, "PNG", 0, 0, imgW, sliceH, undefined, "FAST");
+        pdf.addImage(pageCanvas, "PNG", marginLeft, marginTop, imgW, sliceH, undefined, "FAST");
         y += sliceH;
       }
 
@@ -386,7 +404,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -434,7 +452,7 @@ export default function Home() {
                   {fullScreen === 'resume' ? (
                     <TemplateView data={result.resumeData} />
                   ) : result?.coverLetter ? (
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
                       {result.coverLetter}
                     </div>
                   ) : (
