@@ -16,8 +16,7 @@ const emptyResume = {
 export default function ResumeWizard({ initialData, onCancel, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
   const [data, setData] = useState(initialData || emptyResume);
   const [step, setStep] = useState(0);
-  const [jobDesc, setJobDesc] = useState("");
-  const steps = ["basics", "skills", "work", "education", "review"];
+  const steps = ["basics", "skills", "work", "education", "template"];
 
   useEffect(() => {
     if (autosaveKey) {
@@ -55,7 +54,7 @@ export default function ResumeWizard({ initialData, onCancel, onComplete, autosa
 
   function handleSubmit(e) {
     e.preventDefault();
-    onComplete && onComplete(data, jobDesc);
+    onComplete && onComplete(data);
   }
 
   return (
@@ -169,10 +168,7 @@ export default function ResumeWizard({ initialData, onCancel, onComplete, autosa
 
       {step === 4 && (
         <div style={{ display: "grid", gap: 8 }}>
-          <h2>Review</h2>
-          <pre style={{ whiteSpace: "pre-wrap", maxHeight: 300, overflow: "auto", background: "#f5f5f5", padding: 8 }}>
-            {JSON.stringify(data, null, 2)}
-          </pre>
+          <h2>Finalize</h2>
           <div>
             <label style={{ display: "block", fontWeight: 600, marginBottom: 4 }}>Template:</label>
             <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)}>
@@ -185,14 +181,6 @@ export default function ResumeWizard({ initialData, onCancel, onComplete, autosa
               <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>{templateInfo[template]}</div>
             )}
           </div>
-          <textarea
-            rows={8}
-            value={jobDesc}
-            onChange={e => setJobDesc(e.target.value)}
-            placeholder="Paste job description here"
-            required
-            style={{ width: "100%" }}
-          />
         </div>
       )}
 

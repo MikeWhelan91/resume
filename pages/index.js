@@ -38,6 +38,8 @@ export default function Home() {
   const [showWizard, setShowWizard] = useState(false);
   const [wizardData, setWizardData] = useState(null);
   const [isScratch, setIsScratch] = useState(false);
+  const [resumeData, setResumeData] = useState(null);
+  const [jobDesc, setJobDesc] = useState("");
 
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
@@ -121,8 +123,19 @@ export default function Home() {
     setIsScratch(true);
   }
 
-  function handleWizardComplete(data, jobDesc){
-    generateFromData(data, jobDesc);
+  function handleWizardComplete(data){
+    setResumeData(data);
+    setShowWizard(false);
+    setResult(null);
+  }
+
+  function startOver(){
+    setResumeData(null);
+    setResult(null);
+    setJobDesc("");
+    setShowWizard(false);
+    setWizardData(null);
+    setIsScratch(false);
   }
 
   async function generateFromData(resumeData, jobDesc){
@@ -246,11 +259,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload a CV or build one from scratch in a guided wizard, then generate a tailored, ATS-friendly resume and matching cover letter with quick PDF and DOCX downloads."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly resumes and matching cover letters with quick PDF and DOCX downloads."
         />
         <meta
           name="keywords"
-          content="AI resume builder, cover letter generator, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview"
+          content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
 
@@ -260,7 +273,7 @@ export default function Home() {
         <section style={{display:"grid", gap:12, alignContent:"start"}}>
           <h1 style={{fontSize:24, marginBottom:4}}>AI Résumé + Cover Letter</h1>
 
-          {!showWizard && !result && (
+          {!showWizard && (
             <div style={{display:"grid", gap:12}}>
               <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} style={{display:"none"}} onChange={handleFileInput} />
               <button type="button" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
@@ -268,7 +281,7 @@ export default function Home() {
             </div>
           )}
 
-          {showWizard && !result && (
+          {showWizard && (
             <ResumeWizard
               initialData={wizardData}
               onCancel={()=>setShowWizard(false)}
@@ -280,9 +293,24 @@ export default function Home() {
             />
           )}
 
-          {result && (
+          {!showWizard && resumeData && (
             <div style={{display:"grid", gap:8}}>
-              <button type="button" onClick={()=>{ setResult(null); setShowWizard(false); }}>Start over</button>
+              <textarea
+                rows={8}
+                value={jobDesc}
+                onChange={e => setJobDesc(e.target.value)}
+                placeholder="Paste job description here"
+              />
+              <div style={{display:"flex", gap:8}}>
+                <button type="button" onClick={()=>generateFromData(resumeData, jobDesc)}>Generate</button>
+                <button type="button" onClick={()=>setJobDesc("")}>Clear JD</button>
+              </div>
+            </div>
+          )}
+
+          { (resumeData || result) && !showWizard && (
+            <div style={{display:"grid", gap:8}}>
+              <button type="button" onClick={startOver}>Start over</button>
             </div>
           )}
 
