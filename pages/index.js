@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import Head from "next/head";
 import Classic from "../components/templates/Classic";
 import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
-import { useReactToPrint } from "react-to-print";
 
 const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
@@ -21,7 +20,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar
-  const [exportType, setExportType] = useState("pdf"); // pdf | docx
 
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
@@ -71,10 +69,7 @@ export default function Home() {
   }
 
   const compRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => compRef.current,
-    documentTitle: `${result?.resumeData?.name || "Resume"}`
-  });
+  const coverRef = useRef(null);
 
   async function handleSubmit(e){
     e.preventDefault();
@@ -104,15 +99,65 @@ export default function Home() {
     if (!result?.resumeData) return;
     const r = await fetch("/api/export-docx-structured", {
       method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ data: result.resumeData, filename: `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}` })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: result.resumeData,
+        filename: `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}`
+      })
     });
-    if (!r.ok) return alert("Export failed");
+    if (!r.ok) {
+      let msg = "Export failed";
+      try { const j = await r.json(); if (j?.error) msg = `Export failed: ${j.error}`; } catch {}
+      alert(msg);
+      return;
+    }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}.docx`;
+    a.href = url; a.download = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}.docx`;
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  }
+
+  // One-click PDF download capturing the A4 previews (multi-page CV + CL)
+  async function downloadPdf() {
+    if (!result?.resumeData) return;
+    const [{ jsPDF }, html2canvas] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas").then(m => m.default || m)
+    ]);
+
+    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    // Helper to capture a DOM node and add as a PDF page
+    async function snapAndAdd(node, addNewPage) {
+      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+      const img = canvas.toDataURL("image/png");
+      if (addNewPage) pdf.addPage();
+      pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+    }
+
+    // Capture CV scroller page-by-page if present
+    const cvScroller = document.querySelector(".a4 .a4-scroll") || (compRef?.current || null);
+    if (cvScroller) {
+      const h = cvScroller.clientHeight || pageH;
+      const total = Math.max(1, Math.ceil(cvScroller.scrollHeight / h));
+      for (let i = 0; i < total; i++) {
+        cvScroller.scrollTop = i * h;
+        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
+        await snapAndAdd(cvScroller, i > 0);
+      }
+    }
+
+    // Capture Cover Letter panel if present
+    if (coverRef?.current) {
+      // add a new page after CV pages
+      await snapAndAdd(coverRef.current, true);
+    }
+
+    const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}.pdf`;
+    pdf.save(fname);
   }
 
   const TemplateView = useMemo(() => {
@@ -172,14 +217,6 @@ export default function Home() {
             </div>
 
             <div style={{display:"flex", gap:12, alignItems:"center"}}>
-              <div>
-                <label style={{display:"block", fontWeight:600, marginBottom:6}}>Export:</label>
-                <select value={exportType} onChange={e=>setExportType(e.target.value)}>
-                  <option value="pdf">PDF</option>
-                  <option value="docx">DOCX</option>
-                </select>
-              </div>
-
               <button type="submit" disabled={loading}>
                 {loading ? "Generating..." : "Generate"}
               </button>
@@ -258,7 +295,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -270,18 +307,16 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button onClick={() => (exportType === "pdf" ? handlePrint() : downloadDocx())}>
-                  {exportType === "pdf" ? "Download PDF" : "Download DOCX"}
-                </button>
-                <button onClick={handlePrint}>Print</button>
+              <div style={{display:"flex", gap:8, marginTop:10}}>
+                <button onClick={downloadPdf}>Download PDF</button>
+                <button onClick={downloadDocx}>Download DOCX</button>
               </div>
             </>
           ) : (
             <div style={{ opacity: 0.6 }}>Your generated résumé will appear here.</div>
           )}
 
-          {/* Keep existing action buttons (Download/Print) BELOW the previews if you prefer.
+          {/* Keep action buttons BELOW the previews if you prefer.
               If you want them above, move them accordingly. */}
         </section>
       </main>
