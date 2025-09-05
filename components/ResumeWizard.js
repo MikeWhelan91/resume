@@ -1,4 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Classic from "./templates/Classic";
+import TwoCol from "./templates/TwoCol";
+import Centered from "./templates/Centered";
+import Sidebar from "./templates/Sidebar";
 
 const emptyResume = {
   name: "",
@@ -13,10 +17,56 @@ const emptyResume = {
   education: []
 };
 
+const sampleData = {
+  name: "Jane Doe",
+  title: "Software Engineer",
+  email: "jane@example.com",
+  phone: "555-123-4567",
+  location: "San Francisco, CA",
+  summary: "Experienced engineer with a passion for building scalable web applications.",
+  links: [{ label: "GitHub", url: "https://github.com/janedoe" }],
+  skills: ["JavaScript", "React", "Node.js"],
+  experience: [
+    {
+      company: "Tech Corp",
+      role: "Senior Developer",
+      start: "2020-01",
+      end: "2022-12",
+      location: "Remote",
+      bullets: [
+        "Led a team of 5 engineers",
+        "Implemented performance optimizations",
+      ],
+    },
+  ],
+  education: [
+    {
+      school: "State University",
+      degree: "B.S. Computer Science",
+      start: "2016-09",
+      end: "2019-05",
+      grade: "3.8 GPA",
+    },
+  ],
+};
+
 export default function ResumeWizard({ initialData, onCancel, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
   const [data, setData] = useState(initialData || emptyResume);
   const [step, setStep] = useState(0);
   const steps = ["basics", "skills", "work", "education", "template"];
+
+  const TemplatePreview = useMemo(() => {
+    switch (template) {
+      case "twoCol":
+        return TwoCol;
+      case "centered":
+        return Centered;
+      case "sidebar":
+        return Sidebar;
+      default:
+        return Classic;
+    }
+  }, [template]);
 
   useEffect(() => {
     if (autosaveKey) {
@@ -166,23 +216,29 @@ export default function ResumeWizard({ initialData, onCancel, onComplete, autosa
         </div>
       )}
 
-      {step === 4 && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <h2>Finalize</h2>
-          <div>
-            <label style={{ display: "block", fontWeight: 600, marginBottom: 4 }}>Template:</label>
-            <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)}>
-              <option value="classic">Classic (ATS)</option>
-              <option value="twoCol">Two-Column</option>
-              <option value="centered">Centered Header</option>
-              <option value="sidebar">Sidebar</option>
-            </select>
-            {templateInfo && templateInfo[template] && (
-              <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>{templateInfo[template]}</div>
-            )}
+        {step === 4 && (
+          <div style={{ display: "grid", gap: 8 }}>
+            <h2>Finalize</h2>
+            <div>
+              <label style={{ display: "block", fontWeight: 600, marginBottom: 4 }}>Template:</label>
+              <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)}>
+                <option value="classic">Classic (ATS)</option>
+                <option value="twoCol">Two-Column</option>
+                <option value="centered">Centered Header</option>
+                <option value="sidebar">Sidebar</option>
+              </select>
+              {templateInfo && templateInfo[template] && (
+                <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>{templateInfo[template]}</div>
+              )}
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Preview:</div>
+                <div style={{ border: "1px solid #ccc", padding: 8 }}>
+                  <TemplatePreview data={sampleData} />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
         {onCancel && <button type="button" onClick={onCancel}>Cancel</button>}
