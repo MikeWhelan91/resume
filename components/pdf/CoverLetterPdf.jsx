@@ -4,9 +4,9 @@ import "./registerFonts";
 
 const styles = StyleSheet.create({
   page: { fontFamily: "InterRegular", fontSize: 11, lineHeight: 1.6, padding: 48 },
-  h1:   { fontFamily: "InterBold", fontSize: 16, marginBottom: 12 },
+  h1:   { fontFamily: "InterBold", fontWeight: 700, fontSize: 16, marginBottom: 12 },
   para: { fontFamily: "InterRegular", marginBottom: 10 },
-  sign: { fontFamily: "InterBold", marginTop: 18 },
+  sign: { fontFamily: "InterBold", fontWeight: 700, marginTop: 18 },
 });
 
 

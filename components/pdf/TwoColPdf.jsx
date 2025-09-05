@@ -14,11 +14,19 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row" },
   sidebar: { width: 180, marginRight: 18 },
   main: { flex: 1 },
-  h1: { fontFamily: "InterBold", fontSize: 20, marginBottom: 4 },
-  h2: { fontFamily: "InterSemiBold", fontSize: 12, marginTop: 14, marginBottom: 6, textTransform: "uppercase" },
+  h1: { fontFamily: "InterBold", fontWeight: 700, fontSize: 20, marginBottom: 4 },
+  h2: {
+    fontFamily: "InterSemiBold",
+    fontWeight: 600,
+    fontSize: 12,
+    marginTop: 14,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
   muted: { color: "#64748b" },
   pill: {
     fontFamily: "InterMedium",
+    fontWeight: 500,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 999,
@@ -74,7 +82,7 @@ function Education({ data }) {
         const detail = [e.degree, e.grade, dateRange].filter(Boolean).join(" • ");
         return (
           <View key={i} style={{ marginBottom: 6 }}>
-            <Text style={{ fontFamily: "InterBold" }}>{e.school}</Text>
+            <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
             {detail ? <Text style={styles.muted}>{detail}</Text> : null}
           </View>
         );
@@ -105,7 +113,7 @@ function Experience({ data }) {
         return (
           <View key={i} wrap={false}>
             <View style={styles.row}>
-              <Text style={{ fontFamily: "InterBold" }}>{heading}</Text>
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>
               <Text style={{ fontStyle: "italic" }}>{dates}</Text>
             </View>
             <View style={styles.ul}>
