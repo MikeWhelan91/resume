@@ -263,12 +263,12 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly resumes and matching cover letters with quick PDF and DOCX downloads."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly resumes and matching cover letters with quick PDF and DOCX downloads, complete with live template previews."
         />
         <meta
           name="keywords"
-          content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview"
-        />
+            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview"
+          />
       </Head>
       <main className="tc-container tc-page">
         {phase === 'entry' && (
