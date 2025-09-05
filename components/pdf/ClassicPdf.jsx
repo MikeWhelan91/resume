@@ -1,28 +1,66 @@
 import React from "react";
 import {
-  Page, Text, View, Document, StyleSheet, Link
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  Link,
 } from "@react-pdf/renderer";
+import "./registerFonts";
 
 const styles = StyleSheet.create({
-  page: { paddingTop: 28, paddingBottom: 28, paddingHorizontal: 28, fontSize: 11, fontFamily: "Helvetica", lineHeight: 1.4 },
-  h1: { fontSize: 18, marginBottom: 2, fontWeight: "bold" },
-  h2: { fontSize: 12, marginTop: 12, marginBottom: 6, textTransform: "uppercase" },
+  page: {
+    paddingTop: 36,
+    paddingBottom: 36,
+    paddingHorizontal: 36,
+    fontSize: 11,
+    lineHeight: 1.4,
+    fontFamily: "InterPDF",
+  },
+  h1: {
+    fontFamily: "InterPDF",
+    fontSize: 20,
+    fontWeight: 700,
+    marginBottom: 6,
+  },
+  h2: {
+    fontFamily: "InterPDF",
+    fontSize: 12,
+    fontWeight: 600,
+    marginTop: 14,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
   muted: { color: "#64748b" },
-  row: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  pillWrap: { flexDirection: "row", flexWrap: "wrap" },
-  pill: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 999, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4, marginBottom: 4, fontSize: 10 },
-  rule: { borderTopWidth: 1, borderTopColor: "#e2e8f0", marginVertical: 8 },
+  row: { flexDirection: "row", alignItems: "baseline" },
+  right: { marginLeft: "auto", color: "#64748b" }, // use this for dates
+  pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6 },
+  pill: {
+    fontFamily: "InterPDF",
+    fontWeight: 500,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 6,
+    marginBottom: 6,
+    fontSize: 10,
+  },
+  rule: { borderTopWidth: 1, borderTopColor: "#e2e8f0", marginVertical: 10 },
   ul: { marginTop: 4, marginLeft: 10 },
   li: { marginBottom: 4 },
   linkRow: { flexDirection: "row", flexWrap: "wrap" },
-  linkText: { color: "#1a73e8", marginRight: 8 }
+  linkText: { color: "#1a73e8", marginRight: 8 },
 });
 
 function Header({ data }) {
   const meta = [data.title, data.location].filter(Boolean).join(" • ");
   const contacts = [
-    data.email, data.phone,
-    ...(Array.isArray(data.links) ? data.links.map(l => l.url) : [])
+    data.email,
+    data.phone,
+    ...(Array.isArray(data.links) ? data.links.map((l) => l.url) : []),
   ].filter(Boolean);
 
   return (
@@ -31,11 +69,17 @@ function Header({ data }) {
       {meta ? <Text style={styles.muted}>{meta}</Text> : null}
       {contacts.length ? (
         <View style={styles.linkRow}>
-          {contacts.map((c, i) => (
-            c.startsWith("http")
-              ? <Link key={i} src={c} style={styles.linkText}>{c}</Link>
-              : <Text key={i} style={{ marginRight: 8 }}>{c}</Text>
-          ))}
+          {contacts.map((c, i) =>
+            c.startsWith("http") ? (
+              <Link key={i} src={c} style={styles.linkText}>
+                {c}
+              </Link>
+            ) : (
+              <Text key={i} style={{ marginRight: 8 }}>
+                {c}
+              </Text>
+            )
+          )}
         </View>
       ) : null}
       <View style={styles.rule} />
@@ -53,7 +97,11 @@ function Skills({ data }) {
     <View>
       <SectionTitle>Skills</SectionTitle>
       <View style={styles.pillWrap}>
-        {data.skills.map((s, i) => <Text key={i} style={styles.pill}>{String(s)}</Text>)}
+        {data.skills.map((s, i) => (
+          <Text key={i} style={styles.pill}>
+            {String(s)}
+          </Text>
+        ))}
       </View>
     </View>
   );
@@ -76,7 +124,9 @@ function Experience({ data }) {
             </View>
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
-                <Text key={j} style={styles.li}>• {String(b)}</Text>
+                <Text key={j} style={styles.li}>
+                  • {String(b)}
+                </Text>
               ))}
             </View>
           </View>
@@ -98,7 +148,11 @@ function Education({ data }) {
         const grade = e.grade ? ` • ${e.grade}` : "";
         return (
           <View key={i} wrap={false} style={{ marginBottom: 4 }}>
-            <Text><Text style={{ fontWeight: "bold" }}>{heading}</Text>   <Text style={{ fontStyle: "italic" }}>{dates}</Text>{grade}</Text>
+            <Text>
+              <Text style={{ fontWeight: "bold" }}>{heading}</Text>{" "}
+              <Text style={{ fontStyle: "italic" }}>{dates}</Text>
+              {grade}
+            </Text>
           </View>
         );
       })}
