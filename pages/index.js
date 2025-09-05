@@ -171,7 +171,7 @@ export default function Home() {
       URL.revokeObjectURL(url);
       a.remove();
     } catch (err) {
-      console.error("[pdf] export failed. Ensure font files exist under /public/fonts", err);
+      console.error("[pdf] export failed. Ensure font files exist under public/fonts", err);
     }
   }
 
@@ -190,7 +190,7 @@ export default function Home() {
       URL.revokeObjectURL(url);
       a.remove();
     } catch (err) {
-      console.error("[pdf] export failed. Ensure font files exist under /public/fonts", err);
+      console.error("[pdf] export failed. Ensure font files exist under public/fonts", err);
     }
   }
 
