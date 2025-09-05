@@ -405,7 +405,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -453,7 +453,7 @@ export default function Home() {
                   {fullScreen === 'resume' ? (
                     <TemplateView data={result.resumeData} />
                   ) : result?.coverLetter ? (
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
                       {result.coverLetter}
                     </div>
                   ) : (
