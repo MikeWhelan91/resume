@@ -159,11 +159,14 @@ export default function Home() {
 
     const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
 
-
     if (scaleWrapper) scaleWrapper.style.transform = prevTransform || "";
 
     const canvasW = canvas.width;
     const canvasH = canvas.height;
+    if (!canvasW || !canvasH) {
+      alert("Export failed: empty preview");
+      return;
+    }
     const pageCanvasH = (pageH * canvasW) / pageW; // canvas px height for one PDF page
 
     let renderedH = 0;
@@ -172,6 +175,8 @@ export default function Home() {
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvasW;
       const sliceH = Math.min(pageCanvasH, canvasH - renderedH);
+      if (sliceH <= 0) break;
+
       pageCanvas.height = sliceH;
       const ctx = pageCanvas.getContext("2d");
       ctx.drawImage(canvas, 0, renderedH, canvasW, sliceH, 0, 0, canvasW, sliceH);
@@ -187,9 +192,10 @@ export default function Home() {
 
   async function downloadCvPdf() {
     if (!result?.resumeData) return;
-    if (resumeScrollRef?.current) {
+    const node = compRef?.current;
+    if (node) {
       const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
-      await elementToPdf(resumeScrollRef.current, fname);
+      await elementToPdf(node, fname);
     }
 
   }
