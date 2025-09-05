@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import Head from "next/head";
 import Classic from "../components/templates/Classic";
 import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
-import { useReactToPrint } from "react-to-print";
 
 const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
@@ -21,7 +20,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar
-  const [exportType, setExportType] = useState("pdf"); // pdf | docx
 
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
@@ -71,10 +69,7 @@ export default function Home() {
   }
 
   const compRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => compRef.current,
-    documentTitle: `${result?.resumeData?.name || "Resume"}`
-  });
+  const coverRef = useRef(null);
 
   async function handleSubmit(e){
     e.preventDefault();
@@ -100,19 +95,110 @@ export default function Home() {
     }
   }
 
-  async function downloadDocx() {
+  async function downloadCvDocx() {
     if (!result?.resumeData) return;
     const r = await fetch("/api/export-docx-structured", {
       method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ data: result.resumeData, filename: `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}` })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: result.resumeData,
+        filename: `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}`
+      })
     });
-    if (!r.ok) return alert("Export failed");
+    if (!r.ok) {
+      let msg = "Export failed";
+      try { const j = await r.json(); if (j?.error) msg = `Export failed: ${j.error}`; } catch {}
+      alert(msg);
+      return;
+    }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `${(result.resumeData.name||"resume").replace(/\s+/g,"_")}.docx`;
+    a.href = url; a.download = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}.docx`;
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  }
+
+  async function downloadClDocx() {
+    if (!result?.coverLetter) return;
+    const r = await fetch("/api/export-cover-letter-docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        coverLetter: result.coverLetter,
+        filename: `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter`
+      })
+    });
+    if (!r.ok) {
+      let msg = "Export failed";
+      try { const j = await r.json(); if (j?.error) msg = `Export failed: ${j.error}`; } catch {}
+      alert(msg);
+      return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.docx`;
+    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  }
+
+  async function downloadCvPdf() {
+    if (!result?.resumeData) return;
+    const [{ jsPDF }, html2canvas] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas").then(m => m.default || m)
+    ]);
+
+    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    const scroller = resumeScrollRef.current;
+    if (scroller) {
+      const h = scroller.clientHeight || pageH;
+      const total = Math.max(1, Math.ceil(scroller.scrollHeight / h));
+      for (let i = 0; i < total; i++) {
+        const canvas = await html2canvas(scroller, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          width: scroller.clientWidth,
+          height: h,
+          x: 0,
+          y: i * h,
+        });
+        const img = canvas.toDataURL("image/png");
+        if (i > 0) pdf.addPage();
+        pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+      }
+    }
+
+    const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+    pdf.save(fname);
+  }
+
+  async function downloadClPdf() {
+    if (!result?.coverLetter) return;
+    const [{ jsPDF }, html2canvas] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas").then(m => m.default || m)
+    ]);
+
+    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    if (coverRef?.current) {
+      const canvas = await html2canvas(coverRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        width: coverRef.current.clientWidth,
+        height: coverRef.current.clientHeight,
+      });
+      const img = canvas.toDataURL("image/png");
+      pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+    }
+
+    const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+    pdf.save(fname);
   }
 
   const TemplateView = useMemo(() => {
@@ -130,11 +216,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus PDF and DOCX export options."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus separate PDF and DOCX downloads."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF, DOCX, templates, side-by-side preview, fullscreen preview"
+          content="AI resume, cover letter, ATS, PDF download, DOCX download, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
 
@@ -172,14 +258,6 @@ export default function Home() {
             </div>
 
             <div style={{display:"flex", gap:12, alignItems:"center"}}>
-              <div>
-                <label style={{display:"block", fontWeight:600, marginBottom:6}}>Export:</label>
-                <select value={exportType} onChange={e=>setExportType(e.target.value)}>
-                  <option value="pdf">PDF</option>
-                  <option value="docx">DOCX</option>
-                </select>
-              </div>
-
               <button type="submit" disabled={loading}>
                 {loading ? "Generating..." : "Generate"}
               </button>
@@ -256,7 +334,7 @@ export default function Home() {
                 <div className="a4-scale" onClick={() => setFullScreen('cover')} style={{cursor:'pointer'}}>
                   <div className="a4">
                     <div className="a4-inner">
-                      <div className="a4-scroll">
+                      <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
                           <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
@@ -270,18 +348,22 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button onClick={() => (exportType === "pdf" ? handlePrint() : downloadDocx())}>
-                  {exportType === "pdf" ? "Download PDF" : "Download DOCX"}
-                </button>
-                <button onClick={handlePrint}>Print</button>
+              <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
+                <div style={{display:"flex", gap:8}}>
+                  <button onClick={downloadCvPdf}>Download CV PDF</button>
+                  <button onClick={downloadCvDocx}>Download CV DOCX</button>
+                </div>
+                <div style={{display:"flex", gap:8}}>
+                  <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
+                  <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
+                </div>
               </div>
             </>
           ) : (
             <div style={{ opacity: 0.6 }}>Your generated résumé will appear here.</div>
           )}
 
-          {/* Keep existing action buttons (Download/Print) BELOW the previews if you prefer.
+          {/* Keep action buttons BELOW the previews if you prefer.
               If you want them above, move them accordingly. */}
         </section>
       </main>

@@ -17,7 +17,8 @@
     "react": "latest",
     "react-dom": "latest",
     "zod": "^3.23.8",
-    "react-to-print": "^2.15.1",
-    "pdfreader": "^3.0.5"
+    "pdfreader": "^3.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1"
   }
 }
