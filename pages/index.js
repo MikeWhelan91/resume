@@ -163,6 +163,7 @@ export default function Home() {
     const padBottom = pad ? parseFloat(pad.paddingBottom) || 0 : 0;
     const padLeft = pad ? parseFloat(pad.paddingLeft) || 0 : 0;
 
+
     // clone into a clean, offscreen print container
     const shell = document.createElement("div");
     shell.className = "print-root";
