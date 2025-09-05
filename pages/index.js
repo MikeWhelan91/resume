@@ -40,6 +40,7 @@ export default function Home() {
   const [isScratch, setIsScratch] = useState(false);
   const [resumeData, setResumeData] = useState(null);
   const [jobDesc, setJobDesc] = useState("");
+  const [phase, setPhase] = useState("entry"); // entry | target | results
 
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
@@ -127,6 +128,7 @@ export default function Home() {
     setResumeData(data);
     setShowWizard(false);
     setResult(null);
+    setPhase("target");
   }
 
   function startOver(){
@@ -136,6 +138,7 @@ export default function Home() {
     setShowWizard(false);
     setWizardData(null);
     setIsScratch(false);
+    setPhase("entry");
   }
 
   async function generateFromData(resumeData, jobDesc){
@@ -151,6 +154,7 @@ export default function Home() {
       if(!res.ok) throw new Error(data?.error || "Generation failed");
       setResult(data);
       setShowWizard(false);
+      setPhase("results");
       if(isScratch){ try{ localStorage.removeItem('resumeBuilderDraft'); }catch{} }
     }catch(err){
       setError(String(err.message || err));
@@ -266,159 +270,83 @@ export default function Home() {
           content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
-
-      {/* Two-column screen layout: controls left, results right */}
-      <main style={{maxWidth:1200, margin:"24px auto", padding:"0 16px", display:"grid", gridTemplateColumns:"360px 1fr", gap:20}}>
-        {/* LEFT: Controls */}
-        <section style={{display:"grid", gap:12, alignContent:"start"}}>
-          <h1 style={{fontSize:24, marginBottom:4}}>AI Résumé + Cover Letter</h1>
-
-          {!showWizard && (
-            <div style={{display:"grid", gap:12}}>
-              <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} style={{display:"none"}} onChange={handleFileInput} />
-              <button type="button" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
-              <button type="button" onClick={startFromScratch}>Build from scratch</button>
-            </div>
-          )}
-
-          {showWizard && (
-            <ResumeWizard
-              initialData={wizardData}
-              onCancel={()=>setShowWizard(false)}
-              onComplete={handleWizardComplete}
-              autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
-              template={template}
-              onTemplateChange={setTemplate}
-              templateInfo={TEMPLATE_INFO}
-            />
-          )}
-
-          {!showWizard && resumeData && (
-            <div style={{display:"grid", gap:8}}>
-              <textarea
-                rows={8}
-                value={jobDesc}
-                onChange={e => setJobDesc(e.target.value)}
-                placeholder="Paste job description here"
+      <main className="tc-container tc-page">
+        {phase === 'entry' && (
+          <section className="space-y-4">
+            {!showWizard && (
+              <div className="space-y-3">
+                <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} className="hidden" onChange={handleFileInput} />
+                <div className="flex flex-col gap-2">
+                  <button type="button" className="tc-btn-primary" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
+                  <button type="button" className="tc-btn-quiet" onClick={startFromScratch}>Build from scratch</button>
+                </div>
+              </div>
+            )}
+            {showWizard && (
+              <ResumeWizard
+                initialData={wizardData}
+                onCancel={()=>setShowWizard(false)}
+                onComplete={handleWizardComplete}
+                autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
+                template={template}
+                onTemplateChange={setTemplate}
+                templateInfo={TEMPLATE_INFO}
               />
-              <div style={{display:"flex", gap:8}}>
-                <button type="button" onClick={()=>generateFromData(resumeData, jobDesc)}>Generate</button>
-                <button type="button" onClick={()=>setJobDesc("")}>Clear JD</button>
+            )}
+          </section>
+        )}
+
+        {phase === 'target' && resumeData && (
+          <section className="space-y-4">
+            <textarea
+              className="tc-textarea"
+              value={jobDesc}
+              onChange={e => setJobDesc(e.target.value)}
+              placeholder="Paste the job description"
+            />
+            <div className="tc-sticky flex justify-between">
+              <button type="button" className="tc-btn-quiet" onClick={()=>setJobDesc('')}>Clear JD</button>
+              <button type="button" className="tc-btn-primary" onClick={()=>generateFromData(resumeData, jobDesc)}>Generate CV + Cover Letter</button>
+            </div>
+          </section>
+        )}
+
+        {phase === 'results' && result && (
+          <section className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="tc-paper cursor-pointer" onClick={()=>setFullScreen('resume')}>
+                <div ref={resumeScrollRef}>
+                  <TemplateView data={result.resumeData} />
+                </div>
+              </div>
+              <div className="tc-card cursor-pointer" onClick={()=>setFullScreen('cover')}>
+                <div ref={coverRef} className="whitespace-pre-wrap leading-6">
+                  {result.coverLetter || <div className="opacity-60">No cover letter returned.</div>}
+                </div>
               </div>
             </div>
-          )}
-
-          { (resumeData || result) && !showWizard && (
-            <div style={{display:"grid", gap:8}}>
-              <button type="button" onClick={startOver}>Start over</button>
+            <div className="tc-sticky flex flex-wrap gap-3 justify-end">
+              <div className="flex gap-2">
+                <button className="tc-btn-quiet" onClick={downloadCvPdf}>Download CV PDF</button>
+                <button className="tc-btn-quiet" onClick={downloadCvDocx}>Download CV DOCX</button>
+              </div>
+              <div className="flex gap-2">
+                <button className="tc-btn-quiet" onClick={downloadClPdf}>Download Cover Letter PDF</button>
+                <button className="tc-btn-quiet" onClick={downloadClDocx}>Download Cover Letter DOCX</button>
+              </div>
             </div>
-          )}
+          </section>
+        )}
 
-          {error && <div style={{color:"#b91c1c"}}>{error}</div>}
-          {loading && <div>Loading...</div>}
-        </section>
-
-        {/* RIGHT: Results container (two A4 columns) */}
-        <section
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            padding: 12,
-            background: "#fff",
-            overflow: "auto",
-            maxHeight: "85vh"
-          }}
-        >
-          {result?.resumeData ? (
-            <>
-              <div
-                className="resultGrid"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto auto",
-                  gap: 16,
-                  alignItems: "start",
-                  minWidth: 0,
-                  justifyContent: "center"
-                }}
-              >
-                {/* A4 CV PREVIEW (paged) */}
-                <div className="a4-scale" onClick={() => setFullScreen('resume')} style={{cursor:'pointer'}}>
-                  <div className="a4">
-                    <div className="a4-inner">
-                      <div ref={resumeScrollRef} className="a4-scroll">
-                        <div ref={compRef}>
-                          <TemplateView data={result.resumeData} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {resumePageCount > 1 && (
-                      <>
-                        <div className="pager">
-                          <button
-                            className="pager-btn"
-                            onClick={(e) => { e.stopPropagation(); pageResume(-1); }}
-                            disabled={resumePage <= 1}
-                            aria-label="Previous CV page"
-                          >
-                            ‹
-                          </button>
-                          <button
-                            className="pager-btn"
-                            onClick={(e) => { e.stopPropagation(); pageResume(1); }}
-                            disabled={resumePage >= resumePageCount}
-                            aria-label="Next CV page"
-                          >
-                            ›
-                          </button>
-                        </div>
-                        <div className="pageIndicator">
-                          {resumePage}/{resumePageCount}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* A4 COVER LETTER PREVIEW */}
-                <div className="a4-scale" onClick={() => setFullScreen('cover')} style={{cursor:'pointer'}}>
-                  <div className="a4">
-                    <div className="a4-inner">
-                      <div ref={coverRef} className="a4-scroll">
-                        {result?.coverLetter ? (
-                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
-                            {result.coverLetter}
-                          </div>
-                        ) : (
-                          <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
-                <div style={{display:"flex", gap:8}}>
-                  <button onClick={downloadCvPdf}>Download CV PDF</button>
-                  <button onClick={downloadCvDocx}>Download CV DOCX</button>
-                </div>
-                <div style={{display:"flex", gap:8}}>
-                  <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
-                  <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
-                </div>
-
-              </div>
-            </>
-          ) : (
-            <div style={{ opacity: 0.6 }}>Your generated résumé will appear here.</div>
-          )}
-
-          {/* Keep action buttons BELOW the previews if you prefer.
-              If you want them above, move them accordingly. */}
-        </section>
+        {error && <div className="text-red-600 mt-4">{error}</div>}
       </main>
+
+      {loading && (
+        <div className="fixed inset-0 z-[var(--tc-z-overlay)] backdrop-blur bg-bg/80 flex items-center justify-center">
+          <div className="tc-card">Generating...</div>
+        </div>
+      )}
+
       {fullScreen && (
         <div className="fullscreen-overlay" onClick={() => setFullScreen(null)}>
           <div className="fullscreen-inner" onClick={(e) => e.stopPropagation()}>
