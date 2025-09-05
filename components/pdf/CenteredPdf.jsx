@@ -12,9 +12,10 @@ const styles = StyleSheet.create({
     fontFamily: "InterRegular",
   },
   header: { alignItems: "center", textAlign: "center" },
-  h1: { fontFamily: "InterBold", fontSize: 20, marginBottom: 6 },
+  h1: { fontFamily: "InterBold", fontWeight: 700, fontSize: 20, marginBottom: 6 },
   h2: {
     fontFamily: "InterSemiBold",
+    fontWeight: 600,
     fontSize: 12,
     marginTop: 14,
     marginBottom: 6,
@@ -26,6 +27,7 @@ const styles = StyleSheet.create({
   pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6, justifyContent: "center" },
   pill: {
     fontFamily: "InterMedium",
+    fontWeight: 500,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 999,
@@ -105,7 +107,7 @@ function Experience({ data }) {
         return (
           <View key={i} wrap={false}>
             <View style={styles.row}>
-              <Text style={{ fontFamily: "InterBold" }}>{heading}</Text>
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>
               <Text style={{ fontStyle: "italic" }}>{dates}</Text>
             </View>
             <View style={styles.ul}>
@@ -135,7 +137,7 @@ function Education({ data }) {
         return (
           <View key={i} wrap={false} style={{ marginBottom: 4 }}>
             <Text>
-              <Text style={{ fontFamily: "InterBold" }}>{heading}</Text>{" "}
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>{" "}
               <Text style={{ fontStyle: "italic" }}>{dates}</Text>
               {grade}
             </Text>
