@@ -142,59 +142,91 @@ export default function Home() {
   }
 
   async function elementToPdf(node, filename) {
-
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
-      import("html2canvas").then(m => m.default || m)
+      import("html2canvas").then((m) => m.default || m),
     ]);
 
-    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
+    // pick the paper element or fallback to node
+    const paper = node.querySelector("[data-paper]") || node;
 
-    // temporarily remove preview scale so capture is 1:1
-    const scaleWrapper = node.closest(".a4-scale");
-    const prevTransform = scaleWrapper ? scaleWrapper.style.transform : null;
-    if (scaleWrapper) scaleWrapper.style.transform = "none";
-    node.classList.add("print-mode");
-    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-    node.classList.remove("print-mode");
-    if (scaleWrapper) scaleWrapper.style.transform = prevTransform || "";
+    // clone into a clean, offscreen print container
+    const shell = document.createElement("div");
+    shell.className = "print-root";
+    const clone = paper.cloneNode(true);
+    shell.appendChild(clone);
+    document.body.appendChild(shell);
 
-    const canvasW = canvas.width;
-    const canvasH = canvas.height;
-    if (!canvasW || !canvasH) {
-      alert("Export failed: empty preview");
-      return;
+    // print-mode: nuke shadows/animations/outlines so visuals match text-only intent
+    document.documentElement.classList.add("print-mode");
+
+    // wait for fonts and images inside the clone
+    await (document.fonts?.ready || Promise.resolve());
+    await Promise.all(
+      Array.from(clone.querySelectorAll("img")).map((img) =>
+        img.complete ? null : new Promise((r) => (img.onload = img.onerror = r))
+      )
+    );
+
+    try {
+      const dpr = Math.min(2, window.devicePixelRatio || 1); // crisp without bloat
+      const rect = clone.getBoundingClientRect();
+
+      const canvas = await html2canvas(clone, {
+        backgroundColor: "#ffffff",
+        scale: dpr,
+        width: Math.ceil(rect.width),
+        height: Math.ceil(rect.height),
+        letterRendering: true,
+        useCORS: true,
+        removeContainer: true,
+      });
+
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      let y = 0;
+      while (y < imgH) {
+        if (y > 0) pdf.addPage();
+        const sliceH = Math.min(pageH, imgH - y);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = Math.round((sliceH / imgH) * canvas.height);
+
+        const ctx = pageCanvas.getContext("2d");
+        ctx.drawImage(
+          canvas,
+          0,
+          Math.round((y / imgH) * canvas.height),
+          canvas.width,
+          pageCanvas.height,
+          0,
+          0,
+          pageCanvas.width,
+          pageCanvas.height
+        );
+
+        pdf.addImage(pageCanvas, "PNG", 0, 0, imgW, sliceH, undefined, "FAST");
+        y += sliceH;
+      }
+
+      pdf.save(`${filename}.pdf`);
+    } finally {
+      document.documentElement.classList.remove("print-mode");
+      shell.remove();
     }
-    const pageCanvasH = (pageH * canvasW) / pageW; // canvas px height for one PDF page
-
-    let renderedH = 0;
-
-    while (renderedH < canvasH) {
-      const pageCanvas = document.createElement("canvas");
-      pageCanvas.width = canvasW;
-      const sliceH = Math.min(pageCanvasH, canvasH - renderedH);
-      if (sliceH <= 0) break;
-
-      pageCanvas.height = sliceH;
-      const ctx = pageCanvas.getContext("2d");
-      ctx.drawImage(canvas, 0, renderedH, canvasW, sliceH, 0, 0, canvasW, sliceH);
-      if (renderedH > 0) pdf.addPage();
-      const pdfPageH = pageH * (sliceH / pageCanvasH);
-      pdf.addImage(pageCanvas, "PNG", 0, 0, pageW, pdfPageH, undefined, "FAST");
-
-      renderedH += sliceH;
-    }
-
-    pdf.save(filename);
   }
 
   async function downloadCvPdf() {
     if (!result?.resumeData) return;
     const node = compRef?.current;
     if (node) {
-      const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+      const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV`;
       await elementToPdf(node, fname);
     }
 
@@ -203,7 +235,7 @@ export default function Home() {
   async function downloadClPdf() {
     if (!result?.coverLetter) return;
     if (coverRef?.current) {
-      const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+      const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter`;
       await elementToPdf(coverRef.current, fname);
     }
 

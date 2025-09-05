@@ -6,7 +6,7 @@ export default function Classic({ data = {} }) {
   const edu = Array.isArray(data.education) ? data.education : [];
 
   return (
-    <div className="resume">
+    <div className="resume" data-paper>
       <header>
         {data.name && <h1>{data.name}</h1>}
         {(data.title || data.location) && (
