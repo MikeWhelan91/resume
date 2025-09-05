@@ -5,6 +5,24 @@
   --accent: #1a73e8;
   --bg: #ffffff;
 }
+
+/* Suppress decorative effects during PDF capture */
+.print-mode * {
+  text-shadow: none !important;
+  filter: none !important;        /* drop-shadow, blur, etc. */
+  animation: none !important;
+}
+
+/* Hide any intentionally duplicated/shadow layers while printing */
+.print-mode .shadow-layer,
+.print-mode .outline,
+.print-mode [data-print-hide],
+.print-mode .chip::before,
+.print-mode .chip::after,
+.print-mode .pill::before,
+.print-mode .pill::after {
+  display: none !important;
+}
 .resume {
   color: var(--ink);
   background: var(--bg);
