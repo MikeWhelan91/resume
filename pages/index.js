@@ -142,6 +142,7 @@ export default function Home() {
   }
 
   async function elementToPdf(node, filename) {
+
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
       import("html2canvas").then(m => m.default || m)
@@ -163,6 +164,7 @@ export default function Home() {
     const canvasW = canvas.width;
     const canvasH = canvas.height;
     const pageCanvasH = (pageH * canvasW) / pageW; // canvas px height for one PDF page
+
     let renderedH = 0;
 
     while (renderedH < canvasH) {
@@ -188,6 +190,7 @@ export default function Home() {
       const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
       await elementToPdf(resumeScrollRef.current, fname);
     }
+
   }
 
   async function downloadClPdf() {
@@ -196,6 +199,7 @@ export default function Home() {
       const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
       await elementToPdf(coverRef.current, fname);
     }
+
   }
 
   const TemplateView = useMemo(() => {
@@ -218,6 +222,7 @@ export default function Home() {
         <meta
           name="keywords"
           content="AI resume, cover letter, ATS, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview, pixel-perfect"
+
         />
       </Head>
 
@@ -333,7 +338,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -354,6 +359,7 @@ export default function Home() {
                   <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
                   <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
                 </div>
+
               </div>
             </>
           ) : (
