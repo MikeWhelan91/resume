@@ -157,7 +157,8 @@ export default function Home() {
     const prevTransform = scaleWrapper ? scaleWrapper.style.transform : null;
     if (scaleWrapper) scaleWrapper.style.transform = "none";
 
-    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+
 
     if (scaleWrapper) scaleWrapper.style.transform = prevTransform || "";
 
@@ -174,10 +175,10 @@ export default function Home() {
       pageCanvas.height = sliceH;
       const ctx = pageCanvas.getContext("2d");
       ctx.drawImage(canvas, 0, renderedH, canvasW, sliceH, 0, 0, canvasW, sliceH);
-      const img = pageCanvas.toDataURL("image/png");
       if (renderedH > 0) pdf.addPage();
       const pdfPageH = pageH * (sliceH / pageCanvasH);
-      pdf.addImage(img, "PNG", 0, 0, pageW, pdfPageH, undefined, "FAST");
+      pdf.addImage(pageCanvas, "PNG", 0, 0, pageW, pdfPageH, undefined, "FAST");
+
       renderedH += sliceH;
     }
 
@@ -217,11 +218,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus one-click, pixel-perfect PDF and DOCX downloads for CVs and cover letters."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus independent, one-click PDF and DOCX downloads for CVs and cover letters."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview, pixel-perfect"
+          content="AI resume, cover letter, ATS, PDF download, DOCX download, CV PDF, cover letter PDF, independent downloads, templates, side-by-side preview, fullscreen preview, pixel-perfect"
 
         />
       </Head>
