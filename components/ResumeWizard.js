@@ -1,16 +1,22 @@
-import { useState, useEffect, useMemo } from "react";
-import Classic from "./templates/Classic";
-import TwoCol from "./templates/TwoCol";
-import Centered from "./templates/Centered";
-import Sidebar from "./templates/Sidebar";
+import { useState, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import SkillsInput from './wizard/SkillsInput';
+import ExperienceCard from './wizard/ExperienceCard';
+import EducationCard from './wizard/EducationCard';
+import Classic from './templates/Classic';
+import TwoCol from './templates/TwoCol';
+import Centered from './templates/Centered';
+import Sidebar from './templates/Sidebar';
+import { AnimatePresence } from 'framer-motion';
 
 const emptyResume = {
-  name: "",
-  title: "",
-  email: "",
-  phone: "",
-  location: "",
-  summary: "",
+  name: '',
+  title: '',
+  email: '',
+  phone: '',
+  location: '',
+  summary: '',
   links: [],
   skills: [],
   experience: [],
@@ -18,235 +24,309 @@ const emptyResume = {
 };
 
 const sampleData = {
-  name: "Jane Doe",
-  title: "Software Engineer",
-  email: "jane@example.com",
-  phone: "555-123-4567",
-  location: "San Francisco, CA",
-  summary: "Experienced engineer with a passion for building scalable web applications.",
-  links: [{ label: "GitHub", url: "https://github.com/janedoe" }],
-  skills: ["JavaScript", "React", "Node.js"],
+  name: 'Jane Doe',
+  title: 'Software Engineer',
+  email: 'jane@example.com',
+  phone: '555-123-4567',
+  location: 'San Francisco, CA',
+  summary: 'Experienced engineer with a passion for building scalable web applications.',
+  links: [{ label: 'GitHub', url: 'https://github.com/janedoe' }],
+  skills: ['JavaScript', 'React', 'Node.js'],
   experience: [
     {
-      company: "Tech Corp",
-      role: "Senior Developer",
-      start: "2020-01",
-      end: "2022-12",
-      location: "Remote",
+      company: 'Tech Corp',
+      role: 'Senior Developer',
+      start: '2020-01',
+      end: '2022-12',
+      location: 'Remote',
       bullets: [
-        "Led a team of 5 engineers",
-        "Implemented performance optimizations",
-      ],
-    },
+        'Led a team of 5 engineers',
+        'Implemented performance optimizations'
+      ]
+    }
   ],
   education: [
     {
-      school: "State University",
-      degree: "B.S. Computer Science",
-      start: "2016-09",
-      end: "2019-05",
-      grade: "3.8 GPA",
-    },
-  ],
+      school: 'State University',
+      degree: 'B.S. Computer Science',
+      start: '2016-09',
+      end: '2019-05',
+      grade: '3.8 GPA'
+    }
+  ]
+};
+
+const schemas = {
+  basics: z.object({
+    name: z.string().min(1, 'Name is required'),
+    title: z.string().optional(),
+    email: z.string().email('Invalid email').optional().or(z.literal('')),
+    phone: z.string().optional(),
+    location: z.string().optional(),
+    summary: z.string().optional(),
+    links: z.array(z.object({
+      label: z.string().optional(),
+      url: z.string().url('Invalid URL').optional().or(z.literal(''))
+    }))
+  }),
+  skills: z.object({ skills: z.array(z.string()) }),
+  work: z.object({
+    experience: z.array(z.object({
+      company: z.string().min(1, 'Company required'),
+      role: z.string().min(1, 'Role required'),
+      location: z.string().optional(),
+      start: z.string().optional(),
+      end: z.string().optional(),
+      present: z.boolean().optional(),
+      bullets: z.array(z.string()).optional()
+    }))
+  }),
+  education: z.object({
+    education: z.array(z.object({
+      school: z.string().min(1, 'School required'),
+      degree: z.string().optional(),
+      grade: z.string().optional(),
+      start: z.string().optional(),
+      end: z.string().optional(),
+      present: z.boolean().optional(),
+      bullets: z.array(z.string()).optional()
+    }))
+  })
 };
 
 export default function ResumeWizard({ initialData, onCancel, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
-  const [data, setData] = useState(initialData || emptyResume);
   const [step, setStep] = useState(0);
-  const steps = ["basics", "skills", "work", "education", "template"];
+  const steps = ['basics', 'skills', 'work', 'education', 'template'];
+
+  const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
+  const { register, handleSubmit, watch, setValue, getValues } = methods;
+
+  const [isValid, setIsValid] = useState(true);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const sub = watch(() => {
+      const key = steps[step];
+      const schema = schemas[key];
+      if (!schema) { setIsValid(true); setMessage(''); return; }
+      const res = schema.safeParse(getValues());
+      setIsValid(res.success);
+      setMessage(res.success ? '' : res.error.issues[0]?.message || 'Incomplete');
+    });
+    return () => sub.unsubscribe();
+  }, [watch, step, getValues]);
+
+  // autosave
+  useEffect(() => {
+    if (!autosaveKey) return;
+    const sub = watch((val) => {
+      try {
+        localStorage.setItem(autosaveKey, JSON.stringify(val));
+      } catch {}
+    });
+    return () => sub.unsubscribe();
+  }, [watch, autosaveKey]);
+
+  function next() { if (step < steps.length -1) setStep(s => s + 1); }
+  function prev() { if (step > 0) setStep(s => s - 1); }
+
+  function addLink() {
+    const links = getValues('links');
+    setValue('links', [...links, { label: '', url: '' }]);
+  }
+  function removeLink(i) {
+    const links = getValues('links').filter((_, idx) => idx !== i);
+    setValue('links', links);
+  }
+
+  function addExp() {
+    const exps = getValues('experience');
+    setValue('experience', [...exps, { company:'', role:'', start:'', end:'', location:'', bullets:[] }]);
+  }
+  function updateExp(i, val) {
+    const exps = getValues('experience');
+    exps[i] = val; setValue('experience', exps);
+  }
+  function removeExp(i) {
+    const exps = getValues('experience').filter((_, idx) => idx !== i);
+    setValue('experience', exps);
+  }
+  function duplicateExp(i) {
+    const exps = getValues('experience');
+    setValue('experience', [...exps.slice(0,i+1), { ...exps[i] }, ...exps.slice(i+1)]);
+  }
+
+  function addEdu() {
+    const eds = getValues('education');
+    setValue('education', [...eds, { school:'', degree:'', start:'', end:'', grade:'', bullets:[] }]);
+  }
+  function updateEdu(i, val) {
+    const eds = getValues('education');
+    eds[i] = val; setValue('education', eds);
+  }
+  function removeEdu(i) {
+    const eds = getValues('education').filter((_, idx) => idx !== i);
+    setValue('education', eds);
+  }
+  function duplicateEdu(i) {
+    const eds = getValues('education');
+    setValue('education', [...eds.slice(0,i+1), { ...eds[i] }, ...eds.slice(i+1)]);
+  }
 
   const TemplatePreview = useMemo(() => {
     switch (template) {
-      case "twoCol":
-        return TwoCol;
-      case "centered":
-        return Centered;
-      case "sidebar":
-        return Sidebar;
-      default:
-        return Classic;
+      case 'twoCol': return TwoCol;
+      case 'centered': return Centered;
+      case 'sidebar': return Sidebar;
+      default: return Classic;
     }
   }, [template]);
 
-  useEffect(() => {
-    if (autosaveKey) {
-      try {
-        localStorage.setItem(autosaveKey, JSON.stringify(data));
-      } catch {}
-    }
-  }, [data, autosaveKey]);
-
-  function update(field, value) {
-    setData((d) => ({ ...d, [field]: value }));
-  }
-
-  function next() { setStep((s) => Math.min(s + 1, steps.length - 1)); }
-  function prev() { setStep((s) => Math.max(s - 1, 0)); }
-
-  function addLink() { update("links", [...data.links, { label: "", url: "" }]); }
-  function removeLink(i) { update("links", data.links.filter((_, idx) => idx !== i)); }
-
-  function addExp() {
-    update("experience", [
-      ...data.experience,
-      { company: "", role: "", start: "", end: "", location: "", bullets: [] }
-    ]);
-  }
-  function removeExp(i) { update("experience", data.experience.filter((_, idx) => idx !== i)); }
-
-  function addEdu() {
-    update("education", [
-      ...data.education,
-      { school: "", degree: "", start: "", end: "", grade: "" }
-    ]);
-  }
-  function removeEdu(i) { update("education", data.education.filter((_, idx) => idx !== i)); }
-
-  function handleSubmit(e) {
-    e.preventDefault();
+  function submit(data) {
     onComplete && onComplete(data);
   }
 
+  const values = watch();
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
-      {step === 0 && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <h2>Basics</h2>
-          <input placeholder="Name" value={data.name} onChange={e => update("name", e.target.value)} required />
-          <input placeholder="Title" value={data.title} onChange={e => update("title", e.target.value)} />
-          <input placeholder="Email" type="email" value={data.email} onChange={e => update("email", e.target.value)} required />
-          <input placeholder="Phone" value={data.phone} onChange={e => update("phone", e.target.value)} />
-          <input placeholder="Location" value={data.location} onChange={e => update("location", e.target.value)} />
-          <textarea placeholder="Summary" rows={4} value={data.summary} onChange={e => update("summary", e.target.value)} />
-          <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>Links</div>
-            {data.links.map((l, i) => (
-              <div key={i} style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-                <input placeholder="Label" value={l.label} onChange={e => {
-                  const arr = [...data.links];
-                  arr[i] = { ...arr[i], label: e.target.value };
-                  update("links", arr);
-                }} />
-                <input placeholder="URL" value={l.url} onChange={e => {
-                  const arr = [...data.links];
-                  arr[i] = { ...arr[i], url: e.target.value };
-                  update("links", arr);
-                }} />
-                <button type="button" onClick={() => removeLink(i)}>✕</button>
+    <form onSubmit={handleSubmit(submit)} className="max-w-3xl mx-auto space-y-8">
+      <div className="space-y-8">
+        {step === 0 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Basics</h2>
+              <p className="text-sm text-zinc-500">Tell us who you are.</p>
+            </header>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-1 md:col-span-1 col-span-2">
+                <label className="text-xs font-medium text-zinc-600">Name*</label>
+                <input {...register('name')} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="Jane Doe" />
               </div>
-            ))}
-            <button type="button" onClick={addLink}>Add link</button>
-          </div>
-        </div>
-      )}
-
-      {step === 1 && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <h2>Skills</h2>
-          <textarea
-            rows={6}
-            value={data.skills.join("\n")}
-            onChange={e => update("skills", e.target.value.split(/\n+/).map(s => s.trim()).filter(Boolean))}
-            placeholder="One skill per line"
-          />
-        </div>
-      )}
-
-      {step === 2 && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <h2>Work Experience</h2>
-          {data.experience.map((exp, i) => (
-            <div key={i} style={{ border: "1px solid #ccc", padding: 8 }}>
-              <input placeholder="Company" value={exp.company} onChange={e => {
-                const arr = [...data.experience]; arr[i] = { ...arr[i], company: e.target.value }; update("experience", arr);
-              }} />
-              <input placeholder="Role" value={exp.role} onChange={e => {
-                const arr = [...data.experience]; arr[i] = { ...arr[i], role: e.target.value }; update("experience", arr);
-              }} />
-              <input placeholder="Start (YYYY-MM)" value={exp.start} onChange={e => {
-                const arr = [...data.experience]; arr[i] = { ...arr[i], start: e.target.value }; update("experience", arr);
-              }} />
-              <input placeholder="End (YYYY-MM or blank)" value={exp.end || ""} onChange={e => {
-                const arr = [...data.experience]; arr[i] = { ...arr[i], end: e.target.value }; update("experience", arr);
-              }} />
-              <input placeholder="Location" value={exp.location || ""} onChange={e => {
-                const arr = [...data.experience]; arr[i] = { ...arr[i], location: e.target.value }; update("experience", arr);
-              }} />
-              <textarea
-                placeholder="Bullets (one per line)"
-                rows={4}
-                value={(exp.bullets || []).join("\n")}
-                onChange={e => {
-                  const arr = [...data.experience];
-                  arr[i] = { ...arr[i], bullets: e.target.value.split(/\n+/).map(s => s.trim()).filter(Boolean) };
-                  update("experience", arr);
-                }}
-              />
-              <button type="button" onClick={() => removeExp(i)}>Remove</button>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Title / Headline</label>
+                <input {...register('title')} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="Software Engineer" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Email</label>
+                <input {...register('email')} type="email" className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="you@example.com" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Phone</label>
+                <input {...register('phone')} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="555-123-4567" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Location</label>
+                <input {...register('location')} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="City, Country" />
+              </div>
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Summary</label>
+                <textarea {...register('summary')} rows={4} className="w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" placeholder="3–5 lines, action-oriented" />
+              </div>
             </div>
-          ))}
-          <button type="button" onClick={addExp}>Add experience</button>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <h2>Education</h2>
-          {data.education.map((edu, i) => (
-            <div key={i} style={{ border: "1px solid #ccc", padding: 8 }}>
-              <input placeholder="School" value={edu.school} onChange={e => {
-                const arr = [...data.education]; arr[i] = { ...arr[i], school: e.target.value }; update("education", arr);
-              }} />
-              <input placeholder="Degree" value={edu.degree} onChange={e => {
-                const arr = [...data.education]; arr[i] = { ...arr[i], degree: e.target.value }; update("education", arr);
-              }} />
-              <input placeholder="Start (YYYY-MM)" value={edu.start} onChange={e => {
-                const arr = [...data.education]; arr[i] = { ...arr[i], start: e.target.value }; update("education", arr);
-              }} />
-              <input placeholder="End (YYYY-MM)" value={edu.end} onChange={e => {
-                const arr = [...data.education]; arr[i] = { ...arr[i], end: e.target.value }; update("education", arr);
-              }} />
-              <input placeholder="Grade" value={edu.grade || ""} onChange={e => {
-                const arr = [...data.education]; arr[i] = { ...arr[i], grade: e.target.value }; update("education", arr);
-              }} />
-              <button type="button" onClick={() => removeEdu(i)}>Remove</button>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Links</div>
+              {values.links.map((l, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2 items-center">
+                  <input {...register(`links.${i}.label`)} placeholder="Label" className="h-11 rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" />
+                  <div className="flex gap-2">
+                    <input {...register(`links.${i}.url`)} placeholder="URL" className="flex-1 h-11 rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent" />
+                    <button type="button" onClick={() => removeLink(i)} className="px-2 text-red-600">×</button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addLink} className="text-sm text-teal-600">Add link</button>
             </div>
-          ))}
-          <button type="button" onClick={addEdu}>Add education</button>
-        </div>
-      )}
+          </section>
+        )}
+
+        {step === 1 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Skills</h2>
+              <p className="text-sm text-zinc-500">Add your core skills.</p>
+            </header>
+            <SkillsInput value={values.skills} onChange={v => setValue('skills', v)} />
+          </section>
+        )}
+
+        {step === 2 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Work Experience</h2>
+              <p className="text-sm text-zinc-500">Highlight relevant roles.</p>
+            </header>
+            <div className="space-y-4">
+              <AnimatePresence>
+                {values.experience.map((exp, i) => (
+                  <ExperienceCard key={i} value={exp} index={i} onChange={v => updateExp(i, v)} onRemove={() => removeExp(i)} onDuplicate={() => duplicateExp(i)} />
+                ))}
+              </AnimatePresence>
+              <button type="button" onClick={addExp} className="text-sm text-teal-600">Add role</button>
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Education</h2>
+              <p className="text-sm text-zinc-500">Your academic background.</p>
+            </header>
+            <div className="space-y-4">
+              <AnimatePresence>
+                {values.education.map((edu, i) => (
+                  <EducationCard key={i} value={edu} index={i} onChange={v => updateEdu(i, v)} onRemove={() => removeEdu(i)} onDuplicate={() => duplicateEdu(i)} />
+                ))}
+              </AnimatePresence>
+              <button type="button" onClick={addEdu} className="text-sm text-teal-600">Add education</button>
+            </div>
+          </section>
+        )}
 
         {step === 4 && (
-          <div style={{ display: "grid", gap: 8 }}>
-            <h2>Finalize</h2>
-            <div>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 4 }}>Template:</label>
-              <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)}>
-                <option value="classic">Classic (ATS)</option>
-                <option value="twoCol">Two-Column</option>
-                <option value="centered">Centered Header</option>
-                <option value="sidebar">Sidebar</option>
-              </select>
-              {templateInfo && templateInfo[template] && (
-                <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>{templateInfo[template]}</div>
-              )}
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Preview:</div>
-                <div style={{ border: "1px solid #ccc", padding: 8 }}>
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Finalize</h2>
+              <p className="text-sm text-zinc-500">Choose a template.</p>
+            </header>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-600">Template</label>
+                <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 bg-transparent focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                  <option value="classic">Classic (ATS)</option>
+                  <option value="twoCol">Two-Column</option>
+                  <option value="centered">Centered Header</option>
+                  <option value="sidebar">Sidebar</option>
+                </select>
+                {templateInfo && templateInfo[template] && (
+                  <p className="text-sm text-zinc-500 mt-1">{templateInfo[template]}</p>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-medium mb-2">Preview</div>
+                <div className="border rounded-lg p-4">
                   <TemplatePreview data={sampleData} />
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
+      </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-        {onCancel && <button type="button" onClick={onCancel}>Cancel</button>}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          {step > 0 && <button type="button" onClick={prev}>Back</button>}
-          {step < steps.length - 1 && <button type="button" onClick={next}>Next</button>}
-          {step === steps.length - 1 && <button type="submit">Generate</button>}
+      <div className="sticky bottom-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-t pt-4 pb-4">
+        <div className="flex items-center gap-4">
+          {onCancel && <button type="button" onClick={onCancel} className="text-sm text-zinc-600">Cancel</button>}
+          <div className="ml-auto flex gap-2">
+            {step > 0 && <button type="button" onClick={prev} className="px-4 h-10 rounded-md border">Back</button>}
+            {step < steps.length - 1 && (
+              <button type="button" onClick={next} disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Next</button>
+            )}
+            {step === steps.length - 1 && (
+              <button type="submit" disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Generate</button>
+            )}
+          </div>
         </div>
+        {!isValid && message && <p className="text-xs text-red-600 mt-1">{message}</p>}
       </div>
     </form>
   );
