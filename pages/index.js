@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Head from "next/head";
 import Classic from "../components/templates/Classic";
 import TwoCol from "../components/templates/TwoCol";
@@ -22,6 +22,42 @@ export default function Home() {
 
   const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar
   const [exportType, setExportType] = useState("pdf"); // pdf | docx
+
+  const resumeScrollRef = useRef(null);
+  const [resumePage, setResumePage] = useState(1);
+  const [resumePageCount, setResumePageCount] = useState(1);
+
+  useEffect(() => {
+    const scroller = resumeScrollRef.current;
+    if (!scroller) return;
+
+    const update = () => {
+      const h = scroller.clientHeight || 1;
+      const total = Math.ceil(scroller.scrollHeight / h);
+      setResumePageCount(Math.max(1, total));
+      const current = Math.floor(scroller.scrollTop / h) + 1;
+      setResumePage(Math.min(Math.max(current, 1), Math.max(1, total)));
+    };
+
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+
+    const ro = new ResizeObserver(update);
+    ro.observe(scroller);
+
+    return () => {
+      scroller.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [result, template]);
+
+  function pageResume(dir) {
+    const scroller = resumeScrollRef.current;
+    if (!scroller) return;
+    const h = scroller.clientHeight || 1;
+    const next = Math.min(Math.max(resumePage + dir, 1), resumePageCount);
+    scroller.scrollTo({ top: (next - 1) * h, behavior: "smooth" });
+  }
 
   const compRef = useRef(null);
   const handlePrint = useReactToPrint({
@@ -136,28 +172,95 @@ export default function Home() {
           {error && <div style={{color:"#b91c1c"}}>{error}</div>}
         </section>
 
-        {/* RIGHT: Results container */}
-        <section style={{border:"1px solid #e5e7eb", borderRadius:8, padding:12, background:"#fff", overflow:"auto", maxHeight:"85vh"}}>
+        {/* RIGHT: Results container (two A4 columns) */}
+        <section
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            padding: 12,
+            background: "#fff",
+            overflow: "auto",
+            maxHeight: "85vh"
+          }}
+        >
           {result?.resumeData ? (
             <>
-              <div ref={compRef}><TemplateView data={result.resumeData} /></div>
-              <div style={{display:"flex", gap:8, marginTop:10}}>
-                <button onClick={() => exportType==="pdf" ? handlePrint() : downloadDocx()}>
-                  {exportType==="pdf" ? "Download PDF" : "Download DOCX"}
+              <div
+                className="resultGrid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 16,
+                  alignItems: "start",
+                  minWidth: 980
+                }}
+              >
+                {/* A4 CV PREVIEW (paged) */}
+                <div className="a4">
+                  <div className="a4-inner">
+                    <div ref={resumeScrollRef} className="a4-scroll">
+                      <div ref={compRef}>
+                        <TemplateView data={result.resumeData} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {resumePageCount > 1 && (
+                    <>
+                      <div className="pager">
+                        <button
+                          className="pager-btn"
+                          onClick={() => pageResume(-1)}
+                          disabled={resumePage <= 1}
+                          aria-label="Previous CV page"
+                        >
+                          ‹
+                        </button>
+                        <button
+                          className="pager-btn"
+                          onClick={() => pageResume(1)}
+                          disabled={resumePage >= resumePageCount}
+                          aria-label="Next CV page"
+                        >
+                          ›
+                        </button>
+                      </div>
+                      <div className="pageIndicator">
+                        {resumePage}/{resumePageCount}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* A4 COVER LETTER PREVIEW */}
+                <div className="a4">
+                  <div className="a4-inner">
+                    <div className="a4-scroll">
+                      {result?.coverLetter ? (
+                        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          {result.coverLetter}
+                        </div>
+                      ) : (
+                        <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button onClick={() => (exportType === "pdf" ? handlePrint() : downloadDocx())}>
+                  {exportType === "pdf" ? "Download PDF" : "Download DOCX"}
                 </button>
                 <button onClick={handlePrint}>Print</button>
               </div>
-
-              {result?.coverLetter && (
-                <div style={{marginTop:18}}>
-                  <h2>Cover Letter</h2>
-                  <textarea readOnly value={result.coverLetter} rows={10} style={{width:"100%"}} />
-                </div>
-              )}
             </>
           ) : (
-            <div style={{opacity:.6}}>Your generated résumé will appear here.</div>
+            <div style={{ opacity: 0.6 }}>Your generated résumé will appear here.</div>
           )}
+
+          {/* Keep existing action buttons (Download/Print) BELOW the previews if you prefer.
+              If you want them above, move them accordingly. */}
         </section>
       </main>
     </>

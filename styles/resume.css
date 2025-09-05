@@ -39,3 +39,96 @@
   @page { margin: 14mm; }
   body { background: #fff; }
 }
+
+/* A4 page frame: 210mm x 297mm approximated at 96dpi ~ 794x1123 px */
+.a4 {
+  position: relative;
+  width: 794px;
+  height: 1123px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.a4-inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* viewport */
+  background: #fff;
+}
+
+.a4-scroll {
+  height: 100%;
+  overflow-y: auto;       /* scroll within the page-height */
+  -webkit-overflow-scrolling: touch;
+  padding: 24px;          /* content padding like a real page margin */
+}
+
+/* Pager overlay */
+.pager {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  pointer-events: none; /* buttons restore pointer-events */
+}
+
+.pager-btn {
+  pointer-events: all;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pageIndicator {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-size: 12px;
+  color: #475569;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* Results grid helper */
+.resultGrid {
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .resultGrid {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+  .a4 { margin: 0 auto; }
+}
+
+/* Printing: ensure full content prints normally */
+@media print {
+  .a4, .a4-inner, .a4-scroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .pager, .pageIndicator { display: none !important; }
+}
