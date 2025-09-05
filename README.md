@@ -8,3 +8,8 @@ Notes:
 - 20MB upload limit; supported: PDF, DOCX, TXT.
 - API is rate-limited (10 req/min/IP).
 - Generated resumes only include skills, titles, and locations that appear in your uploaded resume.
+
+## Export
+- PDF export now uses @react-pdf/renderer for vector, selectable-text PDFs.
+- DOCX export unchanged.
+- HTML preview remains the same.
