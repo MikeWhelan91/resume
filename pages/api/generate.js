@@ -17,13 +17,16 @@ async function extractTextFromFile(file){
   const mime = (f.mimetype || f.type || "").toLowerCase();
   if (!p) return "";
   const buf = fs.readFileSync(p);
+  let text = "";
   if (mime.includes("pdf") || p.toLowerCase().endsWith(".pdf")){
-    const r = await pdfParse(buf); return r.text || "";
+    const r = await pdfParse(buf); text = r.text || "";
+  } else if (mime.includes("wordprocessingml") || p.toLowerCase().endsWith(".docx")){
+    const { value } = await mammoth.extractRawText({ buffer: buf }); text = value || "";
+  } else {
+    text = buf.toString("utf8");
   }
-  if (mime.includes("wordprocessingml") || p.toLowerCase().endsWith(".docx")){
-    const { value } = await mammoth.extractRawText({ buffer: buf }); return value || "";
-  }
-  return buf.toString("utf8");
+  try{ fs.unlinkSync(p); }catch{}
+  return text;
 }
 
 function parseForm(req){
@@ -60,17 +63,24 @@ async function coreHandler(req, res){
 
   try{
     const { fields, files } = await parseForm(req);
-    const resumeText = await extractTextFromFile(files?.resume);
+    const resumeDataField = Array.isArray(fields?.resumeData) ? fields.resumeData[0] : fields?.resumeData;
+    let resumeData = null;
+    if (resumeDataField) {
+      resumeData = normalizeResumeData(safeJSON(resumeDataField) || {});
+    }
+    const resumeText = resumeData ? "" : await extractTextFromFile(files?.resume);
     const coverText  = await extractTextFromFile(files?.coverLetter);
     const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
 
-    if (!resumeText && !coverText) return res.status(400).json({ error:"No readable files", code:"E_NO_FILES" });
+    if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
     if (!jobDesc || jobDesc.trim().length < 30) return res.status(400).json({ error:"Job description too short", code:"E_BAD_INPUT" });
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // Pass 1: résumé-only allow-list
-    const allowedSkills = await extractAllowedSkills(client, resumeText);
+    const allowedSkills = resumeData
+      ? (resumeData.skills || []).map(s=>String(s).toLowerCase())
+      : await extractAllowedSkills(client, resumeText);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
     // Pass 2: generate with hard constraints
@@ -89,14 +99,15 @@ STRICT RULES:
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 `.trim();
 
+    const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
     const user = `
 Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
 
 Job Description:
 ${jobDesc}
 
-Extracted Resume Text:
-${resumeText}
+Resume Data:
+${resumePayload}
 
 Previous Cover Letter (optional):
 ${coverText}
