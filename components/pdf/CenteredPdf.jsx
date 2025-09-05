@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Page,
-  Text,
-  View,
-  Document,
-  StyleSheet,
-  Link,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Link } from "@react-pdf/renderer";
 import "./registerFonts";
 
 const styles = StyleSheet.create({
@@ -18,12 +11,8 @@ const styles = StyleSheet.create({
     lineHeight: 1.4,
     fontFamily: "InterPDF",
   },
-  h1: {
-    fontFamily: "InterPDF",
-    fontSize: 20,
-    fontWeight: 700,
-    marginBottom: 6,
-  },
+  header: { alignItems: "center", textAlign: "center" },
+  h1: { fontFamily: "InterPDF", fontSize: 20, fontWeight: 700, marginBottom: 6 },
   h2: {
     fontFamily: "InterPDF",
     fontSize: 12,
@@ -34,8 +23,8 @@ const styles = StyleSheet.create({
   },
   muted: { color: "#64748b" },
   row: { flexDirection: "row", alignItems: "baseline" },
-  right: { marginLeft: "auto", color: "#64748b" }, // use this for dates
-  pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6 },
+  right: { marginLeft: "auto", color: "#64748b" },
+  pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6, justifyContent: "center" },
   pill: {
     fontFamily: "InterPDF",
     fontWeight: 500,
@@ -48,10 +37,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     fontSize: 10,
   },
-  rule: { borderTopWidth: 1, borderTopColor: "#e2e8f0", marginVertical: 10 },
+  rule: { borderTopWidth: 1, borderTopColor: "#e2e8f0", marginVertical: 10, width: "96%" },
   ul: { marginTop: 4, marginLeft: 10 },
   li: { marginBottom: 4 },
-  linkRow: { flexDirection: "row", flexWrap: "wrap" },
+  linkRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" },
   linkText: { color: "#1a73e8", marginRight: 8 },
 });
 
@@ -62,9 +51,8 @@ function Header({ data }) {
     data.phone,
     ...(Array.isArray(data.links) ? data.links.map((l) => l.url) : []),
   ].filter(Boolean);
-
   return (
-    <View>
+    <View style={styles.header}>
       <Text style={styles.h1}>{data.name || "Candidate"}</Text>
       {meta ? <Text style={styles.muted}>{meta}</Text> : null}
       {contacts.length ? (
@@ -170,7 +158,7 @@ function Summary({ data }) {
   );
 }
 
-export default function ClassicPdf({ data }) {
+export default function CenteredPdf({ data }) {
   const safe = data || {};
   return (
     <Document>
@@ -184,3 +172,4 @@ export default function ClassicPdf({ data }) {
     </Document>
   );
 }
+
