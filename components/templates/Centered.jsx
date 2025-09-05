@@ -6,7 +6,7 @@ export default function Centered({ data = {} }) {
   const edu = Array.isArray(data.education) ? data.education : [];
 
   return (
-    <div className="resume centeredHeader">
+    <div className="resume centeredHeader" data-paper>
       <header>
         {data.name && <h1>{data.name}</h1>}
         {(data.title || data.location) && (

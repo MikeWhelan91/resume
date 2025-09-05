@@ -6,7 +6,7 @@ export default function Sidebar({ data = {} }) {
   const edu = Array.isArray(data.education) ? data.education : [];
 
   return (
-    <div className="resume resumeGrid">
+    <div className="resume resumeGrid" data-paper>
       <aside className="sidebar">
         {data.name && <h1 style={{margin:'0 0 4px 0'}}>{data.name}</h1>}
         {(data.title || data.location) && (
