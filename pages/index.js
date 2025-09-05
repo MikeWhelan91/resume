@@ -161,11 +161,13 @@ export default function Home() {
         scroller.scrollTop = i * h;
         await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
         const canvas = await html2canvas(scroller, { scale: 2, backgroundColor: "#ffffff" });
+
         const img = canvas.toDataURL("image/png");
         if (i > 0) pdf.addPage();
         pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
       }
       scroller.scrollTop = originalTop;
+
     }
 
     const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
@@ -200,6 +202,7 @@ export default function Home() {
     }
 
     const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+
     pdf.save(fname);
   }
 
@@ -338,7 +341,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -359,6 +362,7 @@ export default function Home() {
                   <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
                   <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
                 </div>
+
               </div>
             </>
           ) : (
