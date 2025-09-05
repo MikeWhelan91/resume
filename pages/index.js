@@ -117,8 +117,14 @@ export default function Home() {
     <>
       <Head>
         <title>TailorCV - AI Résumé + Cover Letter</title>
-        <meta name="description" content="Generate tailored, ATS-friendly resumes and cover letters with PDF and DOCX export options." />
-        <meta name="keywords" content="AI resume, cover letter, ATS, PDF, DOCX, templates" />
+        <meta
+          name="description"
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side preview plus PDF and DOCX export options."
+        />
+        <meta
+          name="keywords"
+          content="AI resume, cover letter, ATS, PDF, DOCX, templates, side-by-side preview"
+        />
       </Head>
 
       {/* Two-column screen layout: controls left, results right */}
@@ -189,60 +195,65 @@ export default function Home() {
                 className="resultGrid"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "auto auto",
                   gap: 16,
                   alignItems: "start",
-                  minWidth: 980
+                  minWidth: 0,
+                  justifyContent: "center"
                 }}
               >
                 {/* A4 CV PREVIEW (paged) */}
-                <div className="a4">
-                  <div className="a4-inner">
-                    <div ref={resumeScrollRef} className="a4-scroll">
-                      <div ref={compRef}>
-                        <TemplateView data={result.resumeData} />
+                <div className="a4-scale">
+                  <div className="a4">
+                    <div className="a4-inner">
+                      <div ref={resumeScrollRef} className="a4-scroll">
+                        <div ref={compRef}>
+                          <TemplateView data={result.resumeData} />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {resumePageCount > 1 && (
-                    <>
-                      <div className="pager">
-                        <button
-                          className="pager-btn"
-                          onClick={() => pageResume(-1)}
-                          disabled={resumePage <= 1}
-                          aria-label="Previous CV page"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          className="pager-btn"
-                          onClick={() => pageResume(1)}
-                          disabled={resumePage >= resumePageCount}
-                          aria-label="Next CV page"
-                        >
-                          ›
-                        </button>
-                      </div>
-                      <div className="pageIndicator">
-                        {resumePage}/{resumePageCount}
-                      </div>
-                    </>
-                  )}
+                    {resumePageCount > 1 && (
+                      <>
+                        <div className="pager">
+                          <button
+                            className="pager-btn"
+                            onClick={() => pageResume(-1)}
+                            disabled={resumePage <= 1}
+                            aria-label="Previous CV page"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            className="pager-btn"
+                            onClick={() => pageResume(1)}
+                            disabled={resumePage >= resumePageCount}
+                            aria-label="Next CV page"
+                          >
+                            ›
+                          </button>
+                        </div>
+                        <div className="pageIndicator">
+                          {resumePage}/{resumePageCount}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* A4 COVER LETTER PREVIEW */}
-                <div className="a4">
-                  <div className="a4-inner">
-                    <div className="a4-scroll">
-                      {result?.coverLetter ? (
-                        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
-                          {result.coverLetter}
-                        </div>
-                      ) : (
-                        <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
-                      )}
+                <div className="a4-scale">
+                  <div className="a4">
+                    <div className="a4-inner">
+                      <div className="a4-scroll">
+                        {result?.coverLetter ? (
+                          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                            {result.coverLetter}
+                          </div>
+                        ) : (
+                          <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
