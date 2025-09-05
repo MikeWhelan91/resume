@@ -141,8 +141,8 @@ export default function Home() {
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
-  async function downloadCvPdf() {
-    if (!result?.resumeData) return;
+  async function elementToPdf(node, filename) {
+
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
       import("html2canvas").then(m => m.default || m)
@@ -152,58 +152,45 @@ export default function Home() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
-    const scroller = resumeScrollRef.current;
-    if (scroller) {
-      const h = scroller.clientHeight || pageH;
-      const total = Math.max(1, Math.ceil(scroller.scrollHeight / h));
-      const originalTop = scroller.scrollTop;
-      for (let i = 0; i < total; i++) {
-        scroller.scrollTop = i * h;
-        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
-        const canvas = await html2canvas(scroller, { scale: 2, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+    const canvasW = canvas.width;
+    const canvasH = canvas.height;
+    const pageCanvasH = pageH * canvasW / pageW; // height in canvas px for one PDF page
+    let renderedH = 0;
 
-        const img = canvas.toDataURL("image/png");
-        if (i > 0) pdf.addPage();
-        pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-      }
-      scroller.scrollTop = originalTop;
-
+    while (renderedH < canvasH) {
+      const pageCanvas = document.createElement("canvas");
+      pageCanvas.width = canvasW;
+      const sliceH = Math.min(pageCanvasH, canvasH - renderedH);
+      pageCanvas.height = sliceH;
+      const ctx = pageCanvas.getContext("2d");
+      ctx.drawImage(canvas, 0, renderedH, canvasW, sliceH, 0, 0, canvasW, sliceH);
+      const img = pageCanvas.toDataURL("image/png");
+      if (renderedH > 0) pdf.addPage();
+      const pdfPageH = pageH * (sliceH / pageCanvasH);
+      pdf.addImage(img, "PNG", 0, 0, pageW, pdfPageH, undefined, "FAST");
+      renderedH += sliceH;
     }
 
-    const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
-    pdf.save(fname);
+    pdf.save(filename);
+  }
+
+  async function downloadCvPdf() {
+    if (!result?.resumeData) return;
+    if (resumeScrollRef?.current) {
+      const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+      await elementToPdf(resumeScrollRef.current, fname);
+    }
+
   }
 
   async function downloadClPdf() {
     if (!result?.coverLetter) return;
-    const [{ jsPDF }, html2canvas] = await Promise.all([
-      import("jspdf"),
-      import("html2canvas").then(m => m.default || m)
-    ]);
-
-    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-
-    const node = coverRef?.current;
-    if (node) {
-      const h = node.clientHeight || pageH;
-      const total = Math.max(1, Math.ceil(node.scrollHeight / h));
-      const originalTop = node.scrollTop;
-      for (let i = 0; i < total; i++) {
-        node.scrollTop = i * h;
-        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
-        const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
-        const img = canvas.toDataURL("image/png");
-        if (i > 0) pdf.addPage();
-        pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-      }
-      node.scrollTop = originalTop;
+    if (coverRef?.current) {
+      const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+      await elementToPdf(coverRef.current, fname);
     }
 
-    const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
-
-    pdf.save(fname);
   }
 
   const TemplateView = useMemo(() => {
@@ -221,11 +208,12 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus separate PDF and DOCX downloads."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus pixel-perfect PDF and DOCX downloads."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF download, DOCX download, templates, side-by-side preview, fullscreen preview"
+          content="AI resume, cover letter, ATS, PDF download, DOCX download, templates, side-by-side preview, fullscreen preview, pixel-perfect"
+
         />
       </Head>
 
