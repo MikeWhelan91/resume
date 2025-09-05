@@ -142,6 +142,7 @@ export default function Home() {
   }
 
   async function downloadCvPdf() {
+
     if (!result?.resumeData) return;
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
@@ -198,6 +199,7 @@ export default function Home() {
     }
 
     const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+
     pdf.save(fname);
   }
 
@@ -336,7 +338,7 @@ export default function Home() {
                     <div className="a4-inner">
                       <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
-                          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                          <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
                           </div>
                         ) : (
@@ -357,6 +359,7 @@ export default function Home() {
                   <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
                   <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
                 </div>
+
               </div>
             </>
           ) : (
