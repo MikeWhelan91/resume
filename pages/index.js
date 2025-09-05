@@ -142,7 +142,6 @@ export default function Home() {
   }
 
   async function downloadCvPdf() {
-
     if (!result?.resumeData) return;
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
@@ -157,19 +156,18 @@ export default function Home() {
     if (scroller) {
       const h = scroller.clientHeight || pageH;
       const total = Math.max(1, Math.ceil(scroller.scrollHeight / h));
+      const originalTop = scroller.scrollTop;
       for (let i = 0; i < total; i++) {
-        const canvas = await html2canvas(scroller, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          width: scroller.clientWidth,
-          height: h,
-          x: 0,
-          y: i * h,
-        });
+        scroller.scrollTop = i * h;
+        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
+        const canvas = await html2canvas(scroller, { scale: 2, backgroundColor: "#ffffff" });
+
         const img = canvas.toDataURL("image/png");
         if (i > 0) pdf.addPage();
         pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
       }
+      scroller.scrollTop = originalTop;
+
     }
 
     const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
@@ -187,15 +185,20 @@ export default function Home() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
-    if (coverRef?.current) {
-      const canvas = await html2canvas(coverRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        width: coverRef.current.clientWidth,
-        height: coverRef.current.clientHeight,
-      });
-      const img = canvas.toDataURL("image/png");
-      pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+    const node = coverRef?.current;
+    if (node) {
+      const h = node.clientHeight || pageH;
+      const total = Math.max(1, Math.ceil(node.scrollHeight / h));
+      const originalTop = node.scrollTop;
+      for (let i = 0; i < total; i++) {
+        node.scrollTop = i * h;
+        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
+        const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+        const img = canvas.toDataURL("image/png");
+        if (i > 0) pdf.addPage();
+        pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+      }
+      node.scrollTop = originalTop;
     }
 
     const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
