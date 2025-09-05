@@ -4,6 +4,9 @@ import Classic from "../components/templates/Classic";
 import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
+import { pdf } from "@react-pdf/renderer";
+import ClassicPdf from "../components/pdf/ClassicPdf";
+import CoverLetterPdf from "../components/pdf/CoverLetterPdf";
 
 const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
@@ -141,132 +144,30 @@ export default function Home() {
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
-  async function elementToPdf(node, filename) {
-    const [{ jsPDF }, html2canvas] = await Promise.all([
-      import("jspdf"),
-      import("html2canvas").then((m) => m.default || m),
-    ]);
-
-    // pick the core resume element
-    const paper = node.querySelector("[data-paper]") || node;
-
-    // measure the live paper size without any preview scaling
-    const liveWidth = paper.offsetWidth;
-    const liveHeight = paper.offsetHeight;
-    console.log("Live paper size:", liveWidth, liveHeight);
-
-    // detect preview padding (e.g., the .a4-scroll margin)
-    const scroll = paper.closest(".a4-scroll");
-    const pad = scroll ? getComputedStyle(scroll) : null;
-    const padTop = pad ? parseFloat(pad.paddingTop) || 0 : 0;
-    const padRight = pad ? parseFloat(pad.paddingRight) || 0 : 0;
-    const padBottom = pad ? parseFloat(pad.paddingBottom) || 0 : 0;
-    const padLeft = pad ? parseFloat(pad.paddingLeft) || 0 : 0;
-
-
-    // clone into a clean, offscreen print container
-    const shell = document.createElement("div");
-    shell.className = "print-root";
-    shell.style.width = `${liveWidth}px`;
-    const clone = paper.cloneNode(true);
-    shell.appendChild(clone);
-    document.body.appendChild(shell);
-
-    // print-mode: nuke shadows/animations/outlines so visuals match text-only intent
-    document.documentElement.classList.add("print-mode");
-
-    // wait for fonts and images inside the clone
-    await (document.fonts?.ready || Promise.resolve());
-    await Promise.all(
-      Array.from(clone.querySelectorAll("img")).map((img) =>
-        img.complete ? null : new Promise((r) => (img.onload = img.onerror = r))
-      )
-    );
-
-    // log the clone's dimensions for parity with the live paper
-    const cloneWidth = clone.offsetWidth;
-    const cloneHeight = clone.offsetHeight;
-    console.log("Clone size:", cloneWidth, cloneHeight);
-
-    try {
-      const dpr = Math.min(2, window.devicePixelRatio || 1); // crisp without bloat
-      const rect = { width: cloneWidth, height: cloneHeight };
-
-      const canvas = await html2canvas(clone, {
-        backgroundColor: "#ffffff",
-        scale: dpr,
-        width: Math.ceil(rect.width),
-        height: Math.ceil(rect.height),
-        letterRendering: true,
-        useCORS: true,
-        removeContainer: true,
-      });
-
-      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-
-      // scale the resume so that preview padding becomes PDF margins
-      const totalWidth = liveWidth + padLeft + padRight;
-      const scale = pageW / totalWidth;
-      const marginLeft = padLeft * scale;
-      const marginRight = padRight * scale;
-      const marginTop = padTop * scale;
-      const marginBottom = padBottom * scale;
-      const imgW = liveWidth * scale;
-      const imgH = liveHeight * scale;
-      const pageHeight = pageH - marginTop - marginBottom;
-
-      let y = 0;
-      while (y < imgH) {
-        if (y > 0) pdf.addPage();
-        const sliceH = Math.min(pageHeight, imgH - y);
-
-        const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = Math.round((sliceH / imgH) * canvas.height);
-
-        const ctx = pageCanvas.getContext("2d");
-        ctx.drawImage(
-          canvas,
-          0,
-          Math.round((y / imgH) * canvas.height),
-          canvas.width,
-          pageCanvas.height,
-          0,
-          0,
-          pageCanvas.width,
-          pageCanvas.height
-        );
-
-        pdf.addImage(pageCanvas, "PNG", marginLeft, marginTop, imgW, sliceH, undefined, "FAST");
-        y += sliceH;
-      }
-
-      pdf.save(`${filename}.pdf`);
-    } finally {
-      document.documentElement.classList.remove("print-mode");
-      shell.remove();
-    }
-  }
-
+  // CV PDF via React-PDF
   async function downloadCvPdf() {
     if (!result?.resumeData) return;
-    const node = compRef?.current;
-    if (node) {
-      const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV`;
-      await elementToPdf(node, fname);
-    }
-
+    // For now, render ClassicPdf regardless of on-screen template.
+    // (You can extend this to switch on `template` later.)
+    const doc = <ClassicPdf data={result.resumeData} />;
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
+  // Cover Letter PDF via React-PDF
   async function downloadClPdf() {
     if (!result?.coverLetter) return;
-    if (coverRef?.current) {
-      const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter`;
-      await elementToPdf(coverRef.current, fname);
-    }
-
+    const doc = <CoverLetterPdf text={result.coverLetter} />;
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(result?.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
   const TemplateView = useMemo(() => {
@@ -284,11 +185,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus independent, one-click PDF and DOCX downloads for CVs and cover letters."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus independent, one-click vector PDF and DOCX downloads for CVs and cover letters."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF download, DOCX download, CV PDF, cover letter PDF, independent downloads, templates, side-by-side preview, fullscreen preview, pixel-perfect"
+          content="AI resume, cover letter, ATS, vector PDF download, DOCX download, CV PDF, cover letter PDF, independent downloads, templates, side-by-side preview, fullscreen preview, pixel-perfect, selectable text"
 
         />
       </Head>
