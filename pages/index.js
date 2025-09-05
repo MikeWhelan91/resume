@@ -95,7 +95,7 @@ export default function Home() {
     }
   }
 
-  async function downloadDocx() {
+  async function downloadCvDocx() {
     if (!result?.resumeData) return;
     const r = await fetch("/api/export-docx-structured", {
       method: "POST",
@@ -118,8 +118,31 @@ export default function Home() {
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
-  // One-click PDF download capturing the A4 previews (multi-page CV + CL)
-  async function downloadPdf() {
+  async function downloadClDocx() {
+    if (!result?.coverLetter) return;
+    const r = await fetch("/api/export-cover-letter-docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        coverLetter: result.coverLetter,
+        filename: `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter`
+      })
+    });
+    if (!r.ok) {
+      let msg = "Export failed";
+      try { const j = await r.json(); if (j?.error) msg = `Export failed: ${j.error}`; } catch {}
+      alert(msg);
+      return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.docx`;
+    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  }
+
+  async function downloadCvPdf() {
+
     if (!result?.resumeData) return;
     const [{ jsPDF }, html2canvas] = await Promise.all([
       import("jspdf"),
@@ -130,33 +153,53 @@ export default function Home() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
-    // Helper to capture a DOM node and add as a PDF page
-    async function snapAndAdd(node, addNewPage) {
-      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
-      const img = canvas.toDataURL("image/png");
-      if (addNewPage) pdf.addPage();
-      pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-    }
-
-    // Capture CV scroller page-by-page if present
-    const cvScroller = document.querySelector(".a4 .a4-scroll") || (compRef?.current || null);
-    if (cvScroller) {
-      const h = cvScroller.clientHeight || pageH;
-      const total = Math.max(1, Math.ceil(cvScroller.scrollHeight / h));
+    const scroller = resumeScrollRef.current;
+    if (scroller) {
+      const h = scroller.clientHeight || pageH;
+      const total = Math.max(1, Math.ceil(scroller.scrollHeight / h));
       for (let i = 0; i < total; i++) {
-        cvScroller.scrollTop = i * h;
-        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
-        await snapAndAdd(cvScroller, i > 0);
+        const canvas = await html2canvas(scroller, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          width: scroller.clientWidth,
+          height: h,
+          x: 0,
+          y: i * h,
+        });
+        const img = canvas.toDataURL("image/png");
+        if (i > 0) pdf.addPage();
+        pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
       }
     }
 
-    // Capture Cover Letter panel if present
+    const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+    pdf.save(fname);
+  }
+
+  async function downloadClPdf() {
+    if (!result?.coverLetter) return;
+    const [{ jsPDF }, html2canvas] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas").then(m => m.default || m)
+    ]);
+
+    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
     if (coverRef?.current) {
-      // add a new page after CV pages
-      await snapAndAdd(coverRef.current, true);
+      const canvas = await html2canvas(coverRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        width: coverRef.current.clientWidth,
+        height: coverRef.current.clientHeight,
+      });
+      const img = canvas.toDataURL("image/png");
+      pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
     }
 
-    const fname = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}.pdf`;
+    const fname = `${(result.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+
     pdf.save(fname);
   }
 
@@ -175,11 +218,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus PDF and DOCX export options."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus separate PDF and DOCX downloads."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF, DOCX, templates, side-by-side preview, fullscreen preview"
+          content="AI resume, cover letter, ATS, PDF download, DOCX download, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
 
@@ -293,7 +336,7 @@ export default function Home() {
                 <div className="a4-scale" onClick={() => setFullScreen('cover')} style={{cursor:'pointer'}}>
                   <div className="a4">
                     <div className="a4-inner">
-                      <div className="a4-scroll">
+                      <div ref={coverRef} className="a4-scroll">
                         {result?.coverLetter ? (
                           <div ref={coverRef} style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
                             {result.coverLetter}
@@ -307,9 +350,16 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{display:"flex", gap:8, marginTop:10}}>
-                <button onClick={downloadPdf}>Download PDF</button>
-                <button onClick={downloadDocx}>Download DOCX</button>
+              <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
+                <div style={{display:"flex", gap:8}}>
+                  <button onClick={downloadCvPdf}>Download CV PDF</button>
+                  <button onClick={downloadCvDocx}>Download CV DOCX</button>
+                </div>
+                <div style={{display:"flex", gap:8}}>
+                  <button onClick={downloadClPdf}>Download Cover Letter PDF</button>
+                  <button onClick={downloadClDocx}>Download Cover Letter DOCX</button>
+                </div>
+
               </div>
             </>
           ) : (
