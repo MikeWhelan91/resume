@@ -38,10 +38,13 @@ export default async function handler(req,res){
     if (Array.isArray(data.education) && data.education.length){
       docChildren.push(h("Education"));
       data.education.forEach(e=>{
-        docChildren.push(new Paragraph({ children:[
-          new TextRun({ text: `${e.school} — ${e.degree}`, bold:true }),
-          new TextRun({ text: `   ${e.start} – ${e.end}`, italics:true })
-        ]}));
+        const degree = [e.degree, e.grade].filter(Boolean).join(" — ");
+        const dates = [e.start, e.end].filter(Boolean).join(" – ");
+        const children = [
+          new TextRun({ text: `${e.school} — ${degree}`, bold:true })
+        ];
+        if (dates) children.push(new TextRun({ text: `   ${dates}`, italics:true }));
+        docChildren.push(new Paragraph({ children }));
       });
     }
 

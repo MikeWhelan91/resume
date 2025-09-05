@@ -83,6 +83,7 @@ STRICT RULES:
 - Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
 - For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets should be concise accomplishment statements reworded to align with the job description.
+- For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. Use phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
 ALLOWED_SKILLS: ${allowedSkillsCSV}

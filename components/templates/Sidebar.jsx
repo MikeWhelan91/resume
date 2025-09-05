@@ -30,14 +30,19 @@ export default function Sidebar({ data = {} }) {
         {edu.length > 0 && (
           <>
             <h2>Education</h2>
-            {edu.map((e, i) => (
-              <div key={i}>
-                <strong>{e.school}</strong>
-                <div className="muted">
-                  {[e.degree, e.start && fmt(e.start), e.end && fmt(e.end)].filter(Boolean).join(" • ")}
+            {edu.map((e, i) => {
+              const dateRange = [e.start && fmt(e.start), e.end && fmt(e.end)]
+                .filter(Boolean)
+                .join(" – ");
+              return (
+                <div key={i}>
+                  <strong>{e.school}</strong>
+                  <div className="muted">
+                    {[e.degree, e.grade, dateRange].filter(Boolean).join(" • ")}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </aside>
