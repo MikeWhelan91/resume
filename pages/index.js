@@ -263,11 +263,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads, complete with live template previews."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads, complete with live A4 resume and cover letter previews."
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview"
+            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
           />
       </Head>
       <main className="tc-container tc-page">
@@ -325,9 +325,22 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="tc-card cursor-pointer" onClick={() => setFullScreen('cover')}>
-                <div ref={coverRef} className="whitespace-pre-wrap leading-6">
-                  {result.coverLetter || <div className="opacity-60">No cover letter returned.</div>}
+              <div className="tc-paper cursor-pointer" onClick={() => setFullScreen('cover')}>
+                <div className="a4-scale">
+                  <div className="a4">
+                    <div className="a4-inner">
+                      <div className="a4-scroll">
+                        <div
+                          ref={coverRef}
+                          className="whitespace-pre-wrap text-[11px] leading-[1.6]"
+                        >
+                          {result.coverLetter || (
+                            <div className="opacity-60">No cover letter returned.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -369,7 +382,9 @@ export default function Home() {
                   {fullScreen === 'resume' ? (
                     <TemplateView data={result.resumeData} />
                   ) : result?.coverLetter ? (
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
+                    <div
+                      style={{ whiteSpace: "pre-wrap", fontSize: 11, lineHeight: 1.6 }}
+                    >
                       {result.coverLetter}
                     </div>
                   ) : (
