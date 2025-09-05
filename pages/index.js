@@ -12,6 +12,7 @@ import TwoColPdf from "../components/pdf/TwoColPdf";
 import SidebarPdf from "../components/pdf/SidebarPdf";
 // pages/index.js
 import "../components/pdf/registerFonts";
+import ResumeWizard from "../components/ResumeWizard";
 
 
 const TEMPLATE_INFO = {
@@ -29,13 +30,14 @@ const PdfMap = {
 };
 
 export default function Home() {
-  const [resume, setResume] = useState(null);
-  const [jobDesc, setJobDesc] = useState("");
   const [result, setResult] = useState(null);          // { coverLetter, resumeData }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar
+
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardData, setWizardData] = useState(null);
+  const [isScratch, setIsScratch] = useState(false);
 
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
@@ -87,23 +89,56 @@ export default function Home() {
   const compRef = useRef(null);
   const coverRef = useRef(null);
 
-  async function handleSubmit(e){
-    e.preventDefault();
-    setError(""); setResult(null);
+  const fileInputRef = useRef(null);
 
-    if (!resume) return setError("Please upload a resume (PDF or DOCX).");
-    if (!jobDesc.trim()) return setError("Please paste a job description.");
-
+  async function handleFileInput(e){
+    const f = e.target.files?.[0];
+    if(!f) return;
+    setError("");
     try{
       setLoading(true);
-      const formData = new FormData();
-      formData.append("resume", resume);
-      formData.append("jobDesc", jobDesc);
-
-      const res = await fetch("/api/generate", { method:"POST", body: formData });
+      const fd = new FormData();
+      fd.append("resume", f);
+      const res = await fetch("/api/parse-resume", { method:"POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Generation failed");
+      if(!res.ok) throw new Error(data?.error || "Parse failed");
+      setWizardData(data.resumeData || {});
+      setShowWizard(true);
+      setIsScratch(false);
+    }catch(err){
+      setError(String(err.message || err));
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  function startFromScratch(){
+    setError("");
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('resumeBuilderDraft') || 'null'); }catch{}
+    setWizardData(saved || null);
+    setShowWizard(true);
+    setIsScratch(true);
+  }
+
+  function handleWizardComplete(data, jobDesc){
+    generateFromData(data, jobDesc);
+  }
+
+  async function generateFromData(resumeData, jobDesc){
+    setError(""); setResult(null);
+    if(!jobDesc.trim()) return setError("Please paste a job description.");
+    try{
+      setLoading(true);
+      const fd = new FormData();
+      fd.append("resumeData", JSON.stringify(resumeData));
+      fd.append("jobDesc", jobDesc);
+      const res = await fetch("/api/generate", { method:"POST", body: fd });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || "Generation failed");
       setResult(data);
+      setShowWizard(false);
+      if(isScratch){ try{ localStorage.removeItem('resumeBuilderDraft'); }catch{} }
     }catch(err){
       setError(String(err.message || err));
     }finally{
@@ -208,15 +243,14 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>TailorCV - AI Résumé + Cover Letter</title>
+        <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus independent, one-click vector PDF and DOCX downloads for CVs and cover letters."
+          content="Upload a CV or build one from scratch in a guided wizard, then generate a tailored, ATS-friendly resume and matching cover letter with quick PDF and DOCX downloads."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, vector PDF download, DOCX download, CV PDF, cover letter PDF, independent downloads, templates, side-by-side preview, fullscreen preview, pixel-perfect, selectable text"
-
+          content="AI resume builder, cover letter generator, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
 
@@ -226,41 +260,34 @@ export default function Home() {
         <section style={{display:"grid", gap:12, alignContent:"start"}}>
           <h1 style={{fontSize:24, marginBottom:4}}>AI Résumé + Cover Letter</h1>
 
-          <form onSubmit={handleSubmit} style={{display:"grid", gap:12}}>
-            <div>
-              <label style={{display:"block", fontWeight:600, marginBottom:6}}>Upload resume (PDF/DOCX):</label>
-              <input type="file" accept=".pdf,.docx,.txt" onChange={e=>setResume(e.target.files?.[0]||null)} />
+          {!showWizard && !result && (
+            <div style={{display:"grid", gap:12}}>
+              <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} style={{display:"none"}} onChange={handleFileInput} />
+              <button type="button" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
+              <button type="button" onClick={startFromScratch}>Build from scratch</button>
             </div>
+          )}
 
-            <div>
-              <label style={{display:"block", fontWeight:600, marginBottom:6}}>Job description:</label>
-              <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} rows={10} style={{width:"100%"}} />
-              <div style={{marginTop:6}}>
-                <button type="button" onClick={()=>setJobDesc("")}>Clear</button>
-              </div>
-            </div>
+          {showWizard && !result && (
+            <ResumeWizard
+              initialData={wizardData}
+              onCancel={()=>setShowWizard(false)}
+              onComplete={handleWizardComplete}
+              autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
+              template={template}
+              onTemplateChange={setTemplate}
+              templateInfo={TEMPLATE_INFO}
+            />
+          )}
 
-            <div>
-              <label style={{display:"block", fontWeight:600, marginBottom:6}}>Select a template:</label>
-              <select value={template} onChange={e=>setTemplate(e.target.value)}>
-                <option value="classic">Classic (ATS)</option>
-                <option value="twoCol">Two-Column</option>
-                <option value="centered">Centered Header</option>
-                <option value="sidebar">Sidebar</option>
-              </select>
-              <div style={{marginTop:8, fontSize:12, color:"#475569", border:"1px solid #e2e8f0", borderRadius:6, padding:"8px 10px", background:"#fff"}}>
-                {TEMPLATE_INFO[template]}
-              </div>
+          {result && (
+            <div style={{display:"grid", gap:8}}>
+              <button type="button" onClick={()=>{ setResult(null); setShowWizard(false); }}>Start over</button>
             </div>
-
-            <div style={{display:"flex", gap:12, alignItems:"center"}}>
-              <button type="submit" disabled={loading}>
-                {loading ? "Generating..." : "Generate"}
-              </button>
-            </div>
-          </form>
+          )}
 
           {error && <div style={{color:"#b91c1c"}}>{error}</div>}
+          {loading && <div>Loading...</div>}
         </section>
 
         {/* RIGHT: Results container (two A4 columns) */}
