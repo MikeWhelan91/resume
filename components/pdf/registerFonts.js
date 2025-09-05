@@ -1,12 +1,12 @@
+// components/pdf/registerFonts.js
 import { Font } from "@react-pdf/renderer";
 
-// Register each Inter weight as its own family to avoid resolution issues
-Font.register({ family: "InterRegular", src: "/public/fonts/Inter-Regular.ttf" });
-Font.register({ family: "InterMedium",  src: "/public/fonts/Inter-Medium.ttf" });
-Font.register({ family: "InterSemiBold", src: "/public/fonts/Inter-SemiBold.ttf" });
-Font.register({ family: "InterBold",    src: "/public/fonts/Inter-Bold.ttf" });
+const base = typeof window !== "undefined" ? window.location.origin : "";
+const url = (p) => (base ? new URL(p, base).toString() : p);
 
-if (typeof window !== "undefined") {
-  // Debug breadcrumb in DevTools
-  console.log("[pdf] Inter font variants registered");
-}
+// default + explicit weights
+Font.register({ family: "InterPDF", src: url("/fonts/Inter-Regular.ttf") });
+Font.register({ family: "InterPDF", src: url("/fonts/Inter-Regular.ttf"),  fontWeight: 400 });
+Font.register({ family: "InterPDF", src: url("/fonts/Inter-Medium.ttf"),   fontWeight: 500 });
+Font.register({ family: "InterPDF", src: url("/fonts/Inter-SemiBold.ttf"), fontWeight: 600 });
+Font.register({ family: "InterPDF", src: url("/fonts/Inter-Bold.ttf"),     fontWeight: 700 });

@@ -5,12 +5,14 @@ import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
 import { pdf } from "@react-pdf/renderer";
-import "../components/pdf/registerFonts";
 import ClassicPdf from "../components/pdf/ClassicPdf";
 import CoverLetterPdf from "../components/pdf/CoverLetterPdf";
 import CenteredPdf from "../components/pdf/CenteredPdf";
 import TwoColPdf from "../components/pdf/TwoColPdf";
 import SidebarPdf from "../components/pdf/SidebarPdf";
+// pages/index.js
+import "../components/pdf/registerFonts";
+
 
 const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
