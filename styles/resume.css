@@ -205,9 +205,8 @@
   position: fixed;
   left: -100000px; top: 0;
   background: #fff;
-  /* optional: force exact A4-ish width for consistent layout if your paper is fluid */
-  /* width: 794px; */              /* comment out if your templates set width */
   transform: none !important;
+  /* width is set dynamically in JS to match the live paper width */
 }
 
 /* During capture: kill effects that change geometry/anti-aliasing */
