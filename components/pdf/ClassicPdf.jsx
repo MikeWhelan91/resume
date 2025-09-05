@@ -16,18 +16,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     fontSize: 11,
     lineHeight: 1.4,
-    fontFamily: "InterPDF",
+    fontFamily: "InterRegular",
   },
   h1: {
-    fontFamily: "InterPDF",
+    fontFamily: "InterBold",
     fontSize: 20,
-    fontWeight: 700,
     marginBottom: 6,
   },
   h2: {
-    fontFamily: "InterPDF",
+    fontFamily: "InterSemiBold",
     fontSize: 12,
-    fontWeight: 600,
     marginTop: 14,
     marginBottom: 6,
     textTransform: "uppercase",
@@ -37,8 +35,7 @@ const styles = StyleSheet.create({
   right: { marginLeft: "auto", color: "#64748b" }, // use this for dates
   pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6 },
   pill: {
-    fontFamily: "InterPDF",
-    fontWeight: 500,
+    fontFamily: "InterMedium",
     borderWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 999,
@@ -119,7 +116,7 @@ function Experience({ data }) {
         return (
           <View key={i} wrap={false}>
             <View style={styles.row}>
-              <Text style={{ fontWeight: 700 }}>{heading}</Text>
+              <Text style={{ fontFamily: "InterBold" }}>{heading}</Text>
               <Text style={{ fontStyle: "italic" }}>{dates}</Text>
             </View>
             <View style={styles.ul}>
@@ -149,7 +146,7 @@ function Education({ data }) {
         return (
           <View key={i} wrap={false} style={{ marginBottom: 4 }}>
             <Text>
-              <Text style={{ fontWeight: 700 }}>{heading}</Text>{" "}
+              <Text style={{ fontFamily: "InterBold" }}>{heading}</Text>{" "}
               <Text style={{ fontStyle: "italic" }}>{dates}</Text>
               {grade}
             </Text>

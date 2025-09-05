@@ -159,7 +159,7 @@ export default function Home() {
   async function downloadCvPdf() {
     if (!result?.resumeData) return;
     const Comp = PdfMap[template] || ClassicPdf;
-    console.log("[pdf] exporting with InterPDF weights 400/500/600/700");
+    console.log("[pdf] exporting with Inter fonts (regular/medium/semibold/bold)");
     try {
       const blob = await pdf(<Comp data={result.resumeData} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -178,7 +178,7 @@ export default function Home() {
   // Cover Letter PDF via React-PDF
   async function downloadClPdf() {
     if (!result?.coverLetter) return;
-    console.log("[pdf] exporting with InterPDF weights 400/500/600/700");
+    console.log("[pdf] exporting with Inter fonts (regular/medium/semibold/bold)");
     try {
       const blob = await pdf(<CoverLetterPdf text={result.coverLetter} />).toBlob();
       const url = URL.createObjectURL(blob);
