@@ -50,8 +50,14 @@ export default function Centered({ data = {} }) {
       {edu.length > 0 && <h2>Education</h2>}
       {edu.map((e, i) => (
         <div className="row" key={i}>
-          <div><strong>{e.school}</strong>{e.degree ? ` — ${e.degree}` : ""}</div>
-          {(e.start || e.end) && <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>}
+          <div>
+            <strong>{e.school}</strong>
+            {e.degree ? ` — ${e.degree}` : ""}
+            {e.grade ? ` — ${e.grade}` : ""}
+          </div>
+          {(e.start || e.end) && (
+            <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>
+          )}
         </div>
       ))}
     </div>
