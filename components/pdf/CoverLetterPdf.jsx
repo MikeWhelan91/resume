@@ -3,10 +3,10 @@ import { Page, Text, Document, StyleSheet } from "@react-pdf/renderer";
 import "./registerFonts";
 
 const styles = StyleSheet.create({
-  page: { fontFamily: "InterPDF", fontSize: 11, lineHeight: 1.6, padding: 48 },
-  h1:   { fontFamily: "InterPDF", fontSize: 16, fontWeight: 700, marginBottom: 12 },
-  para: { fontFamily: "InterPDF", fontWeight: 400, marginBottom: 10 },
-  sign: { fontFamily: "InterPDF", fontWeight: 700, marginTop: 18 },
+  page: { fontFamily: "InterRegular", fontSize: 11, lineHeight: 1.6, padding: 48 },
+  h1:   { fontFamily: "InterBold", fontSize: 16, marginBottom: 12 },
+  para: { fontFamily: "InterRegular", marginBottom: 10 },
+  sign: { fontFamily: "InterBold", marginTop: 18 },
 });
 
 
