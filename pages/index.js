@@ -26,6 +26,7 @@ export default function Home() {
   const resumeScrollRef = useRef(null);
   const [resumePage, setResumePage] = useState(1);
   const [resumePageCount, setResumePageCount] = useState(1);
+  const [fullScreen, setFullScreen] = useState(null); // null | 'resume' | 'cover'
 
   useEffect(() => {
     const scroller = resumeScrollRef.current;
@@ -50,6 +51,16 @@ export default function Home() {
       ro.disconnect();
     };
   }, [result, template]);
+
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === "Escape") setFullScreen(null);
+    }
+    if (fullScreen) {
+      window.addEventListener("keydown", handleKey);
+    }
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [fullScreen]);
 
   function pageResume(dir) {
     const scroller = resumeScrollRef.current;
@@ -119,11 +130,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side preview plus PDF and DOCX export options."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus PDF and DOCX export options."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF, DOCX, templates, side-by-side preview"
+          content="AI resume, cover letter, ATS, PDF, DOCX, templates, side-by-side preview, fullscreen preview"
         />
       </Head>
 
@@ -203,7 +214,7 @@ export default function Home() {
                 }}
               >
                 {/* A4 CV PREVIEW (paged) */}
-                <div className="a4-scale">
+                <div className="a4-scale" onClick={() => setFullScreen('resume')} style={{cursor:'pointer'}}>
                   <div className="a4">
                     <div className="a4-inner">
                       <div ref={resumeScrollRef} className="a4-scroll">
@@ -218,7 +229,7 @@ export default function Home() {
                         <div className="pager">
                           <button
                             className="pager-btn"
-                            onClick={() => pageResume(-1)}
+                            onClick={(e) => { e.stopPropagation(); pageResume(-1); }}
                             disabled={resumePage <= 1}
                             aria-label="Previous CV page"
                           >
@@ -226,7 +237,7 @@ export default function Home() {
                           </button>
                           <button
                             className="pager-btn"
-                            onClick={() => pageResume(1)}
+                            onClick={(e) => { e.stopPropagation(); pageResume(1); }}
                             disabled={resumePage >= resumePageCount}
                             aria-label="Next CV page"
                           >
@@ -242,7 +253,7 @@ export default function Home() {
                 </div>
 
                 {/* A4 COVER LETTER PREVIEW */}
-                <div className="a4-scale">
+                <div className="a4-scale" onClick={() => setFullScreen('cover')} style={{cursor:'pointer'}}>
                   <div className="a4">
                     <div className="a4-inner">
                       <div className="a4-scroll">
@@ -274,6 +285,34 @@ export default function Home() {
               If you want them above, move them accordingly. */}
         </section>
       </main>
+      {fullScreen && (
+        <div className="fullscreen-overlay" onClick={() => setFullScreen(null)}>
+          <div className="fullscreen-inner" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="fullscreen-close"
+              onClick={() => setFullScreen(null)}
+              aria-label="Close preview"
+            >
+              ×
+            </button>
+            <div className="a4">
+              <div className="a4-inner">
+                <div className="a4-scroll">
+                  {fullScreen === 'resume' ? (
+                    <TemplateView data={result.resumeData} />
+                  ) : result?.coverLetter ? (
+                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                      {result.coverLetter}
+                    </div>
+                  ) : (
+                    <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
