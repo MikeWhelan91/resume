@@ -145,3 +145,39 @@
   }
   .pager, .pageIndicator { display: none !important; }
 }
+
+/* Fullscreen preview overlay */
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.fullscreen-inner {
+  position: relative;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+.fullscreen-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.fullscreen-inner .a4 {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
