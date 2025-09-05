@@ -156,9 +156,9 @@ export default function Home() {
     const scaleWrapper = node.closest(".a4-scale");
     const prevTransform = scaleWrapper ? scaleWrapper.style.transform : null;
     if (scaleWrapper) scaleWrapper.style.transform = "none";
-
+    node.classList.add("print-mode");
     const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-
+    node.classList.remove("print-mode");
     if (scaleWrapper) scaleWrapper.style.transform = prevTransform || "";
 
     const canvasW = canvas.width;
