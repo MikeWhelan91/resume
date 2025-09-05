@@ -152,10 +152,19 @@ export default function Home() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
+    // temporarily remove preview scale so capture is 1:1
+    const scaleWrapper = node.closest(".a4-scale");
+    const prevTransform = scaleWrapper ? scaleWrapper.style.transform : null;
+    if (scaleWrapper) scaleWrapper.style.transform = "none";
+
     const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+
+    if (scaleWrapper) scaleWrapper.style.transform = prevTransform || "";
+
     const canvasW = canvas.width;
     const canvasH = canvas.height;
-    const pageCanvasH = pageH * canvasW / pageW; // height in canvas px for one PDF page
+    const pageCanvasH = (pageH * canvasW) / pageW; // canvas px height for one PDF page
+
     let renderedH = 0;
 
     while (renderedH < canvasH) {
@@ -208,11 +217,11 @@ export default function Home() {
         <title>TailorCV - AI Résumé + Cover Letter</title>
         <meta
           name="description"
-          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus pixel-perfect PDF and DOCX downloads."
+          content="Generate tailored, ATS-friendly resumes and cover letters with side-by-side and fullscreen previews plus one-click, pixel-perfect PDF and DOCX downloads for CVs and cover letters."
         />
         <meta
           name="keywords"
-          content="AI resume, cover letter, ATS, PDF download, DOCX download, templates, side-by-side preview, fullscreen preview, pixel-perfect"
+          content="AI resume, cover letter, ATS, PDF download, DOCX download, CV PDF, cover letter PDF, templates, side-by-side preview, fullscreen preview, pixel-perfect"
 
         />
       </Head>
