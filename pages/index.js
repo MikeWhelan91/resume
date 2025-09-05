@@ -5,14 +5,25 @@ import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
 import { pdf } from "@react-pdf/renderer";
+import "../components/pdf/registerFonts";
 import ClassicPdf from "../components/pdf/ClassicPdf";
 import CoverLetterPdf from "../components/pdf/CoverLetterPdf";
+import CenteredPdf from "../components/pdf/CenteredPdf";
+import TwoColPdf from "../components/pdf/TwoColPdf";
+import SidebarPdf from "../components/pdf/SidebarPdf";
 
 const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
   twoCol: "Two columns with a compact sidebar. Good when you have many skills and want dense use of space.",
   centered: "Centered header with balanced sections. Reads modern while staying recruiter-friendly.",
   sidebar: "Prominent left sidebar for skills/education; main column for experience. Great for showcasing stack breadth."
+};
+
+const PdfMap = {
+  classic: ClassicPdf,
+  centered: CenteredPdf,
+  twoCol: TwoColPdf,
+  sidebar: SidebarPdf,
 };
 
 export default function Home() {
@@ -147,27 +158,40 @@ export default function Home() {
   // CV PDF via React-PDF
   async function downloadCvPdf() {
     if (!result?.resumeData) return;
-    // For now, render ClassicPdf regardless of on-screen template.
-    // (You can extend this to switch on `template` later.)
-    const doc = <ClassicPdf data={result.resumeData} />;
-    const blob = await pdf(doc).toBlob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
-    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+    const Comp = PdfMap[template] || ClassicPdf;
+    console.log("[pdf] exporting with InterPDF weights 400/500/600/700");
+    try {
+      const blob = await pdf(<Comp data={result.resumeData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(result.resumeData.name || "resume").replace(/\s+/g, "_")}_CV.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error("[pdf] export failed. Ensure font files exist under /public/fonts", err);
+    }
   }
 
   // Cover Letter PDF via React-PDF
   async function downloadClPdf() {
     if (!result?.coverLetter) return;
-    const doc = <CoverLetterPdf text={result.coverLetter} />;
-    const blob = await pdf(doc).toBlob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(result?.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
-    document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+    console.log("[pdf] exporting with InterPDF weights 400/500/600/700");
+    try {
+      const blob = await pdf(<CoverLetterPdf text={result.coverLetter} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(result?.resumeData?.name || "cover_letter").replace(/\s+/g, "_")}_cover_letter.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error("[pdf] export failed. Ensure font files exist under /public/fonts", err);
+    }
   }
 
   const TemplateView = useMemo(() => {
