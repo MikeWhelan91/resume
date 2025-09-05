@@ -20,5 +20,9 @@
     "react": "latest",
     "react-dom": "latest",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.12",
+    "typescript": "5.9.2"
   }
 }
