@@ -138,7 +138,15 @@ export default function Home() {
     setShowWizard(false);
     setWizardData(null);
     setIsScratch(false);
+    setError("");
     setPhase("entry");
+  }
+
+  function newJob(){
+    setResult(null);
+    setJobDesc("");
+    setError("");
+    setPhase("target");
   }
 
   async function generateFromData(resumeData, jobDesc){
@@ -263,11 +271,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads, complete with live A4 resume and cover letter previews."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads. Reuse your CV for multiple job descriptions or upload a new one anytime, complete with live A4 resume and cover letter previews."
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
+            content="AI resume builder, cover letter generator, job description tailoring, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
           />
       </Head>
       <main className="tc-container tc-page">
@@ -344,12 +352,14 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="tc-sticky flex flex-wrap gap-3 justify-end">
+            <div className="tc-sticky flex flex-wrap gap-3 justify-between">
+              <div className="flex gap-2">
+                <button className="tc-btn-quiet" onClick={newJob}>New Job Description</button>
+                <button className="tc-btn-quiet" onClick={startOver}>Upload New CV</button>
+              </div>
               <div className="flex gap-2">
                 <button className="tc-btn-quiet" onClick={downloadCvPdf}>Download CV PDF</button>
                 <button className="tc-btn-quiet" onClick={downloadCvDocx}>Download CV DOCX</button>
-              </div>
-              <div className="flex gap-2">
                 <button className="tc-btn-quiet" onClick={downloadClPdf}>Download Cover Letter PDF</button>
                 <button className="tc-btn-quiet" onClick={downloadClDocx}>Download Cover Letter DOCX</button>
               </div>
