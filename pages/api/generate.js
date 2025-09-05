@@ -73,17 +73,16 @@ async function coreHandler(req, res){
     const allowedSkills = await extractAllowedSkills(client, resumeText);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
-    // Pass 2: generate with hard constraints and transferables
+    // Pass 2: generate with hard constraints
     const system = `
 You output ONLY JSON with keys:
 - coverLetterText: string
 - resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])
-- transferables: array of { requiredSkill: string, mappedFrom: string[], rationale: string }
 
 STRICT RULES:
 - Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
-- If the job description requires skills NOT in ALLOWED_SKILLS, add entries to transferables with 1–2 resume skills that map logically and a short rationale.
+- For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets should be concise accomplishment statements reworded to align with the job description.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. Use phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
 ALLOWED_SKILLS: ${allowedSkillsCSV}
@@ -120,8 +119,7 @@ ${coverText}
 
     const payload = {
       coverLetter: String(json.coverLetterText || ""),
-      resumeData: rd,
-      transferables: Array.isArray(json.transferables) ? json.transferables : []
+      resumeData: rd
     };
 
     return res.status(200).json(payload);
