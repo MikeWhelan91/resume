@@ -14,6 +14,7 @@ import SidebarPdf from "../components/pdf/SidebarPdf";
 // pages/index.js
 import "../components/pdf/registerFonts";
 import ResumeWizard from "../components/ResumeWizard";
+import PageViewport from "../components/ui/PageViewport";
 
 
 const TEMPLATE_INFO = {
@@ -45,69 +46,11 @@ export default function Home() {
   const [coverTone, setCoverTone] = useState("professional");
   const [phase, setPhase] = useState("entry"); // entry | target | results
 
-  const resumeScrollRef = useRef(null);
-  const [resumePage, setResumePage] = useState(1);
-  const [resumePageCount, setResumePageCount] = useState(1);
-  const [fullScreen, setFullScreen] = useState(null); // null | 'resume' | 'cover'
   const [exportMode, setExportMode] = useState("ats"); // default ATS-first
 
-  // --- Resizer + menu state ---
-  const [leftPct, setLeftPct] = useState(50);      // 50/50 start
-  const [dragging, setDragging] = useState(false);
+  // --- menu state ---
   const [docxOpen, setDocxOpen] = useState(false);
 
-  useEffect(() => {
-    const scroller = resumeScrollRef.current;
-    if (!scroller) return;
-
-    const update = () => {
-      const h = scroller.clientHeight || 1;
-      const total = Math.ceil(scroller.scrollHeight / h);
-      setResumePageCount(Math.max(1, total));
-      const current = Math.floor(scroller.scrollTop / h) + 1;
-      setResumePage(Math.min(Math.max(current, 1), Math.max(1, total)));
-    };
-
-    update();
-    scroller.addEventListener("scroll", update, { passive: true });
-
-    const ro = new ResizeObserver(update);
-    ro.observe(scroller);
-
-    return () => {
-      scroller.removeEventListener("scroll", update);
-      ro.disconnect();
-    };
-  }, [result, template]);
-
-  useEffect(() => {
-    function handleKey(e) {
-      if (e.key === "Escape") setFullScreen(null);
-    }
-    if (fullScreen) {
-      window.addEventListener("keydown", handleKey);
-    }
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [fullScreen]);
-
-  useEffect(() => {
-    if (!dragging) return;
-    const onMove = (e) => {
-      const grid = document.querySelector(".workspace");
-      if (!grid) return;
-      const rect = grid.getBoundingClientRect();
-      const x = Math.min(Math.max(e.clientX - rect.left, 200), rect.width - 200);
-      const pct = Math.round((x / rect.width) * 100);
-      setLeftPct(Math.min(Math.max(pct, 25), 75)); // clamp 25..75
-    };
-    const onUp = () => setDragging(false);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [dragging]);
 
   // Close DOCX menu on outside click
   useEffect(() => {
@@ -118,17 +61,6 @@ export default function Home() {
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, []);
-
-  function pageResume(dir) {
-    const scroller = resumeScrollRef.current;
-    if (!scroller) return;
-    const h = scroller.clientHeight || 1;
-    const next = Math.min(Math.max(resumePage + dir, 1), resumePageCount);
-    scroller.scrollTo({ top: (next - 1) * h, behavior: "smooth" });
-  }
-
-  const compRef = useRef(null);
-  const coverRef = useRef(null);
 
   const fileInputRef = useRef(null);
 
@@ -350,54 +282,27 @@ export default function Home() {
       </Head>
       {phase === 'results' && result ? (
         <div className="shell">
-          <main
-            className="workspace"
-            style={{
-              ["--left"]: `minmax(320px, ${leftPct}%)`,
-              ["--right"]: `minmax(320px, ${100 - leftPct}%)`,
-            }}
-          >
-            <section className="pane cursor-pointer" onClick={() => setFullScreen('resume')}>
-              <div className="preview" ref={resumeScrollRef}>
-                <div className="a4-scale">
-                  <div className="a4">
-                    <div className="a4-inner">
-                      <div className="a4-scroll">
-                        <TemplateView data={result.resumeData} />
-                      </div>
-                    </div>
-                  </div>
+          <main className="workspace">
+            {/* LEFT: CV preview with paging & fit */}
+            <section className="pane">
+              <PageViewport ariaLabel="CV preview">
+                <div className="paper">
+                  <TemplateView data={result.resumeData} />
                 </div>
-              </div>
+              </PageViewport>
             </section>
 
-            <div
-              className={`splitter ${dragging ? "active" : ""}`}
-              onMouseDown={() => setDragging(true)}
-              title="Drag to resize"
-              role="separator"
-              aria-orientation="vertical"
-            />
-
-            <section className="pane cursor-pointer" onClick={() => setFullScreen('cover')}>
-              <div className="preview">
-                <div className="a4-scale">
-                  <div className="a4">
-                    <div className="a4-inner">
-                      <div className="a4-scroll">
-                        <div
-                          ref={coverRef}
-                          className="whitespace-pre-wrap text-[11px] leading-[1.6]"
-                        >
-                          {result.coverLetter || (
-                            <div className="opacity-60">No cover letter returned.</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+            {/* RIGHT: Cover letter preview with paging & fit */}
+            <section className="pane">
+              <PageViewport ariaLabel="Cover letter preview">
+                <div className="paper">
+                  <div className="whitespace-pre-wrap text-[11px] leading-[1.6]">
+                    {result.coverLetter || (
+                      <div className="opacity-60">No cover letter returned.</div>
+                    )}
                   </div>
                 </div>
-              </div>
+              </PageViewport>
             </section>
           </main>
 
@@ -501,36 +406,6 @@ export default function Home() {
         </div>
       )}
 
-      {fullScreen && (
-        <div className="fullscreen-overlay" onClick={() => setFullScreen(null)}>
-          <div className="fullscreen-inner" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="fullscreen-close"
-              onClick={() => setFullScreen(null)}
-              aria-label="Close preview"
-            >
-              ×
-            </button>
-            <div className="a4">
-              <div className="a4-inner">
-                <div className="a4-scroll">
-                  {fullScreen === 'resume' ? (
-                    <TemplateView data={result.resumeData} />
-                  ) : result?.coverLetter ? (
-                    <div
-                      style={{ whiteSpace: "pre-wrap", fontSize: 11, lineHeight: 1.6 }}
-                    >
-                      {result.coverLetter}
-                    </div>
-                  ) : (
-                    <div style={{ opacity: 0.6 }}>No cover letter returned.</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
