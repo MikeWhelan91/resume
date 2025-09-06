@@ -7,6 +7,7 @@ import Classic from "../../components/templates/Classic";
 import TwoCol from "../../components/templates/TwoCol";
 import Centered from "../../components/templates/Centered";
 import Sidebar from "../../components/templates/Sidebar";
+import Modern from "../../components/templates/Modern";
 
 export const config = {
   api: { bodyParser: { sizeLimit: "1mb" } },
@@ -17,6 +18,7 @@ const TEMPLATE_MAP = {
   twocol: TwoCol,
   centered: Centered,
   sidebar: Sidebar,
+  modern: Modern,
 };
 
 async function launchBrowser() {

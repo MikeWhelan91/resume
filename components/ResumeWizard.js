@@ -8,6 +8,7 @@ import Classic from './templates/Classic';
 import TwoCol from './templates/TwoCol';
 import Centered from './templates/Centered';
 import Sidebar from './templates/Sidebar';
+import Modern from './templates/Modern';
 import { AnimatePresence } from 'framer-motion';
 
 const emptyResume = {
@@ -175,6 +176,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
 
   const TemplatePreview = useMemo(() => {
     switch (template) {
+      case 'modern': return Modern;
       case 'twoCol': return TwoCol;
       case 'centered': return Centered;
       case 'sidebar': return Sidebar;
@@ -297,6 +299,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
                   <option value="twoCol">Two-Column</option>
                   <option value="centered">Centered Header</option>
                   <option value="sidebar">Sidebar</option>
+                  <option value="modern">Modern</option>
                 </select>
                 {templateInfo && templateInfo[template] && (
                   <p className="text-sm text-zinc-500 mt-1">{templateInfo[template]}</p>
