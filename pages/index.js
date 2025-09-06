@@ -4,6 +4,7 @@ import Classic from "../components/templates/Classic";
 import TwoCol from "../components/templates/TwoCol";
 import Centered from "../components/templates/Centered";
 import Sidebar from "../components/templates/Sidebar";
+import Modern from "../components/templates/Modern";
 import { pdf } from "@react-pdf/renderer";
 import ClassicPdf from "../components/pdf/ClassicPdf";
 import CoverLetterPdf from "../components/pdf/CoverLetterPdf";
@@ -19,7 +20,8 @@ const TEMPLATE_INFO = {
   classic: "Single-column, ATS-first. Clean headings, great for online parsers and conservative employers.",
   twoCol: "Two columns with a compact sidebar. Good when you have many skills and want dense use of space.",
   centered: "Centered header with balanced sections. Reads modern while staying recruiter-friendly.",
-  sidebar: "Prominent left sidebar for skills/education; main column for experience. Great for showcasing stack breadth."
+  sidebar: "Prominent left sidebar for skills/education; main column for experience. Great for showcasing stack breadth.",
+  modern: "Two-column grid with clean hierarchy. ATS-safe by default; subtle accents only in Design mode."
 };
 
 const PdfMap = {
@@ -33,7 +35,7 @@ export default function Home() {
   const [result, setResult] = useState(null);          // { coverLetter, resumeData }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar
+  const [template, setTemplate] = useState("classic"); // classic | twoCol | centered | sidebar | modern
 
   const [showWizard, setShowWizard] = useState(false);
   const [wizardData, setWizardData] = useState(null);
@@ -290,6 +292,7 @@ export default function Home() {
 
   const TemplateView = useMemo(() => {
     switch (template) {
+      case "modern": return Modern;
       case "twoCol": return TwoCol;
       case "centered": return Centered;
       case "sidebar": return Sidebar;
@@ -307,7 +310,7 @@ export default function Home() {
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview, ATS PDF export, ATS optimized PDF"
+            content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview, ATS PDF export, ATS optimized PDF, modern resume template"
 
           />
       </Head>
@@ -402,7 +405,9 @@ export default function Home() {
                 <button className="tc-btn-quiet" onClick={startOver}>Upload New CV</button>
               </div>
               <div className="flex gap-2">
-                <button className="tc-btn-quiet" onClick={downloadCvPdf}>Download CV PDF</button>
+                {template !== "modern" && (
+                  <button className="tc-btn-quiet" onClick={downloadCvPdf}>Download CV PDF</button>
+                )}
                 <button className="tc-btn-quiet" onClick={downloadCvDocx}>Download CV DOCX</button>
                 <button className="tc-btn-quiet" onClick={downloadClPdf}>Download Cover Letter PDF</button>
                 <button className="tc-btn-quiet" onClick={downloadClDocx}>Download Cover Letter DOCX</button>
