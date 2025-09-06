@@ -73,6 +73,59 @@ async function extractJobSkills(client, jobDesc){
   return uniq;
 }
 
+// ---- NEW: dynamically expand skills with synonyms ----
+async function expandSkills(client, skills){
+  if(!skills || skills.length === 0) return [];
+  const sys = "Output ONLY JSON: {\\\"synonyms\\\": {<skill>: string[]}} For each SKILL in SKILLS, list up to three common keyword variants or synonyms that might appear in job postings.";
+  const user = `SKILLS:${JSON.stringify(skills)}`;
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  const out = safeJSON(r.choices?.[0]?.message?.content || "");
+  const map = out?.synonyms && typeof out.synonyms === 'object' ? out.synonyms : {};
+  const expanded = new Set(skills.map(s=>String(s).toLowerCase()));
+  for(const k of Object.keys(map)){
+    const list = Array.isArray(map[k]) ? map[k] : [];
+    list.forEach(x => expanded.add(String(x).toLowerCase()));
+  }
+  return Array.from(expanded);
+}
+
+// ---- NEW: post-process bullets with action verbs/metrics ----
+async function rewriteBullets(client, jobDesc, resumeContext, bullets){
+  if(!bullets || bullets.length === 0) return bullets;
+  const sys = "Output ONLY JSON: {\\\"bullets\\\": string[]} Rephrase BULLETS using strong action verbs, quantified outcomes, and relevant JOB_DESC keywords supported by RESUME_CONTEXT. Do not fabricate skills or experience. Keep each bullet under 25 words.";
+  const user = `JOB_DESC:\n${jobDesc}\nRESUME_CONTEXT:\n${resumeContext}\nBULLETS:${JSON.stringify(bullets)}`;
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  const out = safeJSON(r.choices?.[0]?.message?.content || "");
+  const arr = Array.isArray(out?.bullets) ? out.bullets.map(b=>String(b).trim()).filter(Boolean) : null;
+  return arr && arr.length === bullets.length ? arr : bullets;
+}
+
+// ---- NEW: verify rewritten bullets against resume ----
+async function verifyBullets(client, resumeContext, original, rewritten){
+  if(!rewritten || rewritten.length === 0) return rewritten;
+  const sys = "Output ONLY JSON: {\\\"valid\\\": boolean[]} For each bullet in NEW_BULLETS, return true if it is fully supported by RESUME_CONTEXT or ORIGINAL_BULLETS. Return false otherwise.";
+  const user = `RESUME_CONTEXT:\n${resumeContext}\nORIGINAL_BULLETS:${JSON.stringify(original)}\nNEW_BULLETS:${JSON.stringify(rewritten)}`;
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  const out = safeJSON(r.choices?.[0]?.message?.content || "");
+  const flags = Array.isArray(out?.valid) ? out.valid : [];
+  return rewritten.map((b,i)=> flags[i] ? b : original[i]);
+}
+
 async function coreHandler(req, res){
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
@@ -95,14 +148,16 @@ async function coreHandler(req, res){
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // Pass 1: résumé-only allow-list
-    const allowedSkills = resumeData
+    const allowedSkillsBase = resumeData
       ? (resumeData.skills || []).map(s=>String(s).toLowerCase())
       : await extractAllowedSkills(client, resumeText);
+    const allowedSkills = await expandSkills(client, allowedSkillsBase);
+    const expanded = new Set(allowedSkills);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
     // Pass 2: derive job-only skills
     const jobSkills = await extractJobSkills(client, jobDesc);
-    const jobOnlySkills = jobSkills.filter(s => !allowedSkills.includes(s));
+    const jobOnlySkills = jobSkills.filter(s => !expanded.has(s));
     const jobOnlySkillsCSV = jobOnlySkills.join(", ");
 
     // Pass 3: generate with hard constraints
@@ -114,7 +169,7 @@ You output ONLY JSON with keys:
 STRICT RULES:
 - Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
-- For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets should be concise accomplishment statements reworded to align with the job description.
+    - For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - The coverLetterText must adopt a ${tone} tone.
@@ -156,6 +211,13 @@ ${coverText}
     const allowed = new Set(allowedSkills);
     const rd = normalizeResumeData(json.resumeData || {});
     rd.skills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
+
+    const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
+    for (const exp of rd.experience || []) {
+      const originalBullets = exp.bullets || [];
+      const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);
+      exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
+    }
 
     const payload = {
       coverLetter: String(json.coverLetterText || ""),
