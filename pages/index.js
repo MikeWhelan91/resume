@@ -47,6 +47,7 @@ export default function Home() {
   const [resumePage, setResumePage] = useState(1);
   const [resumePageCount, setResumePageCount] = useState(1);
   const [fullScreen, setFullScreen] = useState(null); // null | 'resume' | 'cover'
+  const [exportMode, setExportMode] = useState("ats"); // default ATS-first
 
   useEffect(() => {
     const scroller = resumeScrollRef.current;
@@ -198,6 +199,33 @@ export default function Home() {
     document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
+  async function downloadAtsPdf() {
+    const data = (result?.resumeData || resumeData);
+    if (!data) return;
+    const res = await fetch("/api/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data,
+        template,
+        mode: exportMode, // "ats" by default; user can flip to "design" if you expose it
+        filename: `${data.name}-CV`
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      alert(err?.error || "Export failed");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(data.name || "resume")}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function downloadClDocx() {
     if (!result?.coverLetter) return;
     const r = await fetch("/api/export-cover-letter-docx", {
@@ -275,11 +303,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone and quick PDF and DOCX downloads. Reuse your CV for multiple job descriptions or upload a new one anytime, complete with live A4 resume and cover letter previews."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone and quick ATS-optimized PDF and DOCX downloads. Reuse your CV for multiple job descriptions or upload a new one anytime, complete with live A4 resume and cover letter previews."
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
+            content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview, ATS PDF export, ATS optimized PDF"
 
           />
       </Head>
@@ -378,6 +406,25 @@ export default function Home() {
                 <button className="tc-btn-quiet" onClick={downloadCvDocx}>Download CV DOCX</button>
                 <button className="tc-btn-quiet" onClick={downloadClPdf}>Download Cover Letter PDF</button>
                 <button className="tc-btn-quiet" onClick={downloadClDocx}>Download Cover Letter DOCX</button>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm opacity-70">Mode</label>
+                <select
+                  value={exportMode}
+                  onChange={e=>setExportMode(e.target.value)}
+                  className="border rounded-md px-2 py-1 text-sm"
+                  aria-label="Export mode"
+                >
+                  <option value="ats">ATS (recommended)</option>
+                  <option value="design">Design</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={downloadAtsPdf}
+                  className="px-3 py-1.5 rounded-md bg-teal-600 text-white"
+                >
+                  Download ATS PDF
+                </button>
               </div>
             </div>
           </section>

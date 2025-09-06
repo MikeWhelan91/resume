@@ -230,3 +230,9 @@
   background: #fff !important;
   transform: none !important;      /* ignore preview scale wrappers */
 }
+@media print {
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Prevent ugly breaks inside key blocks */
+  .resume section { page-break-inside: avoid; }
+  .resume h1, .resume h2, .resume h3 { page-break-after: avoid; }
+}
