@@ -90,6 +90,7 @@ function Education({ data }) {
             <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
             {detail ? <Text style={styles.muted}>{detail}</Text> : null}
             {dateRange ? <Text style={styles.muted}>{dateRange}</Text> : null}
+
           </View>
         );
       })}
@@ -122,6 +123,7 @@ function Experience({ data }) {
             ) : null}
             {x.role ? <Text>{x.role}</Text> : null}
             {dates ? <Text style={styles.muted}>{dates}</Text> : null}
+
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>

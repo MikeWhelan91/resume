@@ -36,6 +36,7 @@ export default function Classic({ data = {} }) {
           {x.role && <div>{x.role}</div>}
           {(x.start || x.end != null) && (
             <div className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</div>
+
           )}
           {x.location && <div className="muted">{x.location}</div>}
           {Array.isArray(x.bullets) && x.bullets.length > 0 && (
@@ -53,6 +54,7 @@ export default function Classic({ data = {} }) {
           )}
           {(e.start || e.end) && (
             <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>
+
           )}
         </div>
       ))}

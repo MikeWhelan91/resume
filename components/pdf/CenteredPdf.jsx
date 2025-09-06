@@ -110,6 +110,8 @@ function Experience({ data }) {
             ) : null}
             {x.role ? <Text>{x.role}</Text> : null}
             {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
+
+
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>
@@ -140,6 +142,7 @@ function Education({ data }) {
             ) : null}
             {detail ? <Text>{detail}</Text> : null}
             {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
+
           </View>
         );
       })}

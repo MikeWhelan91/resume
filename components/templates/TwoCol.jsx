@@ -40,6 +40,7 @@ export default function TwoCol({ data = {} }) {
                   <strong>{e.school}</strong>
                   {detail && <div>{detail}</div>}
                   {dateRange && <div className="muted">{dateRange}</div>}
+
                 </div>
               );
             })}
@@ -56,6 +57,7 @@ export default function TwoCol({ data = {} }) {
             {x.role && <div>{x.role}</div>}
             {(x.start || x.end != null) && (
               <div className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</div>
+
             )}
             {x.location && <div className="muted">{x.location}</div>}
             {Array.isArray(x.bullets) && x.bullets.length > 0 && (
