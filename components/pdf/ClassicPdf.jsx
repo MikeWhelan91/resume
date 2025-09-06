@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   muted: { color: "#64748b" },
   row: { flexDirection: "row", alignItems: "baseline" },
-  right: { marginLeft: "auto", color: "#64748b" }, // use this for dates
+  right: { marginLeft: "auto", color: "#64748b" }, // legacy; no longer used for dates
   pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6 },
   pill: {
     fontFamily: "InterMedium",
@@ -114,14 +114,14 @@ function Experience({ data }) {
     <View>
       <SectionTitle>Experience</SectionTitle>
       {xp.map((x, i) => {
-        const heading = [x.company, x.role].filter(Boolean).join(" — ");
         const dates = [x.start, x.end || "Present"].filter(Boolean).join(" – ");
         return (
           <View key={i} wrap={false}>
-            <View style={styles.row}>
-              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>
-              <Text style={{ fontStyle: "italic" }}>{dates}</Text>
-            </View>
+            {x.company ? (
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
+            ) : null}
+            {x.role ? <Text>{x.role}</Text> : null}
+            {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>
@@ -143,16 +143,15 @@ function Education({ data }) {
     <View>
       <SectionTitle>Education</SectionTitle>
       {ed.map((e, i) => {
-        const heading = [e.school, e.degree].filter(Boolean).join(" — ");
         const dates = [e.start, e.end].filter(Boolean).join(" – ");
-        const grade = e.grade ? ` • ${e.grade}` : "";
+        const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
         return (
           <View key={i} wrap={false} style={{ marginBottom: 4 }}>
-            <Text>
-              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>{" "}
-              <Text style={{ fontStyle: "italic" }}>{dates}</Text>
-              {grade}
-            </Text>
+            {e.school ? (
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
+            ) : null}
+            {detail ? <Text>{detail}</Text> : null}
+            {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
           </View>
         );
       })}
