@@ -109,6 +109,23 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   const arr = Array.isArray(out?.bullets) ? out.bullets.map(b=>String(b).trim()).filter(Boolean) : null;
   return arr && arr.length === bullets.length ? arr : bullets;
 }
+
+// ---- NEW: verify rewritten bullets against resume ----
+async function verifyBullets(client, resumeContext, original, rewritten){
+  if(!rewritten || rewritten.length === 0) return rewritten;
+  const sys = "Output ONLY JSON: {\\\"valid\\\": boolean[]} For each bullet in NEW_BULLETS, return true if it is fully supported by RESUME_CONTEXT or ORIGINAL_BULLETS. Return false otherwise.";
+  const user = `RESUME_CONTEXT:\n${resumeContext}\nORIGINAL_BULLETS:${JSON.stringify(original)}\nNEW_BULLETS:${JSON.stringify(rewritten)}`;
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  const out = safeJSON(r.choices?.[0]?.message?.content || "");
+  const flags = Array.isArray(out?.valid) ? out.valid : [];
+  return rewritten.map((b,i)=> flags[i] ? b : original[i]);
+}
+
 async function coreHandler(req, res){
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
@@ -197,7 +214,10 @@ ${coverText}
 
     const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
     for (const exp of rd.experience || []) {
-      exp.bullets = await rewriteBullets(client, jobDesc, resumeContext, exp.bullets || []);
+      const originalBullets = exp.bullets || [];
+      const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);
+      exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
+
     }
 
     const payload = {
