@@ -88,12 +88,9 @@ function Education({ data }) {
         return (
           <View key={i} style={{ marginBottom: 6 }}>
             <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
-            {(detail || dateRange) ? (
-              <View style={styles.row}>
-                {detail ? <Text style={styles.muted}>{detail}</Text> : null}
-                {dateRange ? <Text style={[styles.muted, { marginLeft: "auto" }]}>{dateRange}</Text> : null}
-              </View>
-            ) : null}
+            {detail ? <Text style={styles.muted}>{detail}</Text> : null}
+            {dateRange ? <Text style={styles.muted}>{dateRange}</Text> : null}
+
           </View>
         );
       })}
@@ -124,12 +121,9 @@ function Experience({ data }) {
             {x.company ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
             ) : null}
-            {(x.role || dates) ? (
-              <View style={styles.row}>
-                {x.role ? <Text>{x.role}</Text> : null}
-                {dates ? <Text style={{ fontStyle: "italic" }}>{dates}</Text> : null}
-              </View>
-            ) : null}
+            {x.role ? <Text>{x.role}</Text> : null}
+            {dates ? <Text style={styles.muted}>{dates}</Text> : null}
+
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>

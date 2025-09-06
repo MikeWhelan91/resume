@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   },
   muted: { color: "#64748b" },
   row: { flexDirection: "row", alignItems: "baseline" },
-  right: { marginLeft: "auto", color: "#64748b" },
+  right: { marginLeft: "auto", color: "#64748b" }, // legacy
   pillWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 6, justifyContent: "center" },
   pill: {
     fontFamily: "InterMedium",
@@ -108,12 +108,10 @@ function Experience({ data }) {
             {x.company ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
             ) : null}
-            {(x.role || dates) ? (
-              <View style={styles.row}>
-                {x.role ? <Text>{x.role}</Text> : null}
-                {dates ? <Text style={{ fontStyle: "italic" }}>{dates}</Text> : null}
-              </View>
-            ) : null}
+            {x.role ? <Text>{x.role}</Text> : null}
+            {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
+
+
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>
@@ -142,12 +140,9 @@ function Education({ data }) {
             {e.school ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
             ) : null}
-            {(detail || dates) ? (
-              <View style={styles.row}>
-                {detail ? <Text>{detail}</Text> : null}
-                {dates ? <Text style={{ fontStyle: "italic" }}>{dates}</Text> : null}
-              </View>
-            ) : null}
+            {detail ? <Text>{detail}</Text> : null}
+            {dates ? <Text style={{ color: "#64748b" }}>{dates}</Text> : null}
+
           </View>
         );
       })}

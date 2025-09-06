@@ -38,12 +38,9 @@ export default function TwoCol({ data = {} }) {
               return (
                 <div key={i}>
                   <strong>{e.school}</strong>
-                  {(detail || dateRange) && (
-                    <div className="row muted">
-                      <div>{detail}</div>
-                      {dateRange && <div>{dateRange}</div>}
-                    </div>
-                  )}
+                  {detail && <div>{detail}</div>}
+                  {dateRange && <div className="muted">{dateRange}</div>}
+
                 </div>
               );
             })}
@@ -57,13 +54,10 @@ export default function TwoCol({ data = {} }) {
         {exp.map((x, i) => (
           <section key={i}>
             {x.company && <strong>{x.company}</strong>}
-            {(x.role || x.start || x.end != null) && (
-              <div className="row">
-                {x.role && <div>{x.role}</div>}
-                {(x.start || x.end != null) && (
-                  <span className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</span>
-                )}
-              </div>
+            {x.role && <div>{x.role}</div>}
+            {(x.start || x.end != null) && (
+              <div className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</div>
+
             )}
             {x.location && <div className="muted">{x.location}</div>}
             {Array.isArray(x.bullets) && x.bullets.length > 0 && (
