@@ -217,6 +217,7 @@ ${coverText}
       const originalBullets = exp.bullets || [];
       const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);
       exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
+
     }
 
     const payload = {

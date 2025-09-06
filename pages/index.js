@@ -280,6 +280,7 @@ export default function Home() {
         <meta
           name="keywords"
             content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
+
           />
       </Head>
       <main className="tc-container tc-page">
