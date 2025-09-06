@@ -94,7 +94,7 @@ const schemas = {
   })
 };
 
-export default function ResumeWizard({ initialData, onCancel, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
+export default function ResumeWizard({ initialData, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
   const [step, setStep] = useState(0);
   const steps = ['basics', 'skills', 'work', 'education', 'template'];
 
@@ -313,18 +313,18 @@ export default function ResumeWizard({ initialData, onCancel, onComplete, autosa
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-t pt-4 pb-4">
+      <div className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-t pt-4 pb-4 px-4">
         <div className="flex items-center gap-4">
-          {onCancel && <button type="button" onClick={onCancel} className="text-sm text-zinc-600">Cancel</button>}
-          <div className="ml-auto flex gap-2">
-            {step > 0 && <button type="button" onClick={prev} className="px-4 h-10 rounded-md border">Back</button>}
-            {step < steps.length - 1 && (
-              <button type="button" onClick={next} disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Next</button>
-            )}
-            {step === steps.length - 1 && (
-              <button type="submit" disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Generate</button>
-            )}
+          <button type="button" onClick={prev} disabled={step === 0} className="px-4 h-10 rounded-md border disabled:opacity-50">Back</button>
+          <div className="flex-1 text-center text-sm text-zinc-600">
+            {step + 1}/{steps.length}
           </div>
+          {step < steps.length - 1 && (
+            <button type="button" onClick={next} disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Next</button>
+          )}
+          {step === steps.length - 1 && (
+            <button type="submit" disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Generate</button>
+          )}
         </div>
         {!isValid && message && <p className="text-xs text-red-600 mt-1">{message}</p>}
       </div>

@@ -297,7 +297,6 @@ export default function Home() {
             {showWizard && (
               <ResumeWizard
                 initialData={wizardData}
-                onCancel={()=>setShowWizard(false)}
                 onComplete={handleWizardComplete}
                 autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
                 template={template}
