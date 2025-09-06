@@ -84,11 +84,16 @@ function Education({ data }) {
       <Text style={styles.h2}>Education</Text>
       {ed.map((e, i) => {
         const dateRange = [e.start, e.end].filter(Boolean).join(" – ");
-        const detail = [e.degree, e.grade, dateRange].filter(Boolean).join(" • ");
+        const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
         return (
           <View key={i} style={{ marginBottom: 6 }}>
             <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
-            {detail ? <Text style={styles.muted}>{detail}</Text> : null}
+            {(detail || dateRange) ? (
+              <View style={styles.row}>
+                {detail ? <Text style={styles.muted}>{detail}</Text> : null}
+                {dateRange ? <Text style={[styles.muted, { marginLeft: "auto" }]}>{dateRange}</Text> : null}
+              </View>
+            ) : null}
           </View>
         );
       })}
@@ -113,14 +118,18 @@ function Experience({ data }) {
     <View>
       <Text style={styles.h2}>Experience</Text>
       {xp.map((x, i) => {
-        const heading = [x.company, x.role].filter(Boolean).join(" — ");
         const dates = [x.start, x.end || "Present"].filter(Boolean).join(" – ");
         return (
           <View key={i} wrap={false}>
-            <View style={styles.row}>
-              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{heading}</Text>
-              <Text style={{ fontStyle: "italic" }}>{dates}</Text>
-            </View>
+            {x.company ? (
+              <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
+            ) : null}
+            {(x.role || dates) ? (
+              <View style={styles.row}>
+                {x.role ? <Text>{x.role}</Text> : null}
+                {dates ? <Text style={{ fontStyle: "italic" }}>{dates}</Text> : null}
+              </View>
+            ) : null}
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
                 <Text key={j} style={styles.li}>

@@ -32,9 +32,10 @@ export default function Classic({ data = {} }) {
       {exp.length > 0 && <h2>Experience</h2>}
       {exp.map((x, i) => (
         <section key={i}>
-          {(x.company || x.role || x.start || x.end) && (
+          {x.company && <strong>{x.company}</strong>}
+          {(x.role || x.start || x.end != null) && (
             <div className="row">
-              <strong>{[x.company, x.role].filter(Boolean).join(" — ")}</strong>
+              {x.role && <div>{x.role}</div>}
               {(x.start || x.end != null) && (
                 <span className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</span>
               )}
@@ -49,14 +50,15 @@ export default function Classic({ data = {} }) {
 
       {edu.length > 0 && <h2>Education</h2>}
       {edu.map((e, i) => (
-        <div className="row" key={i}>
-          <div>
-            <strong>{e.school}</strong>
-            {e.degree ? ` — ${e.degree}` : ""}
-            {e.grade ? ` — ${e.grade}` : ""}
-          </div>
-          {(e.start || e.end) && (
-            <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>
+        <div key={i}>
+          {e.school && <strong>{e.school}</strong>}
+          {(e.degree || e.grade || e.start || e.end) && (
+            <div className="row">
+              <div>{[e.degree, e.grade].filter(Boolean).join(" — ")}</div>
+              {(e.start || e.end) && (
+                <div className="muted">{fmt(e.start)} – {fmt(e.end)}</div>
+              )}
+            </div>
           )}
         </div>
       ))}

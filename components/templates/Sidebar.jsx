@@ -34,12 +34,16 @@ export default function Sidebar({ data = {} }) {
               const dateRange = [e.start && fmt(e.start), e.end && fmt(e.end)]
                 .filter(Boolean)
                 .join(" – ");
+              const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
               return (
                 <div key={i}>
                   <strong>{e.school}</strong>
-                  <div className="muted">
-                    {[e.degree, e.grade, dateRange].filter(Boolean).join(" • ")}
-                  </div>
+                  {(detail || dateRange) && (
+                    <div className="row muted">
+                      <div>{detail}</div>
+                      {dateRange && <div>{dateRange}</div>}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -52,9 +56,10 @@ export default function Sidebar({ data = {} }) {
         {exp.length > 0 && <h2>Experience</h2>}
         {exp.map((x, i) => (
           <section key={i}>
-            {(x.company || x.role || x.start || x.end) && (
+            {x.company && <strong>{x.company}</strong>}
+            {(x.role || x.start || x.end != null) && (
               <div className="row">
-                <strong>{[x.company, x.role].filter(Boolean).join(" — ")}</strong>
+                {x.role && <div>{x.role}</div>}
                 {(x.start || x.end != null) && (
                   <span className="muted">{fmt(x.start)} – {x.end == null ? "Present" : fmt(x.end)}</span>
                 )}
