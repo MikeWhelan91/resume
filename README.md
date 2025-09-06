@@ -10,6 +10,7 @@ Notes:
 - 20MB upload limit; supported: PDF, DOCX, TXT.
 - API is rate-limited (10 req/min/IP).
 - Generated resumes only include skills, titles, and locations that appear in your provided resume data.
+ - Cross-references job description skills with your resume so cover letters only mention verified abilities and highlight willingness to learn any missing skills.
 
 ## Export
 - PDF export uses @react-pdf/renderer for vector, selectable-text PDFs.

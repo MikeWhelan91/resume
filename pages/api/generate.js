@@ -57,6 +57,22 @@ async function extractAllowedSkills(client, resumeText){
   return uniq;
 }
 
+// ---- NEW: inventory skills from job description ----
+async function extractJobSkills(client, jobDesc){
+  const sys = "Output ONLY JSON: {\\\"skills\\\": string[]} Extract skills explicitly mentioned IN THE JOB DESCRIPTION ONLY. No guessing or synonyms.";
+  const user = `JOB_DESCRIPTION:\n${jobDesc}`;
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  const inv = safeJSON(r.choices?.[0]?.message?.content || "") || {};
+  const skills = Array.isArray(inv.skills) ? inv.skills.map(s=>String(s).trim()).filter(Boolean) : [];
+  const uniq = Array.from(new Set(skills.map(s=>s.toLowerCase())));
+  return uniq;
+}
+
 async function coreHandler(req, res){
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
@@ -84,7 +100,12 @@ async function coreHandler(req, res){
       : await extractAllowedSkills(client, resumeText);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
-    // Pass 2: generate with hard constraints
+    // Pass 2: derive job-only skills
+    const jobSkills = await extractJobSkills(client, jobDesc);
+    const jobOnlySkills = jobSkills.filter(s => !allowedSkills.includes(s));
+    const jobOnlySkillsCSV = jobOnlySkills.join(", ");
+
+    // Pass 3: generate with hard constraints
     const system = `
 You output ONLY JSON with keys:
 - coverLetterText: string
@@ -95,11 +116,12 @@ STRICT RULES:
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
 - For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets should be concise accomplishment statements reworded to align with the job description.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
-- The coverLetterText MUST NOT claim direct experience with non-allowed skills. Use phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
+- The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - The coverLetterText must adopt a ${tone} tone.
 - The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
 - Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
 ALLOWED_SKILLS: ${allowedSkillsCSV}
+JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
 `.trim();
 
     const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
