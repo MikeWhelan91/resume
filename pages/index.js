@@ -51,6 +51,11 @@ export default function Home() {
   const [fullScreen, setFullScreen] = useState(null); // null | 'resume' | 'cover'
   const [exportMode, setExportMode] = useState("ats"); // default ATS-first
 
+  // --- Resizer + menu state ---
+  const [leftPct, setLeftPct] = useState(50);      // 50/50 start
+  const [dragging, setDragging] = useState(false);
+  const [docxOpen, setDocxOpen] = useState(false);
+
   useEffect(() => {
     const scroller = resumeScrollRef.current;
     if (!scroller) return;
@@ -84,6 +89,35 @@ export default function Home() {
     }
     return () => window.removeEventListener("keydown", handleKey);
   }, [fullScreen]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e) => {
+      const grid = document.querySelector(".workspace");
+      if (!grid) return;
+      const rect = grid.getBoundingClientRect();
+      const x = Math.min(Math.max(e.clientX - rect.left, 200), rect.width - 200);
+      const pct = Math.round((x / rect.width) * 100);
+      setLeftPct(Math.min(Math.max(pct, 25), 75)); // clamp 25..75
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [dragging]);
+
+  // Close DOCX menu on outside click
+  useEffect(() => {
+    const close = (e) => {
+      const m = document.querySelector(".menu");
+      if (m && !m.contains(e.target)) setDocxOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
 
   function pageResume(dir) {
     const scroller = resumeScrollRef.current;
@@ -314,73 +348,39 @@ export default function Home() {
 
           />
       </Head>
-      <main className="tc-container tc-page">
-        {phase === 'entry' && (
-          <section className="space-y-4">
-            {!showWizard && (
-              <div className="space-y-3">
-                <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} className="hidden" onChange={handleFileInput} />
-                <div className="flex flex-col gap-2">
-                  <button type="button" className="tc-btn-primary" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
-                  <button type="button" className="tc-btn-quiet" onClick={startFromScratch}>Build from scratch</button>
-                </div>
-              </div>
-            )}
-            {showWizard && (
-              <ResumeWizard
-                initialData={wizardData}
-                onComplete={handleWizardComplete}
-                autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
-                template={template}
-                onTemplateChange={setTemplate}
-                templateInfo={TEMPLATE_INFO}
-              />
-            )}
-          </section>
-        )}
-
-        {phase === 'target' && resumeData && (
-          <section className="space-y-4">
-            <textarea
-              className="tc-textarea"
-              value={jobDesc}
-              onChange={e => setJobDesc(e.target.value)}
-              placeholder="Paste the job description"
-            />
-            <label className="block">
-              <span className="text-sm">Cover Letter Tone</span>
-              <select
-                className="tc-input mt-1"
-                value={coverTone}
-                onChange={e => setCoverTone(e.target.value)}
-              >
-                <option value="professional">Professional</option>
-                <option value="friendly">Friendly</option>
-                <option value="enthusiastic">Enthusiastic</option>
-              </select>
-            </label>
-            <div className="tc-sticky flex justify-between">
-              <button type="button" className="tc-btn-quiet" onClick={()=>setJobDesc('')}>Clear JD</button>
-              <button type="button" className="tc-btn-primary" onClick={()=>generateFromData(resumeData, jobDesc, coverTone)}>Generate CV + Cover Letter</button>
-            </div>
-          </section>
-        )}
-
-        {phase === 'results' && result && (
-          <section className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="tc-paper cursor-pointer" onClick={() => setFullScreen('resume')}>
+      {phase === 'results' && result ? (
+        <div className="shell">
+          <main
+            className="workspace"
+            style={{
+              ["--left"]: `minmax(320px, ${leftPct}%)`,
+              ["--right"]: `minmax(320px, ${100 - leftPct}%)`,
+            }}
+          >
+            <section className="pane cursor-pointer" onClick={() => setFullScreen('resume')}>
+              <div className="preview" ref={resumeScrollRef}>
                 <div className="a4-scale">
                   <div className="a4">
                     <div className="a4-inner">
-                      <div className="a4-scroll" ref={resumeScrollRef}>
+                      <div className="a4-scroll">
                         <TemplateView data={result.resumeData} />
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="tc-paper cursor-pointer" onClick={() => setFullScreen('cover')}>
+            </section>
+
+            <div
+              className={`splitter ${dragging ? "active" : ""}`}
+              onMouseDown={() => setDragging(true)}
+              title="Drag to resize"
+              role="separator"
+              aria-orientation="vertical"
+            />
+
+            <section className="pane cursor-pointer" onClick={() => setFullScreen('cover')}>
+              <div className="preview">
                 <div className="a4-scale">
                   <div className="a4">
                     <div className="a4-inner">
@@ -398,45 +398,102 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="tc-sticky flex flex-wrap gap-3 justify-between">
-              <div className="flex gap-2">
-                <button className="tc-btn-quiet" onClick={newJob}>New Job Description</button>
-                <button className="tc-btn-quiet" onClick={startOver}>Upload New CV</button>
-              </div>
-              <div className="flex gap-2">
-                {template !== "modern" && (
-                  <button className="tc-btn-quiet" onClick={downloadCvPdf}>Download CV PDF</button>
-                )}
-                <button className="tc-btn-quiet" onClick={downloadCvDocx}>Download CV DOCX</button>
-                <button className="tc-btn-quiet" onClick={downloadClPdf}>Download Cover Letter PDF</button>
-                <button className="tc-btn-quiet" onClick={downloadClDocx}>Download Cover Letter DOCX</button>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm opacity-70">Mode</label>
-                <select
-                  value={exportMode}
-                  onChange={e=>setExportMode(e.target.value)}
-                  className="border rounded-md px-2 py-1 text-sm"
-                  aria-label="Export mode"
-                >
-                  <option value="ats">ATS (recommended)</option>
-                  <option value="design">Design</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={downloadAtsPdf}
-                  className="px-3 py-1.5 rounded-md bg-teal-600 text-white"
-                >
-                  Download ATS PDF
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
+            </section>
+          </main>
 
-        {error && <div className="text-red-600 mt-4">{error}</div>}
-      </main>
+          <div className="toolbar">
+            <div className="group">
+              <button className="btn" onClick={newJob}>New Job Description</button>
+              <button className="btn" onClick={startOver}>Upload New CV</button>
+            </div>
+
+            <div className="group">
+              {/* DOCX dropdown */}
+              <div className={`menu ${docxOpen ? "open" : ""}`}>
+                <button type="button" className="menu-btn" onClick={() => setDocxOpen(v=>!v)} aria-haspopup="menu" aria-expanded={docxOpen}>
+                  Export DOCX ▾
+                </button>
+                <div className="menu-pop" role="menu">
+                  <button className="menu-item" role="menuitem" onClick={() => { setDocxOpen(false); downloadCvDocx(); }}>
+                    Download CV as DOCX
+                  </button>
+                  <button className="menu-item" role="menuitem" onClick={() => { setDocxOpen(false); downloadClDocx(); }}>
+                    Download Cover Letter as DOCX
+                  </button>
+                </div>
+              </div>
+
+              {template !== "modern" && (
+                <button className="btn" onClick={downloadCvPdf}>Download CV PDF</button>
+              )}
+              <button className="btn" onClick={downloadClPdf}>Download Cover Letter PDF</button>
+
+              <label className="btn-ghost" style={{marginLeft:8}}>Mode</label>
+              <select className="select" value={exportMode} onChange={e=>setExportMode(e.target.value)}>
+                <option value="ats">ATS (recommended)</option>
+                <option value="design">Design</option>
+              </select>
+
+              <button className="btn btn-primary" onClick={downloadAtsPdf}>Download ATS PDF</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <main className="tc-container tc-page">
+          {phase === 'entry' && (
+            <section className="space-y-4">
+              {!showWizard && (
+                <div className="space-y-3">
+                  <input type="file" accept=".pdf,.docx,.txt" ref={fileInputRef} className="hidden" onChange={handleFileInput} />
+                  <div className="flex flex-col gap-2">
+                    <button type="button" className="tc-btn-primary" onClick={()=>fileInputRef.current?.click()}>Upload CV</button>
+                    <button type="button" className="tc-btn-quiet" onClick={startFromScratch}>Build from scratch</button>
+                  </div>
+                </div>
+              )}
+              {showWizard && (
+                <ResumeWizard
+                  initialData={wizardData}
+                  onComplete={handleWizardComplete}
+                  autosaveKey={isScratch ? 'resumeBuilderDraft' : undefined}
+                  template={template}
+                  onTemplateChange={setTemplate}
+                  templateInfo={TEMPLATE_INFO}
+                />
+              )}
+            </section>
+          )}
+
+          {phase === 'target' && resumeData && (
+            <section className="space-y-4">
+              <textarea
+                className="tc-textarea"
+                value={jobDesc}
+                onChange={e => setJobDesc(e.target.value)}
+                placeholder="Paste the job description"
+              />
+              <label className="block">
+                <span className="text-sm">Cover Letter Tone</span>
+                <select
+                  className="tc-input mt-1"
+                  value={coverTone}
+                  onChange={e => setCoverTone(e.target.value)}
+                >
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="enthusiastic">Enthusiastic</option>
+                </select>
+              </label>
+              <div className="tc-sticky flex justify-between">
+                <button type="button" className="tc-btn-quiet" onClick={()=>setJobDesc('')}>Clear JD</button>
+                <button type="button" className="tc-btn-primary" onClick={()=>generateFromData(resumeData, jobDesc, coverTone)}>Generate CV + Cover Letter</button>
+              </div>
+            </section>
+          )}
+
+          {error && <div className="text-red-600 mt-4">{error}</div>}
+        </main>
+      )}
 
       {loading && (
         <div className="fixed inset-0 z-[var(--tc-z-overlay)] backdrop-blur bg-bg/80 flex items-center justify-center">

@@ -255,7 +255,7 @@
 
 .modern-left, .modern-right { display: flex; flex-direction: column; gap: 14px; }
 
-.modern-section { break-inside: avoid; }
+.modern-section { break-inside: auto; } /* do not block page breaking globally */
 .modern-h2 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #374151; margin: 0 0 6px; }
 .modern-p { margin: 0; font-size: 13px; color: #111827; }
 
@@ -291,3 +291,24 @@
 /* Design mode (subtle accents); ATS mode strips via .ats-mode overrides */
 :not(.ats-mode) .paper.modern .modern-h2 { color: #0ea5a6; }
 /* ==== End Modern Template ==== */
+
+/* ==== Modern ATS print fixes ==== */
+@media print {
+  /* Stack columns in print to avoid grid pagination bugs */
+  .paper.modern .modern-grid{ display:block !important; }
+  .paper.modern .modern-left,
+  .paper.modern .modern-right{ display:block !important; break-inside:auto !important; }
+
+  /* Only prevent breaks on small items, not entire sections */
+  .paper.modern .modern-edu-item,
+  .paper.modern .modern-exp-item{ break-inside: avoid; }
+
+  /* Tighten spacing in ATS to reduce overflow */
+  .paper.modern{ padding:16mm 14mm; } /* aligns with exporter margins */
+  .paper.modern .modern-header{ margin-bottom:8px; }
+  .paper.modern .modern-grid{ gap:12px !important; }
+  .paper.modern .modern-left, .paper.modern .modern-right{ gap:10px !important; }
+  .paper.modern .modern-bullets{ margin-top:4px !important; }
+}
+/* ATS overrides already force monochrome; keep them. */
+/* ==== /Modern ATS print fixes ==== */

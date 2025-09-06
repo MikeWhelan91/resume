@@ -132,3 +132,79 @@ pre { max-height: 70vh; overflow: auto; padding: 1rem; background: #f9f9f9; font
 @font-face { font-family: "InterLocal"; src: url("/fonts/Inter-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: block; }
 html, body { font-family: "InterLocal", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
 * { font-synthesis: none; }
+
+/* ==== Layout polish, toolbar, menu, splitter ==== */
+:root{
+  --ink:#111827; --muted:#6b7280; --border:#e5e7eb; --bg:#f7f7f9; --accent:#0ea5a6;
+  --radius:14px; --space:16px; --space-sm:10px;
+}
+html,body{ background: var(--bg); color: var(--ink); }
+
+.shell{ max-width:1280px; margin:24px auto 120px; padding:0 20px; }
+
+/* 3 tracks: left | splitter | right; the widths are set inline via CSS vars */
+.workspace{
+  display:grid; align-items:start; gap:24px;
+  grid-template-columns: var(--left, 1fr) 8px var(--right, 1fr);
+}
+
+.pane{
+  background:#fff; border:1px solid var(--border);
+  border-radius:var(--radius); box-shadow:0 2px 12px rgba(0,0,0,.06);
+  padding:18px; min-width:0;
+}
+.preview{ height: calc(100vh - 220px); overflow:auto; border-radius:12px; }
+
+/* Sticky actions bar */
+.toolbar{
+  position:sticky; bottom:12px; inset-inline:0;
+  display:flex; justify-content:space-between; gap:16px;
+  background:rgba(255,255,255,.8); backdrop-filter:blur(8px);
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px; margin:18px auto 0; max-width:1280px;
+}
+.group{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+.btn{
+  appearance:none; border:1px solid var(--border); background:#fff; color:var(--ink);
+  padding:10px 14px; border-radius:999px; font-size:14px; line-height:1; cursor:pointer;
+}
+.btn:hover{ border-color:#d1d5db; }
+.btn-primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover{ filter:brightness(.95); }
+.btn-ghost{ background:transparent; border:0; color:var(--muted); }
+
+.select{ border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-size:14px; background:#fff; }
+
+/* Dropdown menu (for DOCX) */
+.menu{ position:relative; }
+.menu-btn{ appearance:none; border:1px solid var(--border); background:#fff; color:var(--ink);
+  padding:10px 14px; border-radius:999px; font-size:14px; line-height:1; cursor:pointer;
+}
+.menu-btn:hover{ border-color:#d1d5db; }
+.menu-pop{
+  position:absolute; right:0; top:calc(100% + 6px); z-index:20;
+  background:#fff; border:1px solid var(--border); border-radius:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12); min-width:220px; padding:6px; display:none;
+}
+.menu.open .menu-pop{ display:block; }
+.menu-item{
+  width:100%; text-align:left; padding:10px 12px; border-radius:10px; font-size:14px;
+  background:transparent; border:0; cursor:pointer; color:var(--ink);
+}
+.menu-item:hover{ background:#f3f4f6; }
+
+/* Splitter between panes */
+.splitter{
+  width:8px; align-self:stretch; cursor:col-resize; position:relative; user-select:none; background:transparent;
+}
+.splitter::after{ content:""; position:absolute; left:3px; top:0; bottom:0; width:2px; background:var(--border); }
+.splitter.active::after{ background:var(--accent); }
+
+/* Mobile: single column, no splitter */
+@media (max-width:1024px){
+  .workspace{ grid-template-columns:1fr; }
+  .splitter{ display:none; }
+  .preview{ height: calc(100vh - 260px); }
+}
+/* ==== /Layout ==== */
