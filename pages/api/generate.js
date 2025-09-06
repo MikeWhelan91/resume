@@ -71,6 +71,7 @@ async function coreHandler(req, res){
     const resumeText = resumeData ? "" : await extractTextFromFile(files?.resume);
     const coverText  = await extractTextFromFile(files?.coverLetter);
     const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
+    const tone       = Array.isArray(fields?.tone) ? fields.tone[0] : (fields?.tone || "professional");
 
     if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
     if (!jobDesc || jobDesc.trim().length < 30) return res.status(400).json({ error:"Job description too short", code:"E_BAD_INPUT" });
@@ -95,6 +96,8 @@ STRICT RULES:
 - For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets should be concise accomplishment statements reworded to align with the job description.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. Use phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
+- The coverLetterText must adopt a ${tone} tone.
+- The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
 - Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 `.trim();
@@ -102,6 +105,9 @@ ALLOWED_SKILLS: ${allowedSkillsCSV}
     const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
     const user = `
 Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
+
+Cover Letter Tone:
+${tone}
 
 Job Description:
 ${jobDesc}

@@ -40,6 +40,7 @@ export default function Home() {
   const [isScratch, setIsScratch] = useState(false);
   const [resumeData, setResumeData] = useState(null);
   const [jobDesc, setJobDesc] = useState("");
+  const [coverTone, setCoverTone] = useState("professional");
   const [phase, setPhase] = useState("entry"); // entry | target | results
 
   const resumeScrollRef = useRef(null);
@@ -135,6 +136,7 @@ export default function Home() {
     setResumeData(null);
     setResult(null);
     setJobDesc("");
+    setCoverTone("professional");
     setShowWizard(false);
     setWizardData(null);
     setIsScratch(false);
@@ -145,11 +147,12 @@ export default function Home() {
   function newJob(){
     setResult(null);
     setJobDesc("");
+    setCoverTone("professional");
     setError("");
     setPhase("target");
   }
 
-  async function generateFromData(resumeData, jobDesc){
+  async function generateFromData(resumeData, jobDesc, coverTone){
     setError(""); setResult(null);
     if(!jobDesc.trim()) return setError("Please paste a job description.");
     try{
@@ -157,6 +160,7 @@ export default function Home() {
       const fd = new FormData();
       fd.append("resumeData", JSON.stringify(resumeData));
       fd.append("jobDesc", jobDesc);
+      fd.append("tone", coverTone);
       const res = await fetch("/api/generate", { method:"POST", body: fd });
       const data = await res.json();
       if(!res.ok) throw new Error(data?.error || "Generation failed");
@@ -271,11 +275,11 @@ export default function Home() {
         <title>TailorCV - Build or Upload a Résumé</title>
         <meta
           name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with quick PDF and DOCX downloads. Reuse your CV for multiple job descriptions or upload a new one anytime, complete with live A4 resume and cover letter previews."
+          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters with selectable tone and quick PDF and DOCX downloads. Reuse your CV for multiple job descriptions or upload a new one anytime, complete with live A4 resume and cover letter previews."
         />
         <meta
           name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
+            content="AI resume builder, cover letter generator, job description tailoring, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview"
           />
       </Head>
       <main className="tc-container tc-page">
@@ -312,9 +316,21 @@ export default function Home() {
               onChange={e => setJobDesc(e.target.value)}
               placeholder="Paste the job description"
             />
+            <label className="block">
+              <span className="text-sm">Cover Letter Tone</span>
+              <select
+                className="tc-input mt-1"
+                value={coverTone}
+                onChange={e => setCoverTone(e.target.value)}
+              >
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly</option>
+                <option value="enthusiastic">Enthusiastic</option>
+              </select>
+            </label>
             <div className="tc-sticky flex justify-between">
               <button type="button" className="tc-btn-quiet" onClick={()=>setJobDesc('')}>Clear JD</button>
-              <button type="button" className="tc-btn-primary" onClick={()=>generateFromData(resumeData, jobDesc)}>Generate CV + Cover Letter</button>
+              <button type="button" className="tc-btn-primary" onClick={()=>generateFromData(resumeData, jobDesc, coverTone)}>Generate CV + Cover Letter</button>
             </div>
           </section>
         )}
