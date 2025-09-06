@@ -14,6 +14,7 @@ export default function PageViewport({ children, ariaLabel = "Preview" }) {
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1);
+  const A4_HEIGHT = 1123;
 
   // Measure pages & scale to fit width
   const recompute = () => {
@@ -25,23 +26,24 @@ export default function PageViewport({ children, ariaLabel = "Preview" }) {
     if (paper) {
       // Reset scale to measure the intrinsic width
       paper.style.setProperty("--pv-scale", "1");
-      // Use scrollWidth to avoid current transforms
       const paperW = paper.scrollWidth || paper.getBoundingClientRect().width;
       const pad = 16; // small safety padding
       const targetW = el.clientWidth - pad;
       const s = paperW ? Math.min(1.1, Math.max(0.6, targetW / paperW)) : 1; // cap to avoid over/under scaling
       setScale(s);
       paper.style.setProperty("--pv-scale", String(s));
+
+      // Force viewport to match A4 aspect height after scaling
+      el.style.height = `${A4_HEIGHT * s}px`;
+
+      // Total pages based on A4 height
+      const total = Math.max(1, Math.ceil(paper.scrollHeight / A4_HEIGHT));
+      setPages(total);
+
+      // Sync current page to scrollTop
+      const current = Math.min(total, Math.max(1, Math.round(el.scrollTop / el.clientHeight) + 1));
+      setPage(current);
     }
-
-    // Set page count based on scroll height vs client height
-    // (after scaling, so clientHeight is one "page")
-    const total = Math.max(1, Math.round(el.scrollHeight / el.clientHeight));
-    setPages(total);
-
-    // Sync current page to scrollTop
-    const current = Math.min(total, Math.max(1, Math.round(el.scrollTop / el.clientHeight) + 1));
-    setPage(current);
   };
 
   useLayoutEffect(recompute, []);
@@ -78,8 +80,8 @@ export default function PageViewport({ children, ariaLabel = "Preview" }) {
   const prev = () => scrollToPage(page - 1);
 
   const onKeyDown = (e) => {
-    if (e.key === "ArrowDown" || e.key === "PageDown") { e.preventDefault(); next(); }
-    if (e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); prev(); }
+    if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); next(); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); prev(); }
   };
 
   return (
@@ -99,9 +101,9 @@ export default function PageViewport({ children, ariaLabel = "Preview" }) {
 
       {pages > 1 && (
         <>
-          <button type="button" className="pager-arrow up" onClick={prev} aria-label="Previous page" disabled={page <= 1}>▲</button>
+          <button type="button" className="pager-arrow left" onClick={prev} aria-label="Previous page" disabled={page <= 1}>◀</button>
           <div className="pager-indicator" aria-live="polite">{page} / {pages}</div>
-          <button type="button" className="pager-arrow down" onClick={next} aria-label="Next page" disabled={page >= pages}>▼</button>
+          <button type="button" className="pager-arrow right" onClick={next} aria-label="Next page" disabled={page >= pages}>▶</button>
         </>
       )}
     </div>
