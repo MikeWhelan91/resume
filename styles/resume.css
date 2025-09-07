@@ -100,9 +100,9 @@
 .pager {
   position: absolute;
   top: 50%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--pv-width, 100%);
   display: flex;
   justify-content: space-between;
   padding: 0 8px;
