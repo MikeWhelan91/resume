@@ -15,4 +15,4 @@ Notes:
 ## Export
 - PDF export uses @react-pdf/renderer for vector, selectable-text PDFs.
 - DOCX export unchanged.
-- HTML preview remains the same.
+- HTML preview rebuilt for reliability.

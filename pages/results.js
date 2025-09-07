@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
-import PreviewPane from '../components/ui/PreviewPane';
+import Preview from '../components/ui/Preview';
 import Classic from '../components/templates/Classic';
 import TwoCol from '../components/templates/TwoCol';
 import Centered from '../components/templates/Centered';
@@ -107,7 +107,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and export your tailored CV and cover letter with responsive side-by-side and fullscreen A4 previews, customizable templates, themes, density, and ATS-friendly mode."
+          content="View and export your tailored CV and cover letter with responsive A4 display, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
@@ -133,10 +133,10 @@ export default function ResultsPage(){
         right={
           <div className="grid gap-6 md:grid-cols-2">
             <div className="pane">
-              <PreviewPane content={resumePages} page={page} onPageChange={setPage} />
+              <Preview pages={resumePages} page={page} onPageChange={setPage} />
             </div>
             <div className="pane">
-              <PreviewPane content={[coverPage]} />
+              <Preview pages={[coverPage]} />
             </div>
           </div>
         }
