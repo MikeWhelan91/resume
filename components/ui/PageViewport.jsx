@@ -42,6 +42,8 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       const sH = paperH ? Math.min(1, viewportH / paperH) : 1;
       const s = Math.min(sW, sH);
       paper.style.setProperty("--pv-scale", String(s));
+      // expose scaled width for overlay positioning
+      el.style.setProperty("--pv-width", `${paperW * s}px`);
       // Adjust wrapper height to scaled paper height
       el.style.height = `${paperH * s}px`;
     }

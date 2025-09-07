@@ -212,6 +212,7 @@ html,body{ background: var(--bg); color: var(--ink); }
   border-radius:12px;
   overflow:visible;
   cursor: zoom-in;
+  position: relative; /* anchor pager overlay */
 }
 /* Base A4 paper dimensions */
 .paper{
