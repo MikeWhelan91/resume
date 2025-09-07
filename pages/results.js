@@ -107,7 +107,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and export your tailored CV and cover letter with responsive, fullscreen A4 previews, customizable templates, themes, density, and ATS-friendly mode."
+          content="Preview and export your tailored CV and cover letter with responsive side-by-side and fullscreen A4 previews, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
@@ -131,7 +131,7 @@ export default function ResultsPage(){
           />
         }
         right={
-          <div className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
             <div className="pane">
               <PreviewPane content={resumePages} page={page} onPageChange={setPage} />
             </div>
