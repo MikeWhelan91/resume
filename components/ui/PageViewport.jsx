@@ -33,8 +33,8 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
     if (paper) {
       paper.style.setProperty("--pv-scale", "1");
       const rect = paper.getBoundingClientRect();
-      const paperW = paper.scrollWidth || rect.width;
-      const paperH = paper.scrollHeight || rect.height;
+      const paperW = paper.scrollWidth || rect.width || 794;
+      const paperH = paper.scrollHeight || rect.height || 1123;
       const pad = 0; // no extra padding; preview should fill container
       const containerW = fullscreenMode
         ? window.innerWidth
@@ -56,13 +56,21 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       // enforce wrapper dimensions to match scaled paper
       el.style.width = `${scaledW}px`;
       el.style.height = `${scaledH}px`;
+
+      // if dimensions are zero, try again on next frame once layout settles
+      if (!scaledW || !scaledH) {
+        requestAnimationFrame(() => recompute(el, fullscreenMode));
+      }
     }
   };
 
-  useLayoutEffect(() => recompute(wrapperRef.current), []);
+  useLayoutEffect(() => recompute(wrapperRef.current), [children]);
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
+    const doRecompute = () => recompute(el);
+    doRecompute();
+    requestAnimationFrame(doRecompute);
     const ro = new ResizeObserver(() => recompute(el));
     ro.observe(el);
     const parent = el.parentElement;
@@ -82,14 +90,16 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       window.removeEventListener("resize", handle);
       window.removeEventListener("keydown", key);
     };
-  }, [page, pageCount, onPageChange, fullscreen]);
+  }, [children, page, pageCount, onPageChange, fullscreen]);
 
   // recompute when fullscreen is active
   useEffect(() => {
     if (!fullscreen) return;
     const el = fsRef.current;
     if (!el) return;
-    recompute(el, true);
+    const doRecompute = () => recompute(el, true);
+    doRecompute();
+    requestAnimationFrame(doRecompute);
     const ro = new ResizeObserver(() => recompute(el, true));
     ro.observe(el);
     const paper = el.querySelector(".paper");
@@ -100,7 +110,7 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       ro.disconnect();
       window.removeEventListener("resize", handle);
     };
-  }, [fullscreen, page, pageCount]);
+  }, [fullscreen, page, pageCount, children]);
 
   useEffect(() => {
     if (fullscreen) document.body.style.overflow = "hidden";
