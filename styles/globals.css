@@ -196,7 +196,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 
 /* ==== /Layout ==== */
 /* ==== Side-by-side fit-to-width A4 previews ==== */
-.shell{ max-width: 1360px; margin:24px auto 120px; padding:0 20px; } /* widen to reduce outer deadspace */
+.shell{ max-width: 1360px; margin:24px auto 48px; padding:0 20px; } /* widen to reduce outer deadspace */
 .workspace{
   display:grid; align-items:start; gap:24px;
   grid-template-columns: 1fr 1fr; /* keep two panes */
