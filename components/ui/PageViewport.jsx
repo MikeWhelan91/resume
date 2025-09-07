@@ -68,9 +68,12 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
+
     const doRecompute = () => recompute(el);
     doRecompute();
     requestAnimationFrame(doRecompute);
+
+ 
     const ro = new ResizeObserver(() => recompute(el));
     ro.observe(el);
     const parent = el.parentElement;
