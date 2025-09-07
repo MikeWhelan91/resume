@@ -180,7 +180,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 .menu-item:hover{ background:#f3f4f6; }
 
 /* ==== /Layout ==== */
-/* ==== Side-by-side paged previews with fit-to-width ==== */
+/* ==== Side-by-side fit-to-width A4 previews ==== */
 .shell{ max-width: 1360px; margin:24px auto 120px; padding:0 20px; } /* widen to reduce outer deadspace */
 .workspace{
   display:grid; align-items:start; gap:24px;
@@ -192,12 +192,10 @@ html,body{ background: var(--bg); color: var(--ink); }
   padding:14px; min-width:0;
 }
 
-/* One "page" viewport; content inside scrolls page-by-page */
-.preview.paged{
-  height: calc(100vh - 240px);
-  overflow:auto;
+/* Simple viewport showing scaled A4 paper */
+.preview{
   border-radius:12px;
-  scroll-snap-type:y mandatory;
+  overflow:visible;
 }
 /* Base A4 paper dimensions */
 .paper{
@@ -210,29 +208,10 @@ html,body{ background: var(--bg); color: var(--ink); }
   transform-origin: top center;
   margin: 0 auto; /* center the scaled page */
 }
-.preview.paged .paper{ scroll-snap-align:start; }
-
-/* Pager overlay */
-.page-viewport{ position:relative; }
-.pager-arrow{
-  position:absolute; top:50%; transform:translateY(-50%);
-  background:#fff; border:1px solid var(--border); border-radius:999px;
-  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.08);
-}
-.pager-arrow:disabled{ opacity:.4; cursor:default; }
-.pager-arrow.left{ left:6px; }
-.pager-arrow.right{ right:6px; }
-
-.pager-indicator{
-  position:absolute; right:10px; bottom:10px;
-  background:rgba(0,0,0,.75); color:#fff; font-size:12px; padding:6px 8px; border-radius:8px;
-}
 
 /* Slightly shorter viewport on small screens */
 @media (max-width: 1200px){ .shell{ max-width: 1100px; } }
 @media (max-width: 1024px){
   .workspace{ grid-template-columns: 1fr; } /* still stacks on small screens only */
-  .preview.paged{ height: calc(100vh - 280px); }
 }
-/* ==== /Side-by-side paged previews ==== */
+/* ==== /Side-by-side fit-to-width A4 previews ==== */

@@ -268,22 +268,22 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>TailorCV - Build or Upload a Résumé</title>
-        <meta
-          name="description"
-          content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone, quick ATS-optimized PDF and DOCX downloads, and page-by-page A4 previews with left/right navigation. Reuse your CV for multiple job descriptions or upload a new one anytime."
-        />
-        <meta
-          name="keywords"
-            content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview, page navigation, multi-page preview, ATS PDF export, ATS optimized PDF, modern resume template"
-
+        <Head>
+          <title>TailorCV - Build or Upload a Résumé</title>
+          <meta
+            name="description"
+            content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone, quick ATS-optimized PDF and DOCX downloads, and side-by-side A4 previews. Reuse your CV for multiple job descriptions or upload a new one anytime."
           />
-      </Head>
+          <meta
+            name="keywords"
+              content="AI resume builder, cover letter generator, job description tailoring, skill cross-referencing, verified skills, willingness to learn, action verbs, quantified achievements, keyword variants, accuracy check, resume verification, cover letter tone selection, tone selector, reuse CV, multiple job descriptions, upload new resume, ATS, resume wizard, PDF download, DOCX download, CV PDF, cover letter PDF, templates, template preview, side-by-side preview, fullscreen preview, A4 resume preview, A4 cover letter preview, ATS PDF export, ATS optimized PDF, modern resume template"
+
+            />
+        </Head>
       {phase === 'results' && result ? (
         <div className="shell">
           <main className="workspace">
-            {/* LEFT: CV preview with paging & fit */}
+            {/* LEFT: CV A4 preview */}
             <section className="pane">
               <PageViewport ariaLabel="CV preview">
                 <div className="paper">
@@ -292,7 +292,7 @@ export default function Home() {
               </PageViewport>
             </section>
 
-            {/* RIGHT: Cover letter preview with paging & fit */}
+            {/* RIGHT: Cover letter A4 preview */}
             <section className="pane">
               <PageViewport ariaLabel="Cover letter preview">
                 <div className="paper">
