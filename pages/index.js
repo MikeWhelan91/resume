@@ -272,7 +272,7 @@ export default function Home() {
           <title>TailorCV - Build or Upload a Résumé</title>
           <meta
             name="description"
-            content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone, quick ATS-optimized PDF and DOCX downloads, and side-by-side A4 previews. Reuse your CV for multiple job descriptions or upload a new one anytime."
+            content="Upload or craft a resume, then tailor it to any job description to generate ATS-friendly A4 resumes and matching cover letters. Bullets are rewritten with strong action verbs, quantified achievements, and keyword variants while cross-checking against your resume to avoid fabricated experience, with selectable tone, quick ATS-optimized PDF and DOCX downloads, and side-by-side A4 previews that open fullscreen on click. Reuse your CV for multiple job descriptions or upload a new one anytime."
           />
           <meta
             name="keywords"

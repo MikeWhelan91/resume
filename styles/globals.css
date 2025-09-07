@@ -196,6 +196,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 .preview{
   border-radius:12px;
   overflow:visible;
+  cursor: zoom-in;
 }
 /* Base A4 paper dimensions */
 .paper{
