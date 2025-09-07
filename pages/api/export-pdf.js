@@ -53,8 +53,14 @@ const INLINED_CSS = [
 ].map(readIfExists).join("\n");
 
 /** Build a full HTML doc around a given template */
-function renderHtml({ data, template = "classic", mode = "ats" }) {
+function renderHtml({ data, template = "classic", mode = "ats", accent = '#1a73e8', density = 'normal' }) {
   const Comp = TEMPLATE_MAP[String(template).toLowerCase()] || Classic;
+  const densityVars = {
+    compact: ['11px','1.5'],
+    normal: ['12.5px','1.75'],
+    cozy: ['14px','1.9']
+  };
+  const [fontSize, lineHeight] = densityVars[density] || densityVars.normal;
   const body = ReactDOMServer.renderToStaticMarkup(<Comp data={data || {}} />);
 
   // ATS mode: enforce monochrome, remove backgrounds/shadows; print-safe
@@ -68,6 +74,7 @@ function renderHtml({ data, template = "classic", mode = "ats" }) {
 .ats-mode .resume .pill { border:1px solid #000 !important; background:none !important; }
 `.trim();
 
+  const styleVars = `--accent:${accent};--font-size:${fontSize};--line-height:${lineHeight};`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -76,7 +83,7 @@ function renderHtml({ data, template = "classic", mode = "ats" }) {
 <style>${INLINED_CSS}\n/* --- ATS overrides --- */\n${atsCss}</style>
 </head>
 <body class="${mode === "ats" ? "ats-mode" : ""}">
-  <div id="root"><div class="resume">${body}</div></div>
+  <div class="paper" style="${styleVars}">${body}</div>
 </body>
 </html>`;
 }
@@ -84,11 +91,11 @@ function renderHtml({ data, template = "classic", mode = "ats" }) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   try {
-    const { data, template = "classic", mode = "ats", filename = "resume" } =
+    const { data, template = "classic", mode = "ats", accent = '#1a73e8', density = 'normal', filename = "resume" } =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
     if (!data || !data.name) return res.status(400).json({ error: "Missing resume data (data.name required)" });
 
-    const html = renderHtml({ data, template, mode });
+    const html = renderHtml({ data, template, mode, accent, density });
 
     const browser = await launchBrowser();
     const page = await browser.newPage();
@@ -96,7 +103,7 @@ export default async function handler(req, res) {
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "16mm", right: "14mm", bottom: "16mm", left: "14mm" },
+      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
       preferCSSPageSize: true,
     });
     await page.close();

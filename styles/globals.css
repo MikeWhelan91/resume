@@ -222,10 +222,11 @@ html,body{ background: var(--bg); color: var(--ink); }
   border-radius:8px;
   box-shadow:0 1px 3px rgba(0,0,0,0.08);
   overflow:hidden;
+  padding:16mm 14mm;
 }
 
 .cover-letter{
-  padding:48px;
+  padding:0;
 }
 /* scale wrapper – we scale the .paper via CSS var set by PageViewport */
 .pv-scale .paper{
