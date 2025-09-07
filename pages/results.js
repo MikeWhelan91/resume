@@ -105,11 +105,41 @@ export default function ResultsPage(){
     <>
       <Head>
         <title>Results – TailorCV</title>
-        <meta name="description" content="Preview and export your tailored CV and cover letter with accurate A4 page layout, customizable templates, themes, density, and ATS-friendly mode." />
+        <meta
+          name="description"
+          content="Preview and export your tailored CV and cover letter with responsive, fullscreen A4 previews, customizable templates, themes, density, and ATS-friendly mode."
+        />
       </Head>
       <MainShell
-        left={<ControlsPanel template={template} setTemplate={setTemplate} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity} atsMode={atsMode} setAtsMode={setAtsMode} onExportPdf={downloadCvPdf} onExportDocx={downloadCvDocx} onExportClPdf={downloadClPdf} onExportClDocx={downloadClDocx} page={page} pageCount={resumePages.length || 1} onPageChange={setPage} />}
-        right={<div className="space-y-6"><PreviewPane content={resumePages} page={page} onPageChange={setPage} /><PreviewPane content={[coverPage]} /></div>}
+        left={
+          <ControlsPanel
+            template={template}
+            setTemplate={setTemplate}
+            accent={accent}
+            setAccent={setAccent}
+            density={density}
+            setDensity={setDensity}
+            atsMode={atsMode}
+            setAtsMode={setAtsMode}
+            onExportPdf={downloadCvPdf}
+            onExportDocx={downloadCvDocx}
+            onExportClPdf={downloadClPdf}
+            onExportClDocx={downloadClDocx}
+            page={page}
+            pageCount={resumePages.length || 1}
+            onPageChange={setPage}
+          />
+        }
+        right={
+          <div className="space-y-6">
+            <div className="pane">
+              <PreviewPane content={resumePages} page={page} onPageChange={setPage} />
+            </div>
+            <div className="pane">
+              <PreviewPane content={[coverPage]} />
+            </div>
+          </div>
+        }
       />
     </>
   );
