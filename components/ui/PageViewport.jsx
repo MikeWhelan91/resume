@@ -19,14 +19,14 @@ import Icon from './Icon';
 
 export default function PageViewport({ children, ariaLabel = "Preview", page = 0, pageCount = 1, onPageChange }) {
   const wrapperRef = useRef(null);
+  const fsRef = useRef(null);
   const [fullscreen, setFullscreen] = useState(false);
 
   const renderContent = () =>
     isValidElement(children) ? cloneElement(children) : children;
 
   // Measure & scale to fit width and viewport height
-  const recompute = () => {
-    const el = wrapperRef.current;
+  const recompute = (el, fullscreenMode = false) => {
     if (!el) return;
 
     const paper = el.querySelector(".paper");
@@ -38,7 +38,9 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       const pad = 16; // safety padding
       const targetW = el.clientWidth - pad;
       const sW = paperW ? Math.min(1, targetW / paperW) : 1;
-      const viewportH = window.innerHeight ? window.innerHeight - 120 : Infinity;
+      const viewportH = window.innerHeight
+        ? window.innerHeight - (fullscreenMode ? 40 : 120)
+        : Infinity;
       const sH = paperH ? Math.min(1, viewportH / paperH) : 1;
       const s = Math.min(sW, sH);
       paper.style.setProperty("--pv-scale", String(s));
@@ -49,15 +51,16 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
     }
   };
 
-  useLayoutEffect(recompute, []);
+  useLayoutEffect(() => recompute(wrapperRef.current), []);
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(recompute);
+    const ro = new ResizeObserver(() => recompute(el));
     ro.observe(el);
     const paper = el.querySelector(".paper");
     if (paper) ro.observe(paper);
-    window.addEventListener("resize", recompute);
+    const handle = () => recompute(el);
+    window.addEventListener("resize", handle);
     const key = (e) => {
       if (e.key === "ArrowRight" && page < pageCount - 1) onPageChange && onPageChange(page + 1);
       if (e.key === "ArrowLeft" && page > 0) onPageChange && onPageChange(page - 1);
@@ -66,10 +69,28 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
     window.addEventListener("keydown", key);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", recompute);
+      window.removeEventListener("resize", handle);
       window.removeEventListener("keydown", key);
     };
   }, [page, pageCount, onPageChange, fullscreen]);
+
+  // recompute when fullscreen is active
+  useEffect(() => {
+    if (!fullscreen) return;
+    const el = fsRef.current;
+    if (!el) return;
+    recompute(el, true);
+    const ro = new ResizeObserver(() => recompute(el, true));
+    ro.observe(el);
+    const paper = el.querySelector(".paper");
+    if (paper) ro.observe(paper);
+    const handle = () => recompute(el, true);
+    window.addEventListener("resize", handle);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", handle);
+    };
+  }, [fullscreen, page, pageCount]);
 
   useEffect(() => {
     if (fullscreen) document.body.style.overflow = "hidden";
@@ -89,15 +110,33 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
         {/* scale is applied via CSS var; inner .paper is scaled to fill width */}
         <div className="pv-scale">{renderContent()}</div>
         {pageCount > 1 && (
-          <div className="pager">
-            <button className="pager-btn" onClick={(e)=>{e.stopPropagation(); onPageChange && onPageChange(Math.max(page-1,0));}} disabled={page===0}>
-              <Icon name="left" />
-            </button>
-            <div className="pageIndicator">{page+1} / {pageCount}</div>
-            <button className="pager-btn" onClick={(e)=>{e.stopPropagation(); onPageChange && onPageChange(Math.min(page+1,pageCount-1));}} disabled={page===pageCount-1}>
-              <Icon name="right" />
-            </button>
-          </div>
+          <>
+            <div className="pager">
+              <button
+                className="pager-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPageChange && onPageChange(Math.max(page - 1, 0));
+                }}
+                disabled={page === 0}
+              >
+                <Icon name="left" />
+              </button>
+              <button
+                className="pager-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPageChange && onPageChange(Math.min(page + 1, pageCount - 1));
+                }}
+                disabled={page === pageCount - 1}
+              >
+                <Icon name="right" />
+              </button>
+            </div>
+            <div className="pageIndicator">
+              {page + 1} / {pageCount}
+            </div>
+          </>
         )}
       </div>
       {fullscreen && (
@@ -109,6 +148,7 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
         >
           <div
             className="fullscreen-inner"
+            ref={fsRef}
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -118,20 +158,36 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
             >
               &times;
             </button>
-            <div className="relative">
-              {renderContent()}
-              {pageCount > 1 && (
+            <div className="pv-scale">{renderContent()}</div>
+            {pageCount > 1 && (
+              <>
                 <div className="pager">
-                  <button className="pager-btn" onClick={(e)=>{e.stopPropagation(); onPageChange && onPageChange(Math.max(page-1,0));}} disabled={page===0}>
+                  <button
+                    className="pager-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPageChange && onPageChange(Math.max(page - 1, 0));
+                    }}
+                    disabled={page === 0}
+                  >
                     <Icon name="left" />
                   </button>
-                  <div className="pageIndicator">{page+1} / {pageCount}</div>
-                  <button className="pager-btn" onClick={(e)=>{e.stopPropagation(); onPageChange && onPageChange(Math.min(page+1,pageCount-1));}} disabled={page===pageCount-1}>
+                  <button
+                    className="pager-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPageChange && onPageChange(Math.min(page + 1, pageCount - 1));
+                    }}
+                    disabled={page === pageCount - 1}
+                  >
                     <Icon name="right" />
                   </button>
                 </div>
-              )}
-            </div>
+                <div className="pageIndicator">
+                  {page + 1} / {pageCount}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
