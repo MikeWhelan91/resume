@@ -63,11 +63,9 @@ function renderHtml({ data, template = "classic", mode = "ats", accent = '#1a73e
   const [fontSize, lineHeight] = densityVars[density] || densityVars.normal;
   const body = ReactDOMServer.renderToStaticMarkup(<Comp data={data || {}} />);
 
-  // ATS mode: enforce monochrome, remove backgrounds/shadows; print-safe
+  // ATS mode: enforce monochrome, remove backgrounds/shadows; keep colors in design mode
   const atsCss = `
-@media print {
-  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-}
+html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .ats-mode .resume * { color:#000 !important; background:none !important; box-shadow:none !important; }
 .ats-mode .resume a { color:#000 !important; text-decoration:none; }
 .ats-mode .resume [data-paper] { border:none !important; }
@@ -100,6 +98,8 @@ export default async function handler(req, res) {
     const browser = await launchBrowser();
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
+    // Use screen media so PDF mirrors on-screen preview (avoids print-specific layout overrides)
+    await page.emulateMediaType('screen');
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
