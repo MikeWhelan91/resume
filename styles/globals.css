@@ -135,8 +135,23 @@ html, body { font-family: "InterLocal", system-ui, -apple-system, "Segoe UI", Ro
 
 /* ==== Layout polish, toolbar, menu ==== */
 :root{
-  --ink:#111827; --muted:#6b7280; --border:#e5e7eb; --bg:#f7f7f9; --accent:#0ea5a6;
-  --radius:14px; --space:16px; --space-sm:10px;
+  --ink:#0F172A;
+  --muted:#64748B;
+  --rule:#E2E8F0;
+  --accent:#00C9A7;
+  --accent-2:#A3FF6F;
+  --bg:#FFFFFF;
+  --danger:#DC2626;
+  --border:var(--rule);
+  --radius:14px;
+  --space:16px;
+  --space-sm:10px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:32px;
 }
 html,body{ background: var(--bg); color: var(--ink); }
 

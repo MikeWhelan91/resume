@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useRouter } from 'next/router';
 import SkillsInput from './wizard/SkillsInput';
 import ExperienceCard from './wizard/ExperienceCard';
 import EducationCard from './wizard/EducationCard';
@@ -10,6 +11,7 @@ import Centered from './templates/Centered';
 import Sidebar from './templates/Sidebar';
 import Modern from './templates/Modern';
 import { AnimatePresence } from 'framer-motion';
+import StepNav from './ui/StepNav';
 
 const emptyResume = {
   name: '',
@@ -96,18 +98,28 @@ const schemas = {
 };
 
 export default function ResumeWizard({ initialData, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
+  const router = useRouter();
   const [step, setStep] = useState(0);
-  const steps = ['basics', 'skills', 'work', 'education', 'template'];
+  const stepIds = ['basics', 'skills', 'work', 'education', 'template', 'review'];
+  const stepLabels = ['Basics','Skills','Experience','Education','Template & Theme','Review'];
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
   const { register, handleSubmit, watch, setValue, getValues } = methods;
 
   const [isValid, setIsValid] = useState(true);
   const [message, setMessage] = useState('');
+  const [jd, setJd] = useState('');
+  const [tone, setTone] = useState('professional');
 
   useEffect(() => {
     const sub = watch(() => {
-      const key = steps[step];
+      const key = stepIds[step];
+      if(key === 'review'){
+        const ok = jd.trim().length > 0;
+        setIsValid(ok);
+        setMessage(ok ? '' : 'Job description required');
+        return;
+      }
       const schema = schemas[key];
       if (!schema) { setIsValid(true); setMessage(''); return; }
       const res = schema.safeParse(getValues());
@@ -115,7 +127,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
       setMessage(res.success ? '' : res.error.issues[0]?.message || 'Incomplete');
     });
     return () => sub.unsubscribe();
-  }, [watch, step, getValues]);
+  }, [watch, step, getValues, jd]);
 
   // autosave
   useEffect(() => {
@@ -128,8 +140,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
     return () => sub.unsubscribe();
   }, [watch, autosaveKey]);
 
-  function next() { if (step < steps.length -1) setStep(s => s + 1); }
+  function next() { if (step < stepIds.length -1) setStep(s => s + 1); }
   function prev() { if (step > 0) setStep(s => s - 1); }
+  function saveDraft(){ try{ localStorage.setItem('resumeWizardDraft', JSON.stringify(getValues())); }catch{} }
 
   function addLink() {
     const links = getValues('links');
@@ -184,14 +197,30 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
     }
   }, [template]);
 
-  function submit(data) {
-    onComplete && onComplete(data);
+  async function submit(data) {
+    if(step !== stepIds.length -1) return;
+    try{
+      const fd = new FormData();
+      fd.append('resumeData', JSON.stringify(data));
+      fd.append('jobDesc', jd);
+      fd.append('tone', tone);
+      const res = await fetch('/api/generate',{method:'POST', body:fd});
+      const out = await res.json();
+      if(res.ok){
+        onComplete && onComplete(out);
+      } else {
+        alert("Couldn't generate that. Try again in a moment.");
+      }
+    }catch{
+      alert("Couldn't generate that. Try again in a moment.");
+    }
   }
 
   const values = watch();
 
   return (
     <form onSubmit={handleSubmit(submit)} className="max-w-3xl mx-auto space-y-8">
+      <StepNav steps={stepLabels} current={step} onChange={(i)=>{ if(i<=step || isValid) setStep(i); }} allowNext={isValid} />
       <div className="space-y-8">
         {step === 0 && (
           <section className="space-y-6">
@@ -314,19 +343,38 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
             </div>
           </section>
         )}
+
+        {step === 5 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">Review</h2>
+              <p className="text-sm text-zinc-500">Tailor your documents.</p>
+            </header>
+            <textarea className="tc-textarea" value={jd} onChange={e=>setJd(e.target.value)} placeholder="Paste the job description" />
+            <label className="block">
+              <span className="text-sm">Tone</span>
+              <select className="tc-input mt-1" value={tone} onChange={e=>setTone(e.target.value)}>
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly</option>
+                <option value="concise">Concise</option>
+              </select>
+            </label>
+          </section>
+        )}
       </div>
 
       <div className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-t pt-4 pb-4 px-4">
         <div className="flex items-center gap-4">
           <button type="button" onClick={prev} disabled={step === 0} className="px-4 h-10 rounded-md border disabled:opacity-50">Back</button>
           <div className="flex-1 text-center text-sm text-zinc-600">
-            {step + 1}/{steps.length}
+            {step + 1}/{stepIds.length}
           </div>
-          {step < steps.length - 1 && (
+          <button type="button" onClick={saveDraft} className="text-sm text-[var(--muted)]">Save draft</button>
+          {step < stepIds.length - 1 && (
             <button type="button" onClick={next} disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Next</button>
           )}
-          {step === steps.length - 1 && (
-            <button type="submit" disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Generate</button>
+          {step === stepIds.length - 1 && (
+            <button type="submit" disabled={!isValid} className="px-4 h-10 rounded-md bg-teal-600 text-white disabled:opacity-50">Tailor</button>
           )}
         </div>
         {!isValid && message && <p className="text-xs text-red-600 mt-1">{message}</p>}

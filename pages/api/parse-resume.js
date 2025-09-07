@@ -40,8 +40,13 @@ export default async function handler(req,res){
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
   try{
-    const { files } = await parseForm(req);
-    const resumeText = await extractTextFromFile(files?.resume || files?.file);
+    const { fields, files } = await parseForm(req);
+    let resumeText = '';
+    if (fields?.text) {
+      resumeText = String(fields.text);
+    } else {
+      resumeText = await extractTextFromFile(files?.resume || files?.file);
+    }
     if (!resumeText) return res.status(400).json({ error:"No readable file" });
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const system = `Output ONLY JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[]}}
