@@ -202,6 +202,15 @@ html,body{ background: var(--bg); color: var(--ink); }
 .paper{
   width:794px;
   min-height:1123px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  overflow:hidden;
+}
+
+.cover-letter{
+  padding:48px;
 }
 /* scale wrapper – we scale the .paper via CSS var set by PageViewport */
 .pv-scale .paper{
