@@ -210,7 +210,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 /* Simple viewport showing scaled A4 paper */
 .preview{
   border-radius:12px;
-  overflow:visible;
+  overflow:hidden;
   cursor: zoom-in;
   position: relative; /* anchor pager overlay */
 }

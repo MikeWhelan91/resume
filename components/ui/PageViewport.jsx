@@ -35,8 +35,13 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       const rect = paper.getBoundingClientRect();
       const paperW = paper.scrollWidth || rect.width;
       const paperH = paper.scrollHeight || rect.height;
-      const pad = 16; // safety padding
-      const targetW = el.clientWidth - pad;
+      const pad = 0; // no extra padding; preview should fill container
+      const containerW = fullscreenMode
+        ? window.innerWidth
+        : el.parentElement
+        ? el.parentElement.clientWidth
+        : el.clientWidth;
+      const targetW = containerW - pad;
       const sW = paperW ? Math.min(1, targetW / paperW) : 1;
       const viewportH = window.innerHeight
         ? window.innerHeight - (fullscreenMode ? 40 : 120)
@@ -44,16 +49,13 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       const sH = paperH ? Math.min(1, viewportH / paperH) : 1;
       const s = Math.min(sW, sH);
       paper.style.setProperty("--pv-scale", String(s));
+      const scaledW = paperW * s;
+      const scaledH = paperH * s;
       // expose scaled width for overlay positioning
-      el.style.setProperty("--pv-width", `${paperW * s}px`);
-      // Adjust wrapper height/width; keep 100% height in fullscreen
-      if (fullscreenMode) {
-        el.style.height = "";
-        el.style.width = `${paperW * s}px`;
-      } else {
-        el.style.width = "";
-        el.style.height = `${paperH * s}px`;
-      }
+      el.style.setProperty("--pv-width", `${scaledW}px`);
+      // enforce wrapper dimensions to match scaled paper
+      el.style.width = `${scaledW}px`;
+      el.style.height = `${scaledH}px`;
     }
   };
 
@@ -63,6 +65,8 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
     if (!el) return;
     const ro = new ResizeObserver(() => recompute(el));
     ro.observe(el);
+    const parent = el.parentElement;
+    if (parent) ro.observe(parent);
     const paper = el.querySelector(".paper");
     if (paper) ro.observe(paper);
     const handle = () => recompute(el);
