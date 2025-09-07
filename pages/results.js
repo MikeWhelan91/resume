@@ -18,7 +18,7 @@ export default function ResultsPage(){
   const [template, setTemplate] = useState('classic');
   const [accent, setAccent] = useState('#00C9A7');
   const [density, setDensity] = useState('normal');
-  const [atsMode, setAtsMode] = useState(true);
+  const [atsMode, setAtsMode] = useState(false);
   const [page, setPage] = useState(0);
 
   useEffect(()=>{
@@ -34,8 +34,18 @@ export default function ResultsPage(){
     cozy: { '--font-size': '14px', '--line-height': '1.9' }
   };
   const styleVars = { '--accent': accent, ...densityVars[density] };
-  const resumePage = <div className="paper" style={styleVars}><TemplateComp data={result.resumeData} /></div>;
-  const coverPage = <div className="paper cover-letter" style={styleVars}><div className="whitespace-pre-wrap text-[11px] leading-[1.6]">{result.coverLetter || 'No cover letter returned.'}</div></div>;
+  const resumePage = (
+    <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
+      <TemplateComp data={result.resumeData} />
+    </div>
+  );
+  const coverPage = (
+    <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
+      <div className="whitespace-pre-wrap text-[11px] leading-[1.6]">
+        {result.coverLetter || 'No cover letter returned.'}
+      </div>
+    </div>
+  );
 
   async function downloadCvPdf(){
     const res = await fetch('/api/export-pdf',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, template, mode: atsMode?'ats':'design', accent, density, filename:'cv'})});
@@ -65,7 +75,7 @@ export default function ResultsPage(){
     <>
       <Head>
         <title>Results – TailorCV</title>
-        <meta name="description" content="Preview and export your tailored CV and cover letter with customizable templates, themes, and density." />
+        <meta name="description" content="Preview and export your tailored CV and cover letter with customizable templates, themes, density, and ATS-friendly mode." />
       </Head>
       <MainShell
         left={<ControlsPanel template={template} setTemplate={setTemplate} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity} atsMode={atsMode} setAtsMode={setAtsMode} onExportPdf={downloadCvPdf} onExportDocx={downloadCvDocx} onExportClPdf={downloadClPdf} onExportClDocx={downloadClDocx} page={page} pageCount={1} onPageChange={setPage} />}
