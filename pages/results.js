@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
@@ -20,12 +21,11 @@ export default function ResultsPage(){
   const [density, setDensity] = useState('normal');
   const [atsMode, setAtsMode] = useState(false);
   const [page, setPage] = useState(0);
+  const [resumePages, setResumePages] = useState([]);
 
   useEffect(()=>{
     try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
   },[]);
-
-  if(!result) return null;
 
   const TemplateComp = TemplateMap[template] || Classic;
   const densityVars = {
@@ -34,11 +34,41 @@ export default function ResultsPage(){
     cozy: { '--font-size': '14px', '--line-height': '1.9' }
   };
   const styleVars = { '--accent': accent, ...densityVars[density] };
-  const resumePage = (
-    <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
-      <TemplateComp data={result.resumeData} />
-    </div>
-  );
+
+  useEffect(() => {
+    if (!result) return;
+    const pageHeight = 1123;
+    const off = document.createElement('div');
+    off.className = `paper ${atsMode ? 'ats-mode' : ''}`;
+    Object.entries(styleVars).forEach(([k, v]) => off.style.setProperty(k, v));
+    off.style.position = 'absolute';
+    off.style.visibility = 'hidden';
+    off.style.pointerEvents = 'none';
+    off.style.left = '-10000px';
+    document.body.appendChild(off);
+    const root = createRoot(off);
+    root.render(<TemplateComp data={result.resumeData} />);
+    requestAnimationFrame(() => {
+      const total = off.scrollHeight;
+      const count = Math.max(1, Math.ceil(total / pageHeight));
+      const arr = [];
+      for (let i = 0; i < count; i++) {
+        arr.push(
+          <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
+            <div style={{ position: 'relative', top: -i * pageHeight }}>
+              <TemplateComp data={result.resumeData} />
+            </div>
+          </div>
+        );
+      }
+      setResumePages(arr);
+      root.unmount();
+      document.body.removeChild(off);
+    });
+  }, [result, template, accent, density, atsMode]);
+
+  if(!result) return null;
+
   const coverPage = (
     <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
       <div className="whitespace-pre-wrap text-[11px] leading-[1.6]">
@@ -75,11 +105,11 @@ export default function ResultsPage(){
     <>
       <Head>
         <title>Results – TailorCV</title>
-        <meta name="description" content="Preview and export your tailored CV and cover letter with customizable templates, themes, density, and ATS-friendly mode." />
+        <meta name="description" content="Preview and export your tailored CV and cover letter with accurate A4 page layout, customizable templates, themes, density, and ATS-friendly mode." />
       </Head>
       <MainShell
-        left={<ControlsPanel template={template} setTemplate={setTemplate} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity} atsMode={atsMode} setAtsMode={setAtsMode} onExportPdf={downloadCvPdf} onExportDocx={downloadCvDocx} onExportClPdf={downloadClPdf} onExportClDocx={downloadClDocx} page={page} pageCount={1} onPageChange={setPage} />}
-        right={<div className="space-y-6"><PreviewPane content={[resumePage]} /><PreviewPane content={[coverPage]} /></div>}
+        left={<ControlsPanel template={template} setTemplate={setTemplate} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity} atsMode={atsMode} setAtsMode={setAtsMode} onExportPdf={downloadCvPdf} onExportDocx={downloadCvDocx} onExportClPdf={downloadClPdf} onExportClDocx={downloadClDocx} page={page} pageCount={resumePages.length || 1} onPageChange={setPage} />}
+        right={<div className="space-y-6"><PreviewPane content={resumePages} page={page} onPageChange={setPage} /><PreviewPane content={[coverPage]} /></div>}
       />
     </>
   );
