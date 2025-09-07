@@ -28,11 +28,17 @@ export default function ResultsPage(){
   if(!result) return null;
 
   const TemplateComp = TemplateMap[template] || Classic;
-  const resumePage = <div className="paper"><TemplateComp data={result.resumeData} /></div>;
-  const coverPage = <div className="paper cover-letter"><div className="whitespace-pre-wrap text-[11px] leading-[1.6]">{result.coverLetter || 'No cover letter returned.'}</div></div>;
+  const densityVars = {
+    compact: { '--font-size': '11px', '--line-height': '1.5' },
+    normal: { '--font-size': '12.5px', '--line-height': '1.75' },
+    cozy: { '--font-size': '14px', '--line-height': '1.9' }
+  };
+  const styleVars = { '--accent': accent, ...densityVars[density] };
+  const resumePage = <div className="paper" style={styleVars}><TemplateComp data={result.resumeData} /></div>;
+  const coverPage = <div className="paper cover-letter" style={styleVars}><div className="whitespace-pre-wrap text-[11px] leading-[1.6]">{result.coverLetter || 'No cover letter returned.'}</div></div>;
 
   async function downloadCvPdf(){
-    const res = await fetch('/api/export-pdf',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, template, mode: atsMode?'ats':'design', filename:'cv'})});
+    const res = await fetch('/api/export-pdf',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, template, mode: atsMode?'ats':'design', accent, density, filename:'cv'})});
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -59,7 +65,7 @@ export default function ResultsPage(){
     <>
       <Head>
         <title>Results – TailorCV</title>
-        <meta name="description" content="Preview and export your tailored CV and cover letter." />
+        <meta name="description" content="Preview and export your tailored CV and cover letter with customizable templates, themes, and density." />
       </Head>
       <MainShell
         left={<ControlsPanel template={template} setTemplate={setTemplate} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity} atsMode={atsMode} setAtsMode={setAtsMode} onExportPdf={downloadCvPdf} onExportDocx={downloadCvDocx} onExportClPdf={downloadClPdf} onExportClDocx={downloadClDocx} page={page} pageCount={1} onPageChange={setPage} />}

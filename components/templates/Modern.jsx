@@ -24,17 +24,16 @@ export default function Modern({ data = {} }) {
   const contacts = [email, phone, ...links.map(l => l?.url || "").filter(Boolean)].filter(Boolean).join(" · ");
 
   return (
-    <div className="resume">
-      <div data-paper className="paper modern">
-        {/* Header */}
-        <header className="modern-header">
+    <div className="resume modern" data-paper>
+      {/* Header */}
+      <header className="modern-header">
           <h1 className="modern-name">{name}</h1>
           {meta ? <div className="modern-meta">{meta}</div> : null}
           {contacts ? <div className="modern-contacts">{contacts}</div> : null}
-        </header>
+      </header>
 
-        {/* Grid layout: left meta, right body */}
-        <main className="modern-grid">
+      {/* Grid layout: left meta, right body */}
+      <main className="modern-grid">
           <aside className="modern-left">
             {/* Profile */}
             {summary ? (
@@ -108,8 +107,7 @@ export default function Modern({ data = {} }) {
               </ul>
             </section>
           </section>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }
