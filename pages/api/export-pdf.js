@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     const browser = await launchBrowser();
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    // Use screen media so PDF mirrors on-screen preview (avoids print-specific layout overrides)
+    // Use screen media so PDF mirrors on-screen rendering (avoids print-specific layout overrides)
     await page.emulateMediaType('screen');
     const pdf = await page.pdf({
       format: "A4",

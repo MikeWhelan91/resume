@@ -211,7 +211,6 @@ html,body{ background: var(--bg); color: var(--ink); }
 .preview{
   border-radius:12px;
   overflow:hidden;
-  cursor: zoom-in;
   position: relative; /* anchor pager overlay */
 }
 /* Base A4 paper dimensions */
@@ -230,11 +229,45 @@ html,body{ background: var(--bg); color: var(--ink); }
 .cover-letter{
   padding:0;
 }
-/* scale wrapper – we scale the .paper via CSS var set by PageViewport */
-.pv-scale .paper{
-  transform: scale(var(--pv-scale, 1));
-  transform-origin: top center;
-  margin: 0 auto; /* center the scaled page */
+
+/* Pager controls */
+.pager{
+  position:absolute;
+  bottom:8px;
+  right:8px;
+  display:flex;
+  gap:4px;
+}
+
+.pager-btn{
+  width:32px;
+  height:32px;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.pager-btn:disabled{
+  opacity:0.5;
+  cursor:default;
+}
+
+.pageIndicator{
+  position:absolute;
+  bottom:8px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:12px;
+  color:#475569;
+  background:rgba(255,255,255,0.92);
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  padding:2px 6px;
 }
 
 /* Slightly shorter viewport on small screens */
