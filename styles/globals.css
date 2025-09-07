@@ -212,6 +212,8 @@ html,body{ background: var(--bg); color: var(--ink); }
   border-radius:12px;
   overflow:hidden;
   position: relative; /* anchor pager overlay */
+  max-width:794px;
+  margin:0 auto;
 }
 /* Base A4 paper dimensions */
 .paper{
@@ -231,14 +233,6 @@ html,body{ background: var(--bg); color: var(--ink); }
 }
 
 /* Pager controls */
-.pager{
-  position:absolute;
-  bottom:8px;
-  right:8px;
-  display:flex;
-  gap:4px;
-}
-
 .pager-btn{
   width:32px;
   height:32px;
@@ -250,7 +244,13 @@ html,body{ background: var(--bg); color: var(--ink); }
   font-size:20px;
   line-height:1;
   cursor:pointer;
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
 }
+
+.pager-left{ left:8px; }
+.pager-right{ right:8px; }
 
 .pager-btn:disabled{
   opacity:0.5;

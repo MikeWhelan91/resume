@@ -52,7 +52,7 @@ export default function Sidebar({ data = {} }) {
         {data.summary && (<><h2>Profile</h2><p>{data.summary}</p></>)}
         {exp.length > 0 && <h2>Experience</h2>}
         {exp.map((x, i) => (
-          <section key={i}>
+          <section key={i} className="avoid-break">
             {x.company && <strong>{x.company}</strong>}
             {x.role && <div>{x.role}</div>}
             {(x.start || x.end != null) && (
