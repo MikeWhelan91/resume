@@ -78,10 +78,10 @@ html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>${INLINED_CSS}\n.paper{height:auto !important;overflow:visible !important;}\n/* --- ATS overrides --- */\n${atsCss}</style>
+<style>${INLINED_CSS}\n@page{margin:16mm 14mm;}\n.paper{width:auto !important;height:auto !important;overflow:visible !important;padding:0 !important;margin:0 !important;border:none !important;box-shadow:none !important;}\n/* --- ATS overrides --- */\n${atsCss}</style>
 </head>
-<body class="${mode === "ats" ? "ats-mode" : ""}">
-  <div class="paper" style="${styleVars}">${body}</div>
+<body class="${mode === "ats" ? "ats-mode" : ""}" style="${styleVars}">
+  <div class="paper">${body}</div>
 </body>
 </html>`;
 }
