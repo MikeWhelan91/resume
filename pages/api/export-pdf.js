@@ -78,7 +78,7 @@ html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>${INLINED_CSS}\n/* --- ATS overrides --- */\n${atsCss}</style>
+<style>${INLINED_CSS}\n.paper{height:auto !important;overflow:visible !important;}\n/* --- ATS overrides --- */\n${atsCss}</style>
 </head>
 <body class="${mode === "ats" ? "ats-mode" : ""}">
   <div class="paper" style="${styleVars}">${body}</div>

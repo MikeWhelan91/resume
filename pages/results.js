@@ -50,17 +50,25 @@ export default function ResultsPage(){
     root.render(<TemplateComp data={result.resumeData} />);
     requestAnimationFrame(() => {
       const total = off.scrollHeight;
-      const count = Math.max(1, Math.ceil(total / pageHeight));
-      const arr = [];
-      for (let i = 0; i < count; i++) {
-        arr.push(
-          <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
-            <div style={{ position: 'relative', top: -i * pageHeight }}>
-              <TemplateComp data={result.resumeData} />
-            </div>
-          </div>
-        );
+      const items = Array.from(off.querySelectorAll('.avoid-break'));
+      const positions = [];
+      let start = 0;
+      while (start < total) {
+        let end = start + pageHeight;
+        const crossing = items.find(el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end);
+        if (crossing && crossing.offsetTop > start) {
+          end = crossing.offsetTop;
+        }
+        positions.push(start);
+        start = end;
       }
+      const arr = positions.map((pos, i) => (
+        <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
+          <div style={{ position: 'relative', top: -pos }}>
+            <TemplateComp data={result.resumeData} />
+          </div>
+        </div>
+      ));
       setResumePages(arr);
       root.unmount();
       document.body.removeChild(off);
@@ -107,7 +115,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="View and export your tailored CV and cover letter with responsive A4 display, customizable templates, themes, density, and ATS-friendly mode."
+          content="View and export your tailored CV and cover letter with responsive A4 display, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
