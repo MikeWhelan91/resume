@@ -59,10 +59,11 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
     }
   };
 
-  useLayoutEffect(() => recompute(wrapperRef.current), []);
+  useLayoutEffect(() => recompute(wrapperRef.current), [children]);
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
+    recompute(el);
     const ro = new ResizeObserver(() => recompute(el));
     ro.observe(el);
     const parent = el.parentElement;
@@ -82,7 +83,7 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       window.removeEventListener("resize", handle);
       window.removeEventListener("keydown", key);
     };
-  }, [page, pageCount, onPageChange, fullscreen]);
+  }, [children, page, pageCount, onPageChange, fullscreen]);
 
   // recompute when fullscreen is active
   useEffect(() => {
@@ -100,7 +101,7 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       ro.disconnect();
       window.removeEventListener("resize", handle);
     };
-  }, [fullscreen, page, pageCount]);
+  }, [fullscreen, page, pageCount, children]);
 
   useEffect(() => {
     if (fullscreen) document.body.style.overflow = "hidden";
