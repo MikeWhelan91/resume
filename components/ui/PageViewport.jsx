@@ -46,8 +46,14 @@ export default function PageViewport({ children, ariaLabel = "Preview", page = 0
       paper.style.setProperty("--pv-scale", String(s));
       // expose scaled width for overlay positioning
       el.style.setProperty("--pv-width", `${paperW * s}px`);
-      // Adjust wrapper height to scaled paper height
-      el.style.height = `${paperH * s}px`;
+      // Adjust wrapper height/width; keep 100% height in fullscreen
+      if (fullscreenMode) {
+        el.style.height = "";
+        el.style.width = `${paperW * s}px`;
+      } else {
+        el.style.width = "";
+        el.style.height = `${paperH * s}px`;
+      }
     }
   };
 
