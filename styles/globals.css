@@ -133,27 +133,12 @@ pre { max-height: 70vh; overflow: auto; padding: 1rem; background: #f9f9f9; font
 html, body { font-family: "InterLocal", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
 * { font-synthesis: none; }
 
-/* ==== Layout polish, toolbar, menu, splitter ==== */
+/* ==== Layout polish, toolbar, menu ==== */
 :root{
   --ink:#111827; --muted:#6b7280; --border:#e5e7eb; --bg:#f7f7f9; --accent:#0ea5a6;
   --radius:14px; --space:16px; --space-sm:10px;
 }
 html,body{ background: var(--bg); color: var(--ink); }
-
-.shell{ max-width:1280px; margin:24px auto 120px; padding:0 20px; }
-
-/* 3 tracks: left | splitter | right; the widths are set inline via CSS vars */
-.workspace{
-  display:grid; align-items:start; gap:24px;
-  grid-template-columns: var(--left, 1fr) 8px var(--right, 1fr);
-}
-
-.pane{
-  background:#fff; border:1px solid var(--border);
-  border-radius:var(--radius); box-shadow:0 2px 12px rgba(0,0,0,.06);
-  padding:18px; min-width:0;
-}
-.preview{ height: calc(100vh - 220px); overflow:auto; border-radius:12px; }
 
 /* Sticky actions bar */
 .toolbar{
@@ -161,7 +146,7 @@ html,body{ background: var(--bg); color: var(--ink); }
   display:flex; justify-content:space-between; gap:16px;
   background:rgba(255,255,255,.8); backdrop-filter:blur(8px);
   border:1px solid var(--border); border-radius:var(--radius);
-  padding:12px; margin:18px auto 0; max-width:1280px;
+  padding:12px; margin:18px auto 0; max-width:1360px;
 }
 .group{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 
@@ -194,19 +179,6 @@ html,body{ background: var(--bg); color: var(--ink); }
 }
 .menu-item:hover{ background:#f3f4f6; }
 
-/* Splitter between panes */
-.splitter{
-  width:8px; align-self:stretch; cursor:col-resize; position:relative; user-select:none; background:transparent;
-}
-.splitter::after{ content:""; position:absolute; left:3px; top:0; bottom:0; width:2px; background:var(--border); }
-.splitter.active::after{ background:var(--accent); }
-
-/* Mobile: single column, no splitter */
-@media (max-width:1024px){
-  .workspace{ grid-template-columns:1fr; }
-  .splitter{ display:none; }
-  .preview{ height: calc(100vh - 260px); }
-}
 /* ==== /Layout ==== */
 /* ==== Side-by-side paged previews with fit-to-width ==== */
 .shell{ max-width: 1360px; margin:24px auto 120px; padding:0 20px; } /* widen to reduce outer deadspace */
