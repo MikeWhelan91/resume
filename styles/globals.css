@@ -216,13 +216,14 @@ html,body{ background: var(--bg); color: var(--ink); }
 /* Base A4 paper dimensions */
 .paper{
   width:794px;
-  min-height:1123px;
+  height:1123px;
   background:#fff;
   border:1px solid var(--border);
   border-radius:8px;
   box-shadow:0 1px 3px rgba(0,0,0,0.08);
   overflow:hidden;
   padding:16mm 14mm;
+  position:relative;
 }
 
 .cover-letter{
