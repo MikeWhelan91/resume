@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
-// Legacy v3 build (asm.js, no WASM)
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf";
+
+// Lazily load pdfjs to avoid accessing browser globals during SSR.
+// The library reads properties such as `document.hidden` at module
+// evaluation time, which causes "Cannot read properties of undefined"
+// errors when imported in non-browser environments.  Loading it inside
+// the rendering workflow ensures it only runs in the browser.
+let pdfjsPromise;
+async function getPdfjs() {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import("pdfjs-dist/legacy/build/pdf");
+  }
+  return pdfjsPromise;
+}
 
 const PDF_OPTS = { disableWorker: true };
 
@@ -23,6 +34,7 @@ export default function PdfCanvasPreview({ doc, title }) {
       const data = await blob.arrayBuffer();
       if (rid !== renderIdRef.current) return;
 
+      const pdfjs = await getPdfjs();
       const pdfDoc = await pdfjs.getDocument({ data, ...PDF_OPTS }).promise;
       if (rid !== renderIdRef.current) return;
 
