@@ -58,8 +58,9 @@
 .sidebarMain::before { content:""; position:absolute; left:-9px; top:0; bottom:0; width:1px; background: var(--rule); }
 
 @media print {
-  @page { margin: 0; }
+  @page { margin: 1in; }
   body { background: #fff; }
+  .a4-scroll { padding: 0 !important; }
 }
 
 /* A4 page frame: 210mm x 297mm approximated at 96dpi ~ 794x1123 px */
