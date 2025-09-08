@@ -276,3 +276,12 @@ html,body{ background: var(--bg); color: var(--ink); }
   .workspace{ grid-template-columns: 1fr; } /* still stacks on small screens only */
 }
 /* ==== /Side-by-side fit-to-width A4 previews ==== */
+
+@page {
+  size: A4;
+  margin: 20mm;
+}
+@media print {
+  body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+  .no-print { display: none !important; }
+}

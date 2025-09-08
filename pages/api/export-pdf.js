@@ -1,103 +1,35 @@
-import fs from "fs";
-import path from "path";
-import React from "react";
-import ReactDOMServer from "react-dom/server";
+import puppeteer from "puppeteer";
 
-import { getTemplate, densityMap } from "../../lib/resumeConfig";
-
-export const config = {
-  api: { bodyParser: { sizeLimit: "1mb" } },
-};
-
-
-async function launchBrowser() {
-  // Try Vercel/serverless first (puppeteer-core + chrome-aws-lambda), then local/dev fallback
-  try {
-    const chromium = (await import("chrome-aws-lambda")).default;
-    const puppeteerCore = (await import("puppeteer-core")).default;
-    const executablePath = await chromium.executablePath;
-    return puppeteerCore.launch({
-      args: chromium.args,
-      executablePath,
-      headless: true,
-      defaultViewport: { width: 1240, height: 1754 }, // ~A4 @ 96dpi
-    });
-  } catch {
-    const puppeteer = (await import("puppeteer")).default;
-    return puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      defaultViewport: { width: 1240, height: 1754 },
-    });
-  }
-}
-
-function readIfExists(p) {
-  try { return fs.readFileSync(p, "utf8"); } catch { return ""; }
-}
-
-const INLINED_CSS = [
-  path.join(process.cwd(), "styles", "globals.css"),
-  path.join(process.cwd(), "styles", "resume.css"),
-].map(readIfExists).join("\n");
-
-/** Build a full HTML doc around a given template */
-function renderHtml({ data, template = "classic", mode = "ats", accent = '#1a73e8', density = 'normal' }) {
-  const Comp = getTemplate(template);
-  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
-  const body = ReactDOMServer.renderToStaticMarkup(<Comp data={data || {}} />);
-
-  // ATS mode: enforce monochrome, remove backgrounds/shadows; keep colors in design mode
-  const atsCss = `
-html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.ats-mode .resume * { color:#000 !important; background:none !important; box-shadow:none !important; }
-.ats-mode .resume a { color:#000 !important; text-decoration:none; }
-.ats-mode .resume [data-paper] { border:none !important; }
-.ats-mode .resume .pill { border:1px solid #000 !important; background:none !important; }
-`.trim();
-
-  const styleVars = `--accent:${accent};--font-size:${fontSize};--line-height:${lineHeight};`;
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>${INLINED_CSS}\n@page{margin:16mm 14mm;}\n.paper{width:auto !important;height:auto !important;overflow:visible !important;padding:0 !important;margin:0 !important;border:none !important;box-shadow:none !important;}\n/* --- ATS overrides --- */\n${atsCss}</style>
-</head>
-<body class="${mode === "ats" ? "ats-mode" : ""}" style="${styleVars}">
-  <div class="paper">${body}</div>
-</body>
-</html>`;
-}
+export const config = { api: { bodyParser: { sizeLimit: "2mb" } } };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const { html } = req.body || {};
+  if (!html || typeof html !== "string" || html.length < 50) {
+    return res.status(400).json({ error: "Missing or invalid HTML" });
+  }
+
+  let browser;
   try {
-    const { data, template = "classic", mode = "ats", accent = '#1a73e8', density = 'normal', filename = "resume" } =
-      typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
-    if (!data || !data.name) return res.status(400).json({ error: "Missing resume data (data.name required)" });
-
-    const html = renderHtml({ data, template, mode, accent, density });
-
-    const browser = await launchBrowser();
+    browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: "new"
+    });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    // Use screen media so PDF mirrors on-screen rendering (avoids print-specific layout overrides)
-    await page.emulateMediaType('screen');
+
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
-      preferCSSPageSize: true,
+      margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" }
     });
-    await page.close();
-    await browser.close();
 
+    await browser.close();
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${String(filename).replace(/"/g, "")}.pdf"`);
-    return res.send(Buffer.from(pdf));
+    res.setHeader("Content-Disposition", 'attachment; filename="document.pdf"');
+    return res.send(pdf);
   } catch (e) {
-    console.error("[export-pdf] error:", e);
-    return res.status(500).json({ error: "Failed to generate PDF", detail: String(e?.message || e) });
+    try { if (browser) await browser.close(); } catch {}
+    return res.status(500).json({ error: String(e?.message || e) });
   }
 }
