@@ -11,9 +11,9 @@ import "./registerFonts";
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 36,
-    paddingBottom: 36,
-    paddingHorizontal: 36,
+    paddingTop: 72,
+    paddingBottom: 72,
+    paddingHorizontal: 72,
     fontSize: 11,
     lineHeight: 1.4,
     fontFamily: "InterRegular",
