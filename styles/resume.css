@@ -93,7 +93,7 @@
   height: 100%;
   overflow-y: auto;       /* scroll within the page-height */
   -webkit-overflow-scrolling: touch;
-  padding: 48px;          /* content padding like a real page margin */
+  padding: 1in;          /* content padding like a real page margin */
 }
 
 /* Results grid helper */
