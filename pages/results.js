@@ -105,11 +105,8 @@ export default function ResultsPage(){
     const root = document.querySelector('#resume-preview');
     if (!root) return alert('No resume content to export');
     const head = document.head.cloneNode(true);
-    head
-      .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
-      .forEach(el => el.remove());
-
-    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
+    head.querySelectorAll('script').forEach(s => s.remove());
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${root.outerHTML}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
     } catch (e) {
@@ -121,11 +118,8 @@ export default function ResultsPage(){
     const root = document.querySelector('#cover-preview');
     if (!root) return alert('No cover letter content to export');
     const head = document.head.cloneNode(true);
-    head
-      .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
-      .forEach(el => el.remove());
-
-    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
+    head.querySelectorAll('script').forEach(s => s.remove());
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${root.outerHTML}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
     } catch (e) {
@@ -148,9 +142,7 @@ export default function ResultsPage(){
   function ResumePreviewWrapper({ children }) {
     return (
       <div id="resume-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
+        <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
       </div>
     );
   }
@@ -158,9 +150,7 @@ export default function ResultsPage(){
   function CoverPreviewWrapper({ children }) {
     return (
       <div id="cover-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
+        <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
       </div>
     );
   }
@@ -195,23 +185,25 @@ export default function ResultsPage(){
           />
         }
         right={
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <PageCarousel
-              title="Résumé"
-              pages={resumePages}
-              index={rIndex}
-              setIndex={(i)=>{setRIndex(i); setPage(i);}}
-              onOpenLightbox={()=>setLightbox({ type: 'resume' })}
-              Wrapper={ResumePreviewWrapper}
-            />
-            <PageCarousel
-              title="Cover Letter"
-              pages={coverPages}
-              index={cIndex}
-              setIndex={setCIndex}
-              onOpenLightbox={()=>setLightbox({ type: 'cover' })}
-              Wrapper={CoverPreviewWrapper}
-            />
+          <div id="print-root">
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+              <PageCarousel
+                title="Résumé"
+                pages={resumePages}
+                index={rIndex}
+                setIndex={(i)=>{setRIndex(i); setPage(i);}}
+                onOpenLightbox={()=>setLightbox({ type: 'resume' })}
+                Wrapper={ResumePreviewWrapper}
+              />
+              <PageCarousel
+                title="Cover Letter"
+                pages={coverPages}
+                index={cIndex}
+                setIndex={setCIndex}
+                onOpenLightbox={()=>setLightbox({ type: 'cover' })}
+                Wrapper={CoverPreviewWrapper}
+              />
+            </div>
           </div>
         }
       />

@@ -1,15 +1,18 @@
-export const config = { api: { bodyParser: { sizeLimit: "3mb" } } };
+export const config = { api: { bodyParser: { sizeLimit: "5mb" } } };
+
+let ACTIVE = 0;
+const MAX_CONCURRENCY = 2; // keep small for CPU and memory
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const puppeteer = (await import("puppeteer")).default;
-  const { data, doc = "resume", html } = req.body || {}; // data = the object you store in localStorage["resumeResult"]
+  // Simple concurrency gate (production: move to a queue/job runner)
+  if (ACTIVE >= MAX_CONCURRENCY) return res.status(429).json({ error: "Server busy, try again" });
+  ACTIVE++;
 
-  const origin =
-    req.headers.origin ||
-    process.env.PUBLIC_ORIGIN ||
-    "http://localhost:3000";
+  const puppeteer = (await import("puppeteer")).default;
+  const { data, doc = "resume", html } = req.body || {};
+  const origin = req.headers.origin || process.env.PUBLIC_ORIGIN || "http://localhost:3000";
 
   let browser;
   try {
@@ -18,65 +21,61 @@ export default async function handler(req, res) {
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
     const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(45000);
+    page.setDefaultTimeout(30000);
 
     if (html) {
-      // Render provided HTML directly; ensure relative assets resolve against origin
-      const markup = html.includes('<base')
+      // Direct HTML snapshot (client sends)
+      const withBase = html.includes("<base")
         ? html
-        : html.replace('<head>', `<head><base href="${origin}">`);
-      await page.setContent(markup, { waitUntil: "networkidle0" });
-
+        : html.replace("<head>", `<head><base href="${origin}">`);
+      await page.setContent(withBase, { waitUntil: "networkidle0" });
     } else {
-      // 1) Bootstrap an origin context so we can set localStorage for that origin.
+      // Server recreates your UI flow and injects the same data the UI uses
       await page.goto(origin, { waitUntil: "domcontentloaded" });
 
-      // 2) Inject the same data the UI uses
       await page.evaluate((payload) => {
-        try { localStorage.setItem("resumeResult", JSON.stringify(payload)); } catch (e) {}
+        try { localStorage.setItem("resumeResult", JSON.stringify(payload)); } catch {}
       }, data || null);
 
-      // 3) Navigate to the real results page in print mode (loads Tailwind + fonts)
       const url = `${origin}/results?print=1&doc=${encodeURIComponent(doc)}`;
       await page.goto(url, { waitUntil: "networkidle0" });
-      await page.waitForSelector("#print-root .paper", { timeout: 10000 });
     }
 
-    // Remove Next.js FOUC-hiding styles and ensure visibility
-    await page.evaluate(() => {
-      const fouc = document.querySelector('style[data-next-hide-fouc]');
-      if (fouc) fouc.remove();
-      const nos = document.querySelector('noscript[data-n-css]');
-      if (nos) nos.remove();
-      document.body && (document.body.style.visibility = 'visible');
-    });
+    // Fonts & layout readiness
+    await page.evaluate(() => (document.fonts && document.fonts.ready) ? document.fonts.ready.then(() => true) : true);
 
-    await page.waitForSelector('#print-root .paper', { timeout: 10000 });
-
-    // Ensure all web fonts are loaded before exporting
-    await page.evaluate(() => document.fonts.ready);
-
-    // Ensure the target content actually rendered
+    // Wait until printable content exists and has geometry
+    const SELECTORS = ["#print-root .paper", "#resume-preview .paper", "#cover-preview .paper", ".paper"];
+    await page.waitForFunction((sels) => sels.some(s => document.querySelector(s)), { timeout: 15000 }, SELECTORS);
     await page.waitForFunction(() => {
-      const el = document.querySelector('#print-root .paper');
-      return !!el && el.clientHeight > 0;
-    }, { timeout: 10000 });
+      const el = document.querySelector("#print-root .paper") || document.querySelector(".paper");
+      return !!el && el.clientHeight > 0 && el.clientWidth > 0;
+    }, { timeout: 15000 });
 
-
-    // 4) Use print media and trust CSS @page sizing
+    // Print with CSS page size (honor @page)
     await page.emulateMediaType("print");
-    const pdf = await page.pdf({
+    const pdfBuf = await page.pdf({
       printBackground: true,
-      preferCSSPageSize: true,
+      preferCSSPageSize: true, // honor @page { size: A4 }
       margin: { top: 0, right: 0, bottom: 0, left: 0 },
       scale: 1
     });
 
+    const body = Buffer.isBuffer(pdfBuf) ? pdfBuf : Buffer.from(pdfBuf);
     await browser.close();
+
+    // Return with explicit length to avoid truncation by proxies/CDNs
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${doc}.pdf"`);
-    return res.send(pdf);
-  } catch (e) {
+    res.setHeader("Content-Length", String(body.length));
+    res.setHeader("Cache-Control", "no-store");
+    res.end(body);
+  } catch (err) {
     try { if (browser) await browser.close(); } catch {}
-    return res.status(500).json({ error: String(e?.message || e) });
+    res.status(500).json({ error: String(err?.message || err) });
+  } finally {
+    ACTIVE--;
   }
 }
+
