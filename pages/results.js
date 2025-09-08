@@ -7,6 +7,7 @@ import { getTemplate, densityMap } from '../lib/resumeConfig';
 import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
 import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
+import { downloadPdfFromHtml } from '../components/export/downloadPdfFromHtml';
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -101,38 +102,28 @@ export default function ResultsPage(){
   const coverPages = [coverPage];
 
   async function downloadResumePdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
+    const root = document.querySelector('#resume-preview');
+    if (!root) return alert('No resume content to export');
+    const head = document.head.cloneNode(true);
+    head.querySelectorAll('script').forEach(s => s.remove());
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
-      const res = await fetch("/api/export-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: payload, doc: "resume" })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob(); const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
-      a.click(); URL.revokeObjectURL(url);
+      await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
     } catch (e) {
-      alert("Failed to export resume: " + e.message);
+      alert('Failed to export resume: ' + e.message);
     }
   }
 
   async function downloadCoverPdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
+    const root = document.querySelector('#cover-preview');
+    if (!root) return alert('No cover letter content to export');
+    const head = document.head.cloneNode(true);
+    head.querySelectorAll('script').forEach(s => s.remove());
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
-      const res = await fetch("/api/export-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: payload, doc: "cover" })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob(); const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
-      a.click(); URL.revokeObjectURL(url);
+      await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
     } catch (e) {
-      alert("Failed to export cover letter: " + e.message);
+      alert('Failed to export cover letter: ' + e.message);
     }
   }
 
