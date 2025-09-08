@@ -3,7 +3,12 @@ import Head from "next/head";
 import { pdf } from "@react-pdf/renderer";
 import ResumePdf from "../components/pdf/ResumePdf";
 import CoverLetterPdf from "../components/pdf/CoverLetterPdf";
-import PdfCanvasPreview from "../components/pdf/PdfCanvasPreview";
+import dynamic from "next/dynamic";
+
+const PdfCanvasPreview = dynamic(
+  () => import("../components/pdf/PdfCanvasPreview").then(m => m.default),
+  { ssr: false }
+);
 
 const LAYOUTS = ["normal", "cosy", "compact"];
 const COLORS = ["#14b8a6", "#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#0ea5e9"]; // theme dots
