@@ -20,8 +20,11 @@ export default async function handler(req, res) {
     const page = await browser.newPage();
 
     if (html) {
-      // Render provided HTML directly
-      await page.setContent(html, { waitUntil: "networkidle0" });
+      // Render provided HTML directly; ensure relative assets resolve against origin
+      const markup = html.includes('<base')
+        ? html
+        : html.replace('<head>', `<head><base href="${origin}">`);
+      await page.setContent(markup, { waitUntil: "networkidle0" });
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -35,6 +38,26 @@ export default async function handler(req, res) {
       const url = `${origin}/results?print=1&doc=${encodeURIComponent(doc)}`;
       await page.goto(url, { waitUntil: "networkidle0" });
     }
+
+    // Remove Next.js FOUC-hiding styles and ensure visibility
+    await page.evaluate(() => {
+      const fouc = document.querySelector('style[data-next-hide-fouc]');
+      if (fouc) fouc.remove();
+      const nos = document.querySelector('noscript[data-n-css]');
+      if (nos) nos.remove();
+      document.body && (document.body.style.visibility = 'visible');
+    });
+
+    await page.waitForSelector('#print-root .paper', { timeout: 10000 });
+
+    // Ensure all web fonts are loaded before exporting
+    await page.evaluate(() => document.fonts.ready);
+
+    // Ensure the target content actually rendered
+    await page.waitForFunction(() => {
+      const el = document.querySelector('#print-root .paper');
+      return !!el && el.clientHeight > 0;
+    }, { timeout: 10000 });
 
     // 4) Use print media and trust CSS @page sizing
     await page.emulateMediaType("print");
