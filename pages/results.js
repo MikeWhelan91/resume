@@ -108,6 +108,7 @@ export default function ResultsPage(){
     head
       .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
       .forEach(el => el.remove());
+
     const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
@@ -123,6 +124,7 @@ export default function ResultsPage(){
     head
       .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
       .forEach(el => el.remove());
+
     const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');

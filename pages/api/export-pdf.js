@@ -25,6 +25,7 @@ export default async function handler(req, res) {
         ? html
         : html.replace('<head>', `<head><base href="${origin}">`);
       await page.setContent(markup, { waitUntil: "networkidle0" });
+
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -37,6 +38,7 @@ export default async function handler(req, res) {
       // 3) Navigate to the real results page in print mode (loads Tailwind + fonts)
       const url = `${origin}/results?print=1&doc=${encodeURIComponent(doc)}`;
       await page.goto(url, { waitUntil: "networkidle0" });
+      await page.waitForSelector("#print-root .paper", { timeout: 10000 });
     }
 
     // Remove Next.js FOUC-hiding styles and ensure visibility
@@ -58,6 +60,7 @@ export default async function handler(req, res) {
       const el = document.querySelector('#print-root .paper');
       return !!el && el.clientHeight > 0;
     }, { timeout: 10000 });
+
 
     // 4) Use print media and trust CSS @page sizing
     await page.emulateMediaType("print");
