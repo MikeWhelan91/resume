@@ -217,8 +217,9 @@ html,body{ background: var(--bg); color: var(--ink); }
 }
 /* Base A4 paper dimensions */
 .paper{
-  width:794px;
-  height:1123px;
+  width:210mm;
+  height:297mm;
+  box-sizing:border-box;
   background:#fff;
   border:1px solid var(--border);
   border-radius:8px;
@@ -226,6 +227,18 @@ html,body{ background: var(--bg); color: var(--ink); }
   overflow:hidden;
   padding:16mm 14mm;
   position:relative;
+}
+
+.avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+html.print-mode,
+body.print-mode {
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .cover-letter{
@@ -279,15 +292,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 
 @page {
   size: A4;
-  margin: 20mm;
-}
-@media print {
-  body { -webkit-print-color-adjust: exact; color-adjust: exact; }
-  .no-print { display: none !important; }
-}
-@page {
-  size: A4;            /* real A4 */
-  margin: 0;           /* margins will be handled by the page content itself */
+  margin: 0;
 }
 
 /* When printing or when we build HTML for Puppeteer, kill preview scaling */
@@ -313,27 +318,7 @@ html,body{ background: var(--bg); color: var(--ink); }
   }
 }
 
-@page { size: A4; margin: 0; }
 @media print {
-  #print-root [style*="transform"] { transform: none !important; }  /* kill preview scaling */
-  #print-root [style*="zoom"] { zoom: 1 !important; }               /* just in case */
-  #print-root .a4-scope {
-    width: 794px !important;    /* A4 @ ~96dpi */
-    height: 1123px !important;
-  }
-  #print-root .a4-scope img,
-  #print-root .a4-scope canvas,
-  #print-root .a4-scope svg,
-  #print-root .a4-scope iframe,
-  #print-root .a4-scope video {
-    max-width: none !important;
-    width: auto;
-    height: auto;
-  }
-}
-@page { size: A4; margin: 0; }
-@media print {
-  html.print-mode body { -webkit-print-color-adjust: exact; color-adjust: exact; }
   /* Hide app chrome/controls in print */
   [data-app-chrome], .no-print { display: none !important; }
 

@@ -8,8 +8,10 @@ export async function downloadPdfFromHtml(htmlString, filename = "document.pdf",
     const t = await res.text().catch(() => "");
     throw new Error("Export failed: " + t);
   }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+  const bytes = await res.arrayBuffer();
+  const url = URL.createObjectURL(
+    new Blob([bytes], { type: "application/pdf" })
+  );
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
