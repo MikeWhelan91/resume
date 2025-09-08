@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     if (html) {
       // Render provided HTML directly
       await page.setContent(html, { waitUntil: "networkidle0" });
+      await page.waitForSelector("body", { timeout: 10000 });
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -34,7 +35,11 @@ export default async function handler(req, res) {
       // 3) Navigate to the real results page in print mode (loads Tailwind + fonts)
       const url = `${origin}/results?print=1&doc=${encodeURIComponent(doc)}`;
       await page.goto(url, { waitUntil: "networkidle0" });
+      await page.waitForSelector("#print-root .paper", { timeout: 10000 });
     }
+
+    // Ensure all web fonts are loaded before exporting
+    await page.evaluateHandle("document.fonts.ready");
 
     // 4) Use print media and trust CSS @page sizing
     await page.emulateMediaType("print");
