@@ -25,7 +25,6 @@ export default async function handler(req, res) {
         ? html
         : html.replace('<head>', `<head><base href="${origin}">`);
       await page.setContent(markup, { waitUntil: "networkidle0" });
-      await page.waitForSelector('#print-root .paper', { timeout: 10000 });
 
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
@@ -41,6 +40,17 @@ export default async function handler(req, res) {
       await page.goto(url, { waitUntil: "networkidle0" });
       await page.waitForSelector("#print-root .paper", { timeout: 10000 });
     }
+
+    // Remove Next.js FOUC-hiding styles and ensure visibility
+    await page.evaluate(() => {
+      const fouc = document.querySelector('style[data-next-hide-fouc]');
+      if (fouc) fouc.remove();
+      const nos = document.querySelector('noscript[data-n-css]');
+      if (nos) nos.remove();
+      document.body && (document.body.style.visibility = 'visible');
+    });
+
+    await page.waitForSelector('#print-root .paper', { timeout: 10000 });
 
     // Ensure all web fonts are loaded before exporting
     await page.evaluate(() => document.fonts.ready);

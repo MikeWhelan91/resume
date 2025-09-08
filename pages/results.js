@@ -105,7 +105,10 @@ export default function ResultsPage(){
     const root = document.querySelector('#resume-preview');
     if (!root) return alert('No resume content to export');
     const head = document.head.cloneNode(true);
-    head.querySelectorAll('script').forEach(s => s.remove());
+    head
+      .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
+      .forEach(el => el.remove());
+
     const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
@@ -118,7 +121,10 @@ export default function ResultsPage(){
     const root = document.querySelector('#cover-preview');
     if (!root) return alert('No cover letter content to export');
     const head = document.head.cloneNode(true);
-    head.querySelectorAll('script').forEach(s => s.remove());
+    head
+      .querySelectorAll('script, style[data-next-hide-fouc], noscript[data-n-css]')
+      .forEach(el => el.remove());
+
     const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode">${root.outerHTML}</body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
