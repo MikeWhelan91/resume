@@ -312,3 +312,22 @@ html,body{ background: var(--bg); color: var(--ink); }
     height: auto;
   }
 }
+
+@page { size: A4; margin: 0; }
+@media print {
+  #print-root [style*="transform"] { transform: none !important; }  /* kill preview scaling */
+  #print-root [style*="zoom"] { zoom: 1 !important; }               /* just in case */
+  #print-root .a4-scope {
+    width: 794px !important;    /* A4 @ ~96dpi */
+    height: 1123px !important;
+  }
+  #print-root .a4-scope img,
+  #print-root .a4-scope canvas,
+  #print-root .a4-scope svg,
+  #print-root .a4-scope iframe,
+  #print-root .a4-scope video {
+    max-width: none !important;
+    width: auto;
+    height: auto;
+  }
+}

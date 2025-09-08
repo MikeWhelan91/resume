@@ -86,22 +86,38 @@ export default function ResultsPage(){
   );
   const coverPages = [coverPage];
 
-  function buildHtmlFromNode(node) {
+  function buildHtmlFromNode(rootEl) {
+    const node = rootEl.cloneNode(true);
+
+    // 4a) remove inline transforms/zoom from ALL descendants (preview scaling)
+    node.querySelectorAll("[style]").forEach(n => {
+      const s = n.getAttribute("style") || "";
+      const cleaned = s
+        .replace(/transform\s*:\s*[^;]+;?/gi, "")
+        .replace(/zoom\s*:\s*[^;]+;?/gi, "");
+      if (cleaned.trim()) n.setAttribute("style", cleaned);
+      else n.removeAttribute("style");
+    });
+
+    // 4b) ensure we have the #print-root wrapper on the clone (if not already)
+    if (!node.querySelector("#print-root")) {
+      const wrap = node.ownerDocument?.createElement?.("div") || document.createElement("div");
+      wrap.id = "print-root";
+      while (node.firstChild) wrap.appendChild(node.firstChild);
+      node.appendChild(wrap);
+    }
+
+    // 4c) full HTML with our global CSS + safety @page
     const cssLinks = `
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link rel="stylesheet" href="/_next/static/css/app.css">
-      <link rel="stylesheet" href="/_next/static/css/styles.css">
     `;
     return `
       <html>
         <head>
-          <meta charset="utf-8" />
+          <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           ${cssLinks}
-          <style>
-            @page { size: A4; margin: 0; }
-            @media print { body{ -webkit-print-color-adjust: exact; color-adjust: exact; } }
-          </style>
+          <style>@page{size:A4;margin:0}</style>
         </head>
         <body>${node.outerHTML}</body>
       </html>
