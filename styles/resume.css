@@ -60,6 +60,7 @@
 @page { margin: 1in; }
 
 @media print {
+
   body { background: #fff; }
   .a4-scroll { padding: 0 !important; }
 }
