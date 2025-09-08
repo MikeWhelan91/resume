@@ -11,8 +11,8 @@ import Sidebar from '../components/templates/Sidebar';
 import Modern from '../components/templates/Modern';
 import { pdf } from '@react-pdf/renderer';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
-import PageCarousel from '@/components/ui/PageCarousel';
-import LightboxModal from '@/components/ui/LightboxModal';
+import PageCarousel from '../components/ui/PageCarousel';
+import LightboxModal from '../components/ui/LightboxModal';
 
 const TemplateMap = { classic: Classic, twoCol: TwoCol, centered: Centered, sidebar: Sidebar, modern: Modern };
 
