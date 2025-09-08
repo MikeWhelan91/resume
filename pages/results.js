@@ -7,7 +7,6 @@ import { getTemplate, densityMap } from '../lib/resumeConfig';
 import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
 import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
-import { downloadPdfFromHtml } from "../components/export/downloadPdfFromHtml";
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -24,6 +23,18 @@ export default function ResultsPage(){
   useEffect(()=>{
     try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
   },[]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("print") === "1") {
+      document.documentElement.classList.add("print-mode");
+      // Optional: if ?doc=resume or ?doc=cover, hide the other column:
+      const doc = params.get("doc");
+      if (doc === "resume") { const c = document.getElementById("cover-preview"); if (c) c.style.display = "none"; }
+      if (doc === "cover")  { const r = document.getElementById("resume-preview"); if (r) r.style.display = "none"; }
+    }
+  }, []);
 
   const TemplateComp = getTemplate(template);
   const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
@@ -86,56 +97,30 @@ export default function ResultsPage(){
   );
   const coverPages = [coverPage];
 
-  function buildHtmlFromNode(rootEl) {
-    const node = rootEl.cloneNode(true);
-
-    // 4a) remove inline transforms/zoom from ALL descendants (preview scaling)
-    node.querySelectorAll("[style]").forEach(n => {
-      const s = n.getAttribute("style") || "";
-      const cleaned = s
-        .replace(/transform\s*:\s*[^;]+;?/gi, "")
-        .replace(/zoom\s*:\s*[^;]+;?/gi, "");
-      if (cleaned.trim()) n.setAttribute("style", cleaned);
-      else n.removeAttribute("style");
-    });
-
-    // 4b) ensure we have the #print-root wrapper on the clone (if not already)
-    if (!node.querySelector("#print-root")) {
-      const wrap = node.ownerDocument?.createElement?.("div") || document.createElement("div");
-      wrap.id = "print-root";
-      while (node.firstChild) wrap.appendChild(node.firstChild);
-      node.appendChild(wrap);
-    }
-
-    // 4c) full HTML with our global CSS + safety @page
-    const cssLinks = `
-      <link rel="stylesheet" href="/_next/static/css/app.css">
-    `;
-    return `
-      <html>
-        <head>
-          <meta charSet="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          ${cssLinks}
-          <style>@page{size:A4;margin:0}</style>
-        </head>
-        <body>${node.outerHTML}</body>
-      </html>
-    `;
-  }
-
   async function downloadResumePdf() {
-    const el = document.getElementById("resume-preview");
-    if (!el) return alert("Resume preview not found");
-    const html = buildHtmlFromNode(el);
-    await downloadPdfFromHtml(html, "resume.pdf");
+    let payload = null;
+    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
+    const res = await fetch("/api/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: payload, doc: "resume" })
+    });
+    const blob = await res.blob(); const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
+    a.click(); URL.revokeObjectURL(url);
   }
 
   async function downloadCoverPdf() {
-    const el = document.getElementById("cover-preview");
-    if (!el) return alert("Cover letter preview not found");
-    const html = buildHtmlFromNode(el);
-    await downloadPdfFromHtml(html, "cover-letter.pdf");
+    let payload = null;
+    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
+    const res = await fetch("/api/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: payload, doc: "cover" })
+    });
+    const blob = await res.blob(); const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
+    a.click(); URL.revokeObjectURL(url);
   }
 
   async function downloadCvDocx(){

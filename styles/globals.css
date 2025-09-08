@@ -331,3 +331,20 @@ html,body{ background: var(--bg); color: var(--ink); }
     height: auto;
   }
 }
+@page { size: A4; margin: 0; }
+@media print {
+  html.print-mode body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+  /* Hide app chrome/controls in print */
+  [data-app-chrome], .no-print { display: none !important; }
+
+  /* Disable preview scaling in print */
+  #print-root [style*="transform"] { transform: none !important; }
+  #print-root [style*="zoom"] { zoom: 1 !important; }
+
+  /* Ensure inner A4 box remains true size; your preview already uses .a4-scope */
+  #print-root .a4-scope { width: 794px !important; height: 1123px !important; }
+  #print-root .a4-scope img, #print-root .a4-scope canvas, #print-root .a4-scope svg,
+  #print-root .a4-scope iframe, #print-root .a4-scope video {
+    max-width: none !important; width: auto; height: auto;
+  }
+}
