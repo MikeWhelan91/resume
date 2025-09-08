@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
@@ -102,11 +103,11 @@ export default function ResultsPage(){
   const coverPages = [coverPage];
 
   async function downloadResumePdf() {
-    const root = document.querySelector('#resume-preview');
-    if (!root) return alert('No resume content to export');
+    if (!resumePages.length) return alert('No resume content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${root.outerHTML}</div></body></html>`;
+    const pagesHtml = resumePages.map(p => renderToStaticMarkup(p)).join('');
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
     } catch (e) {
@@ -115,11 +116,11 @@ export default function ResultsPage(){
   }
 
   async function downloadCoverPdf() {
-    const root = document.querySelector('#cover-preview');
-    if (!root) return alert('No cover letter content to export');
+    if (!coverPages.length) return alert('No cover letter content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${root.outerHTML}</div></body></html>`;
+    const pagesHtml = coverPages.map(p => renderToStaticMarkup(p)).join('');
+    const html = `<!doctype html><html><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
     } catch (e) {
@@ -161,7 +162,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, multi-page PDF export, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell

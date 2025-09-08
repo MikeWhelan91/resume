@@ -16,3 +16,4 @@ Notes:
 - PDF export uses @react-pdf/renderer for vector, selectable-text PDFs.
 - DOCX export unchanged.
 - HTML preview rebuilt for reliability.
+ - Multi-page PDF export supported.
