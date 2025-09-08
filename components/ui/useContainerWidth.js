@@ -10,7 +10,7 @@ export default function useContainerWidth(ref, deps = []) {
         if (!ref.current) return;
         const ro = new ResizeObserver(entries => {
           for (const e of entries) {
-            const cw = e.contentRect?.width || ref.current.offsetWidth || 0;
+            const cw = e.contentRect?.width ?? ref.current?.offsetWidth ?? 0;
             width = cw;
             setW(cw);
           }
