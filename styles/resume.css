@@ -57,8 +57,10 @@
 .sidebarMain { position: relative; }
 .sidebarMain::before { content:""; position:absolute; left:-9px; top:0; bottom:0; width:1px; background: var(--rule); }
 
+@page { margin: 1in; }
+
 @media print {
-  @page { margin: 1in; }
+
   body { background: #fff; }
   .a4-scroll { padding: 0 !important; }
 }
