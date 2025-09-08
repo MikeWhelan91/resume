@@ -3,19 +3,12 @@ import { createRoot } from 'react-dom/client';
 import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
-import Preview from '../components/ui/Preview';
-import Classic from '../components/templates/Classic';
-import TwoCol from '../components/templates/TwoCol';
-import Centered from '../components/templates/Centered';
-import Sidebar from '../components/templates/Sidebar';
-import Modern from '../components/templates/Modern';
+import { getTemplate, densityMap } from '../lib/resumeConfig';
 import { pdf } from '@react-pdf/renderer';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
 import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
 import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
-
-const TemplateMap = { classic: Classic, twoCol: TwoCol, centered: Centered, sidebar: Sidebar, modern: Modern };
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -33,13 +26,9 @@ export default function ResultsPage(){
     try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
   },[]);
 
-  const TemplateComp = TemplateMap[template] || Classic;
-  const densityVars = {
-    compact: { '--font-size': '11px', '--line-height': '1.5' },
-    normal: { '--font-size': '12.5px', '--line-height': '1.75' },
-    cozy: { '--font-size': '14px', '--line-height': '1.9' }
-  };
-  const styleVars = { '--accent': accent, ...densityVars[density] };
+  const TemplateComp = getTemplate(template);
+  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
+  const styleVars = { '--accent': accent, '--font-size': fontSize, '--line-height': lineHeight };
 
   useEffect(() => {
     if (!result) return;
@@ -128,7 +117,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
