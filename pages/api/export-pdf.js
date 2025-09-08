@@ -20,9 +20,13 @@ export default async function handler(req, res) {
     const page = await browser.newPage();
 
     if (html) {
-      // Render provided HTML directly
-      await page.setContent(html, { waitUntil: "networkidle0" });
-      await page.waitForSelector("body", { timeout: 10000 });
+      // Render provided HTML directly; ensure relative assets resolve against origin
+      const markup = html.includes('<base')
+        ? html
+        : html.replace('<head>', `<head><base href="${origin}">`);
+      await page.setContent(markup, { waitUntil: "networkidle0" });
+      await page.waitForSelector('#print-root .paper', { timeout: 10000 });
+
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -39,7 +43,14 @@ export default async function handler(req, res) {
     }
 
     // Ensure all web fonts are loaded before exporting
-    await page.evaluateHandle("document.fonts.ready");
+    await page.evaluate(() => document.fonts.ready);
+
+    // Ensure the target content actually rendered
+    await page.waitForFunction(() => {
+      const el = document.querySelector('#print-root .paper');
+      return !!el && el.clientHeight > 0;
+    }, { timeout: 10000 });
+
 
     // 4) Use print media and trust CSS @page sizing
     await page.emulateMediaType("print");
