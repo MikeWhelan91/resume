@@ -1,235 +1,83 @@
 import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import Head from 'next/head';
-import MainShell from '../components/layout/MainShell';
-import ControlsPanel from '../components/ui/ControlsPanel';
-import { getTemplate, densityMap } from '../lib/resumeConfig';
-import PageCarousel from '../components/ui/PageCarousel';
-import LightboxModal from '../components/ui/LightboxModal';
-import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
+import { pdf } from '@react-pdf/renderer';
+import dynamic from 'next/dynamic';
+import ResumePdf from '../components/pdf/ResumePdf';
+import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
 
-export default function ResultsPage(){
-  const [result, setResult] = useState(null);
-  const [template, setTemplate] = useState('classic');
-  const [accent, setAccent] = useState('#00C9A7');
-  const [density, setDensity] = useState('normal');
-  const [atsMode, setAtsMode] = useState(false);
-  const [page, setPage] = useState(0);
-  const [resumePages, setResumePages] = useState([]);
-  const [rIndex, setRIndex] = useState(0);
-  const [cIndex, setCIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(null);
+const PDFViewer = dynamic(() => import('@react-pdf/renderer').then(m => m.PDFViewer), {
+  ssr: false,
+});
 
-  useEffect(()=>{
-    try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
-  },[]);
+const LAYOUTS = ['normal','cosy','compact'];
+
+export default function ResultsPage() {
+  const [data, setData] = useState(null);
+  const [layout, setLayout] = useState('normal');
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("print") === "1") {
-      document.documentElement.classList.add("print-mode");
-      // Optional: if ?doc=resume or ?doc=cover, hide the other column:
-      const doc = params.get("doc");
-      if (doc === "resume") { const c = document.getElementById("cover-preview"); if (c) c.style.display = "none"; }
-      if (doc === "cover")  { const r = document.getElementById("resume-preview"); if (r) r.style.display = "none"; }
-    }
+    try {
+      const saved = JSON.parse(localStorage.getItem('resumeResult') || 'null');
+      setData(saved || null);
+    } catch {}
   }, []);
 
-  const TemplateComp = getTemplate(template);
-  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
-  const styleVars = { '--accent': accent, '--font-size': fontSize, '--line-height': lineHeight };
-
-  useEffect(() => {
-    if (!result) return;
-    const off = document.createElement('div');
-    off.className = `paper ${atsMode ? 'ats-mode' : ''}`;
-    Object.entries(styleVars).forEach(([k, v]) => off.style.setProperty(k, v));
-    off.style.position = 'absolute';
-    off.style.visibility = 'hidden';
-    off.style.pointerEvents = 'none';
-    off.style.left = '-10000px';
-    document.body.appendChild(off);
-    const pageHeight = off.getBoundingClientRect().height;
-    const root = createRoot(off);
-    root.render(<TemplateComp data={result.resumeData} />);
-    requestAnimationFrame(() => {
-      const total = off.scrollHeight;
-      const items = Array.from(off.querySelectorAll('.avoid-break'));
-      const positions = [];
-      let start = 0;
-      while (start < total) {
-        let end = start + pageHeight;
-        const crossing = items.find(
-          el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end
-        );
-        if (crossing && crossing.offsetTop > start) {
-          end = crossing.offsetTop;
-        }
-        positions.push(start);
-        start = end;
-      }
-      const arr = positions.map((pos, i) => (
-        <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
-          <div style={{ position: 'relative', top: -pos }}>
-            <TemplateComp data={result.resumeData} />
-          </div>
-        </div>
-      ));
-      setResumePages(arr);
-      setPage(p => Math.min(p, arr.length - 1));
-      setRIndex(i => Math.min(i, arr.length - 1));
-      root.unmount();
-      document.body.removeChild(off);
-    });
-  }, [result, template, accent, density, atsMode]);
-
-  if(!result) return null;
-
-  const coverPage = (
-    <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
-      <div className="text-[11px] leading-[1.6] space-y-[10px]">
-        {(result.coverLetter || 'No cover letter returned.').split(/\n+/).map((line, i) => (
-          <p key={i}>{line}</p>
-        ))}
-      </div>
-    </div>
-  );
-  const coverPages = [coverPage];
-
-  async function downloadResumePdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "resume" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  async function downloadCoverPdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "cover" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  async function downloadCvDocx(){
-    const res = await fetch('/api/export-docx-structured',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, filename:'cv'})});
-    const blob = await res.blob();
+  async function downloadResume() {
+    if (!data) return;
+    const blob = await pdf(<ResumePdf data={data?.resumeData} layout={layout} />).toBlob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'cv.docx'; a.click(); URL.revokeObjectURL(url);
-  }
-  async function downloadClDocx(){
-    const res = await fetch('/api/export-cover-letter-docx',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({coverLetter: result.coverLetter, filename:'cover_letter'})});
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cover_letter.docx'; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement('a'); a.href = url; a.download = 'resume.pdf'; a.click(); URL.revokeObjectURL(url);
   }
 
-  function ResumePreviewWrapper({ children }) {
-    return (
-      <div id="resume-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
-      </div>
-    );
-  }
-
-  function CoverPreviewWrapper({ children }) {
-    return (
-      <div id="cover-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
-      </div>
-    );
+  async function downloadCover() {
+    if (!data) return;
+    const blob = await pdf(<CoverLetterPdf text={data?.coverLetter} identity={data?.resumeData} layout={layout} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'cover-letter.pdf'; a.click(); URL.revokeObjectURL(url);
   }
 
   return (
     <>
       <Head>
         <title>Results – TailorCV</title>
-        <meta
-          name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
-        />
+        <meta name="description" content="Preview and export your résumé and cover letter with pixel-perfect PDF rendering and adjustable layouts." />
       </Head>
-      <MainShell
-        left={
-          <ControlsPanel
-            template={template}
-            setTemplate={setTemplate}
-            accent={accent}
-            setAccent={setAccent}
-            density={density}
-            setDensity={setDensity}
-            atsMode={atsMode}
-            setAtsMode={setAtsMode}
-            onExportPdf={downloadResumePdf}
-            onExportDocx={downloadCvDocx}
-            onExportClPdf={downloadCoverPdf}
-            onExportClDocx={downloadClDocx}
-            page={page}
-            pageCount={resumePages.length || 1}
-            onPageChange={(p)=>{setPage(p); setRIndex(p);}}
-          />
-        }
-        right={
+      <main className="min-h-screen bg-zinc-50">
+        <div className="mx-auto px-6 py-8 max-w-[1600px]">
+          <header className="mb-6 flex items-end justify-between" data-app-chrome>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold">Preview</h1>
+              <select className="border rounded px-2 py-1" value={layout} onChange={e => setLayout(e.target.value)}>
+                {LAYOUTS.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <button className="border rounded px-3 py-1" onClick={downloadResume}>Download Résumé (PDF)</button>
+              <button className="border rounded px-3 py-1" onClick={downloadCover}>Download Cover Letter (PDF)</button>
+            </div>
+          </header>
+
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <PageCarousel
-              title="Résumé"
-              pages={resumePages}
-              index={rIndex}
-              setIndex={(i)=>{setRIndex(i); setPage(i);}}
-              onOpenLightbox={()=>setLightbox({ type: 'resume' })}
-              Wrapper={ResumePreviewWrapper}
-            />
-            <PageCarousel
-              title="Cover Letter"
-              pages={coverPages}
-              index={cIndex}
-              setIndex={setCIndex}
-              onOpenLightbox={()=>setLightbox({ type: 'cover' })}
-              Wrapper={CoverPreviewWrapper}
-            />
+            <div className="flex flex-col">
+              <div className="text-sm font-medium mb-2">Résumé</div>
+              <div className="h-[80vh] border rounded overflow-hidden bg-white">
+                <PDFViewer width="100%" height="100%">
+                  <ResumePdf data={data?.resumeData} layout={layout} />
+                </PDFViewer>
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="text-sm font-medium mb-2">Cover Letter</div>
+              <div className="h-[80vh] border rounded overflow-hidden bg-white">
+                <PDFViewer width="100%" height="100%">
+                  <CoverLetterPdf text={data?.coverLetter} identity={data?.resumeData} layout={layout} />
+                </PDFViewer>
+              </div>
+            </div>
           </div>
-        }
-      />
-      <LightboxModal
-        open={!!lightbox}
-        onClose={()=>setLightbox(null)}
-        onPrev={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.max(0, i-1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.max(0, i-1));
-        }}
-        onNext={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.min((resumePages?.length ?? 1) - 1, i+1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.min((coverPages?.length ?? 1) - 1, i+1));
-        }}
-        canPrev={lightbox?.type === 'resume' ? rIndex > 0 : cIndex > 0}
-        canNext={lightbox?.type === 'resume'
-          ? rIndex < (resumePages?.length ?? 1) - 1
-          : cIndex < (coverPages?.length ?? 1) - 1}
-        pageLabel={
-          lightbox
-            ? `${lightbox.type === 'resume' ? rIndex + 1 : cIndex + 1} / ${lightbox.type === 'resume' ? (resumePages?.length ?? 1) : (coverPages?.length ?? 1)}`
-            : ''
-        }
-      >
-        {lightbox?.type === 'resume' ? resumePages?.[rIndex] : coverPages?.[cIndex]}
-      </LightboxModal>
+        </div>
+      </main>
     </>
   );
 }
