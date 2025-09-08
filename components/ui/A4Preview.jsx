@@ -1,15 +1,25 @@
 import { useMemo } from "react";
 export default function A4Preview({ children, scale = 0.72, className = "" }) {
-  const style = useMemo(() => ({
-    width: 794,
-    height: 1123,
-    transform: `scale(${scale})`,
-  }), [scale]);
+  const innerStyle = useMemo(
+    () => ({
+      width: 794,
+      height: 1123,
+      transform: `scale(${scale})`,
+    }),
+    [scale]
+  );
+  const outerStyle = useMemo(
+    () => ({
+      width: 794 * scale,
+      height: 1123 * scale,
+    }),
+    [scale]
+  );
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative overflow-hidden ${className}`} style={outerStyle}>
       <div
         className="origin-top-left bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_25px_rgba(0,0,0,0.08)]"
-        style={style}
+        style={innerStyle}
       >
         <style>{`
           .a4-scope * { box-sizing: border-box; }

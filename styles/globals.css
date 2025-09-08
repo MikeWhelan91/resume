@@ -229,7 +229,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 }
 
 .cover-letter{
-  padding:0;
+  padding:48px;
 }
 
 /* Pager controls */
