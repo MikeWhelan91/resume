@@ -11,6 +11,8 @@ import Sidebar from '../components/templates/Sidebar';
 import Modern from '../components/templates/Modern';
 import { pdf } from '@react-pdf/renderer';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
+import PageCarousel from '@/components/ui/PageCarousel';
+import LightboxModal from '@/components/ui/LightboxModal';
 
 const TemplateMap = { classic: Classic, twoCol: TwoCol, centered: Centered, sidebar: Sidebar, modern: Modern };
 
@@ -22,6 +24,9 @@ export default function ResultsPage(){
   const [atsMode, setAtsMode] = useState(false);
   const [page, setPage] = useState(0);
   const [resumePages, setResumePages] = useState([]);
+  const [rIndex, setRIndex] = useState(0);
+  const [cIndex, setCIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(()=>{
     try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
@@ -84,6 +89,7 @@ export default function ResultsPage(){
       </div>
     </div>
   );
+  const coverPages = [coverPage];
 
   async function downloadCvPdf(){
     const res = await fetch('/api/export-pdf',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, template, mode: atsMode?'ats':'design', accent, density, filename:'cv'})});
@@ -135,20 +141,53 @@ export default function ResultsPage(){
             onExportClDocx={downloadClDocx}
             page={page}
             pageCount={resumePages.length || 1}
-            onPageChange={setPage}
+            onPageChange={(p)=>{setPage(p); setRIndex(p);}}
           />
         }
         right={
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="pane">
-              <Preview pages={resumePages} page={page} onPageChange={setPage} />
-            </div>
-            <div className="pane">
-              <Preview pages={[coverPage]} />
-            </div>
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+            <PageCarousel
+              title="Résumé"
+              pages={resumePages}
+              index={rIndex}
+              setIndex={(i)=>{setRIndex(i); setPage(i);}}
+              onOpenLightbox={()=>setLightbox({ type: 'resume' })}
+            />
+            <PageCarousel
+              title="Cover Letter"
+              pages={coverPages}
+              index={cIndex}
+              setIndex={setCIndex}
+              onOpenLightbox={()=>setLightbox({ type: 'cover' })}
+            />
           </div>
         }
       />
+      <LightboxModal
+        open={!!lightbox}
+        onClose={()=>setLightbox(null)}
+        onPrev={()=>{
+          if(!lightbox) return;
+          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.max(0, i-1); setPage(n); return n; });
+          if(lightbox.type === 'cover') setCIndex(i=>Math.max(0, i-1));
+        }}
+        onNext={()=>{
+          if(!lightbox) return;
+          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.min((resumePages?.length ?? 1) - 1, i+1); setPage(n); return n; });
+          if(lightbox.type === 'cover') setCIndex(i=>Math.min((coverPages?.length ?? 1) - 1, i+1));
+        }}
+        canPrev={lightbox?.type === 'resume' ? rIndex > 0 : cIndex > 0}
+        canNext={lightbox?.type === 'resume'
+          ? rIndex < (resumePages?.length ?? 1) - 1
+          : cIndex < (coverPages?.length ?? 1) - 1}
+        pageLabel={
+          lightbox
+            ? `${lightbox.type === 'resume' ? rIndex + 1 : cIndex + 1} / ${lightbox.type === 'resume' ? (resumePages?.length ?? 1) : (coverPages?.length ?? 1)}`
+            : ''
+        }
+      >
+        {lightbox?.type === 'resume' ? resumePages?.[rIndex] : coverPages?.[cIndex]}
+      </LightboxModal>
     </>
   );
 }
