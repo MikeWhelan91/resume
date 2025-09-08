@@ -26,6 +26,7 @@ export default async function handler(req, res) {
         : html.replace('<head>', `<head><base href="${origin}">`);
       await page.setContent(markup, { waitUntil: "networkidle0" });
       await page.waitForSelector('#print-root .paper', { timeout: 10000 });
+
     } else {
       // 1) Bootstrap an origin context so we can set localStorage for that origin.
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -49,6 +50,7 @@ export default async function handler(req, res) {
       const el = document.querySelector('#print-root .paper');
       return !!el && el.clientHeight > 0;
     }, { timeout: 10000 });
+
 
     // 4) Use print media and trust CSS @page sizing
     await page.emulateMediaType("print");
