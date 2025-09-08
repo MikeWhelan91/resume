@@ -285,3 +285,30 @@ html,body{ background: var(--bg); color: var(--ink); }
   body { -webkit-print-color-adjust: exact; color-adjust: exact; }
   .no-print { display: none !important; }
 }
+@page {
+  size: A4;            /* real A4 */
+  margin: 0;           /* margins will be handled by the page content itself */
+}
+
+/* When printing or when we build HTML for Puppeteer, kill preview scaling */
+@media print {
+  /* Nuke any transform-based scaling inside the exported subtree */
+  #print-root [style*="transform"] {
+    transform: none !important;
+  }
+  /* Ensure our A4 inner page still has its true size */
+  #print-root .a4-scope {
+    width: 794px !important;
+    height: 1123px !important;
+  }
+  /* Avoid global max-width rules collapsing content */
+  #print-root .a4-scope img,
+  #print-root .a4-scope canvas,
+  #print-root .a4-scope svg,
+  #print-root .a4-scope iframe,
+  #print-root .a4-scope video {
+    max-width: none !important;
+    width: auto;
+    height: auto;
+  }
+}

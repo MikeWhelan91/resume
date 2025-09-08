@@ -99,7 +99,7 @@ export default function ResultsPage(){
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           ${cssLinks}
           <style>
-            @page { size: A4; margin: 20mm; }
+            @page { size: A4; margin: 0; }
             @media print { body{ -webkit-print-color-adjust: exact; color-adjust: exact; } }
           </style>
         </head>
@@ -135,11 +135,23 @@ export default function ResultsPage(){
   }
 
   function ResumePreviewWrapper({ children }) {
-    return <div id="resume-preview"><ResponsiveA4Preview>{children}</ResponsiveA4Preview></div>;
+    return (
+      <div id="resume-preview">
+        <div id="print-root">
+          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
+        </div>
+      </div>
+    );
   }
 
   function CoverPreviewWrapper({ children }) {
-    return <div id="cover-preview"><ResponsiveA4Preview>{children}</ResponsiveA4Preview></div>;
+    return (
+      <div id="cover-preview">
+        <div id="print-root">
+          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
+        </div>
+      </div>
+    );
   }
 
   return (

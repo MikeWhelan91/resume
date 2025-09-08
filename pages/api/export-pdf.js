@@ -1,9 +1,9 @@
-import puppeteer from "puppeteer";
-
 export const config = { api: { bodyParser: { sizeLimit: "2mb" } } };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const puppeteer = (await import("puppeteer")).default;
   const { html } = req.body || {};
   if (!html || typeof html !== "string" || html.length < 50) {
     return res.status(400).json({ error: "Missing or invalid HTML" });
@@ -12,16 +12,19 @@ export default async function handler(req, res) {
   let browser;
   try {
     browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      headless: "new"
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
     const page = await browser.newPage();
+
+    // Let CSS (@page size: A4) dictate final page size:
     await page.setContent(html, { waitUntil: "networkidle0" });
 
     const pdf = await page.pdf({
-      format: "A4",
       printBackground: true,
-      margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" }
+      preferCSSPageSize: true,     // <— trust @page size
+      margin: { top: 0, right: 0, bottom: 0, left: 0 }, // no extra margins
+      scale: 1                     // do NOT downscale
     });
 
     await browser.close();
