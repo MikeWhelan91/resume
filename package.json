@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@react-pdf/renderer": "^3.4.0",
+    "@react-pdf/renderer": "^3.3.0",
     "docx": "^9.0.3",
     "formidable": "^3.5.0",
     "google-fonts": "^1.0.0",
@@ -17,6 +17,7 @@
     "openai": "^4.0.0",
     "pdf-parse": "^1.1.1",
     "pdfreader": "^3.0.5",
+    "pdfjs-dist": "^4.6.82",
     "react": "latest",
     "react-dom": "latest",
     "zod": "^3.23.8",
