@@ -1,30 +1,32 @@
-import React from "react";
-import { Page, Text, Document, StyleSheet } from "@react-pdf/renderer";
-import "./registerFonts";
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { registerInter } from './fonts';
+import { makeTheme } from './theme';
 
-const layoutMap = {
-  normal: { fontSize: 11, lineHeight: 1.6 },
-  cosy:   { fontSize: 12, lineHeight: 1.7 },
-  compact:{ fontSize: 10, lineHeight: 1.5 },
-};
-
-export default function CoverLetterPdf({ text, identity, layout = "normal" }) {
-  const body = String(text || "");
-  const { fontSize, lineHeight } = layoutMap[layout] || layoutMap.normal;
-  const styles = StyleSheet.create({
-    page: { fontFamily: "InterRegular", fontSize, lineHeight, padding: 48 },
-    h1:   { fontFamily: "InterBold", fontWeight: 700, fontSize: 16, marginBottom: 12 },
-    para: { fontFamily: "InterRegular", marginBottom: 10 },
-    sign: { fontFamily: "InterBold", fontWeight: 700, marginTop: 18 },
+function stylesFor(t) {
+  return StyleSheet.create({
+    page: { fontFamily: 'Inter', fontSize: t.base, lineHeight: t.lh, padding: t.margin, color: t.text },
+    name: { fontSize: t.h1, fontWeight: 700, marginBottom: 8, color: t.accent },
+    meta: { color: t.meta, marginBottom: 12 },
+    p: { marginBottom: 8 },
+    sign: { fontWeight: 700, marginTop: 8 },
   });
+}
+
+export default function CoverLetterPdf({ text, identity, layout='normal', accent='#2563eb', ats=false }) {
+  registerInter();
+  const t = makeTheme(layout, accent, ats);
+  const s = stylesFor(t);
+  const lines = String(text || '').split(/\n+/).filter(Boolean);
+
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {identity?.name ? <Text style={styles.h1}>{identity.name}</Text> : null}
-        {body.split(/\n+/).map((line, i) => (
-          <Text key={i} style={styles.para}>{line}</Text>
-        ))}
-        {identity?.name ? <Text style={styles.sign}>{identity.name}</Text> : null}
+      <Page size="A4" style={s.page}>
+        {identity?.name ? <Text style={s.name}>{String(identity.name)}</Text> : null}
+        <Text style={s.meta}>
+          {[identity?.email, identity?.phone, identity?.location].filter(Boolean).join(' • ')}
+        </Text>
+        {lines.length ? lines.map((ln, i) => <Text key={i} style={s.p}>{ln}</Text>) : <Text>(No cover letter)</Text>}
+        {identity?.name ? <Text style={s.sign}>{String(identity.name)}</Text> : null}
       </Page>
     </Document>
   );
