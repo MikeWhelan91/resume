@@ -51,6 +51,9 @@ export default function ResultsPage(){
     off.style.left = '-10000px';
     document.body.appendChild(off);
     const pageHeight = off.getBoundingClientRect().height;
+    // Allow content to expand so we can measure its full height
+    off.style.height = 'auto';
+    off.style.overflow = 'visible';
     const root = createRoot(off);
     root.render(<TemplateComp data={result.resumeData} />);
     requestAnimationFrame(() => {
@@ -100,27 +103,37 @@ export default function ResultsPage(){
   async function downloadResumePdf() {
     let payload = null;
     try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "resume" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
-    a.click(); URL.revokeObjectURL(url);
+    try {
+      const res = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: payload, doc: "resume" })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob(); const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
+      a.click(); URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to export resume: " + e.message);
+    }
   }
 
   async function downloadCoverPdf() {
     let payload = null;
     try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "cover" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
-    a.click(); URL.revokeObjectURL(url);
+    try {
+      const res = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: payload, doc: "cover" })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob(); const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
+      a.click(); URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to export cover letter: " + e.message);
+    }
   }
 
   async function downloadCvDocx(){
@@ -161,7 +174,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell

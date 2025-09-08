@@ -1,8 +1,8 @@
-export async function downloadPdfFromHtml(htmlString, filename = "document.pdf") {
+export async function downloadPdfFromHtml(htmlString, filename = "document.pdf", doc = "resume") {
   const res = await fetch("/api/export-pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html: htmlString })
+    body: JSON.stringify({ html: htmlString, doc })
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
