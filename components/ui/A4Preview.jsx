@@ -16,7 +16,7 @@ export default function A4Preview({ children, scale = 0.72, className = "" }) {
     [scale]
   );
   return (
-    <div className={`relative overflow-hidden ${className}`} style={outerStyle}>
+    <div className={`relative overflow-hidden a4-outer ${className}`} style={outerStyle}>
       <div
         className="origin-top-left bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_25px_rgba(0,0,0,0.08)]"
         style={innerStyle}
@@ -27,6 +27,13 @@ export default function A4Preview({ children, scale = 0.72, className = "" }) {
             max-width: none !important;
             width: auto;
             height: auto;
+          }
+          @media print {
+            .a4-outer {
+              width: 794px !important;
+              height: 1123px !important;
+              overflow: visible !important;
+            }
           }
         `}</style>
         <div className="a4-scope w-full h-full">{children}</div>

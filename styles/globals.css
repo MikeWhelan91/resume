@@ -301,7 +301,12 @@ body.print-mode {
   #print-root [style*="transform"] {
     transform: none !important;
   }
-  /* Ensure our A4 inner page still has its true size */
+  /* Ensure our A4 preview containers render at true size */
+  #print-root .a4-outer {
+    width: 794px !important;
+    height: 1123px !important;
+    overflow: visible !important;
+  }
   #print-root .a4-scope {
     width: 794px !important;
     height: 1123px !important;
