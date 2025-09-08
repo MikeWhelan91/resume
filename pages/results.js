@@ -4,11 +4,10 @@ import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import { getTemplate, densityMap } from '../lib/resumeConfig';
-import { pdf } from '@react-pdf/renderer';
-import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
 import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
 import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
+import { downloadPdfFromHtml } from "../components/export/downloadPdfFromHtml";
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -87,28 +86,60 @@ export default function ResultsPage(){
   );
   const coverPages = [coverPage];
 
-  async function downloadCvPdf(){
-    const res = await fetch('/api/export-pdf',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, template, mode: atsMode?'ats':'design', accent, density, filename:'cv'})});
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'cv.pdf'; a.click();
-    URL.revokeObjectURL(url);
+  function buildHtmlFromNode(node) {
+    const cssLinks = `
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link rel="stylesheet" href="/_next/static/css/app.css">
+      <link rel="stylesheet" href="/_next/static/css/styles.css">
+    `;
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          ${cssLinks}
+          <style>
+            @page { size: A4; margin: 20mm; }
+            @media print { body{ -webkit-print-color-adjust: exact; color-adjust: exact; } }
+          </style>
+        </head>
+        <body>${node.outerHTML}</body>
+      </html>
+    `;
   }
+
+  async function downloadResumePdf() {
+    const el = document.getElementById("resume-preview");
+    if (!el) return alert("Resume preview not found");
+    const html = buildHtmlFromNode(el);
+    await downloadPdfFromHtml(html, "resume.pdf");
+  }
+
+  async function downloadCoverPdf() {
+    const el = document.getElementById("cover-preview");
+    if (!el) return alert("Cover letter preview not found");
+    const html = buildHtmlFromNode(el);
+    await downloadPdfFromHtml(html, "cover-letter.pdf");
+  }
+
   async function downloadCvDocx(){
     const res = await fetch('/api/export-docx-structured',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, filename:'cv'})});
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'cv.docx'; a.click(); URL.revokeObjectURL(url);
   }
-  async function downloadClPdf(){
-    const blob = await pdf(<CoverLetterPdf text={result.coverLetter} />).toBlob();
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='cover_letter.pdf'; a.click(); URL.revokeObjectURL(url);
-  }
   async function downloadClDocx(){
     const res = await fetch('/api/export-cover-letter-docx',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({coverLetter: result.coverLetter, filename:'cover_letter'})});
     const blob = await res.blob();
     const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cover_letter.docx'; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function ResumePreviewWrapper({ children }) {
+    return <div id="resume-preview"><ResponsiveA4Preview>{children}</ResponsiveA4Preview></div>;
+  }
+
+  function CoverPreviewWrapper({ children }) {
+    return <div id="cover-preview"><ResponsiveA4Preview>{children}</ResponsiveA4Preview></div>;
   }
 
   return (
@@ -131,9 +162,9 @@ export default function ResultsPage(){
             setDensity={setDensity}
             atsMode={atsMode}
             setAtsMode={setAtsMode}
-            onExportPdf={downloadCvPdf}
+            onExportPdf={downloadResumePdf}
             onExportDocx={downloadCvDocx}
-            onExportClPdf={downloadClPdf}
+            onExportClPdf={downloadCoverPdf}
             onExportClDocx={downloadClDocx}
             page={page}
             pageCount={resumePages.length || 1}
@@ -148,7 +179,7 @@ export default function ResultsPage(){
               index={rIndex}
               setIndex={(i)=>{setRIndex(i); setPage(i);}}
               onOpenLightbox={()=>setLightbox({ type: 'resume' })}
-              Wrapper={ResponsiveA4Preview}
+              Wrapper={ResumePreviewWrapper}
             />
             <PageCarousel
               title="Cover Letter"
@@ -156,7 +187,7 @@ export default function ResultsPage(){
               index={cIndex}
               setIndex={setCIndex}
               onOpenLightbox={()=>setLightbox({ type: 'cover' })}
-              Wrapper={ResponsiveA4Preview}
+              Wrapper={CoverPreviewWrapper}
             />
           </div>
         }
