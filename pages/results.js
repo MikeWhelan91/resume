@@ -13,6 +13,7 @@ import { pdf } from '@react-pdf/renderer';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
 import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
+import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
 
 const TemplateMap = { classic: Classic, twoCol: TwoCol, centered: Centered, sidebar: Sidebar, modern: Modern };
 
@@ -152,6 +153,7 @@ export default function ResultsPage(){
               index={rIndex}
               setIndex={(i)=>{setRIndex(i); setPage(i);}}
               onOpenLightbox={()=>setLightbox({ type: 'resume' })}
+              Wrapper={ResponsiveA4Preview}
             />
             <PageCarousel
               title="Cover Letter"
@@ -159,6 +161,7 @@ export default function ResultsPage(){
               index={cIndex}
               setIndex={setCIndex}
               onOpenLightbox={()=>setLightbox({ type: 'cover' })}
+              Wrapper={ResponsiveA4Preview}
             />
           </div>
         }
