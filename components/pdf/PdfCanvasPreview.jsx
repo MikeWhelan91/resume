@@ -60,6 +60,7 @@ export default function PdfCanvasPreview({ doc, title }) {
   }
 
   useEffect(() => { render(); /* eslint-disable-next-line */ }, [doc, index]);
+  useEffect(() => { setIndex(0); }, [doc]);
   useEffect(() => {
     const ro = new ResizeObserver(() => render());
     if (wrapperRef.current) ro.observe(wrapperRef.current);
@@ -102,7 +103,7 @@ export default function PdfCanvasPreview({ doc, title }) {
               >→</button>
             )}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-zinc-600">
-              {index + 1} / {pageCount}
+              {Math.min(index + 1, pageCount)} / {pageCount}
             </div>
           </>
         )}

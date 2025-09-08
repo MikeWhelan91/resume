@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Head from "next/head";
 import { pdf } from "@react-pdf/renderer";
 import ResumePdf from "../components/pdf/ResumePdf";
@@ -26,16 +26,24 @@ export default function ResultsPage() {
     } catch {}
   }, []);
 
+  const resumeDoc = useMemo(() => (
+    <ResumePdf data={payload?.resumeData} layout={layout} accent={accent} ats={ats} />
+  ), [payload, layout, accent, ats]);
+
+  const coverDoc = useMemo(() => (
+    <CoverLetterPdf text={payload?.coverLetter} identity={payload?.resumeData} layout={layout} accent={accent} ats={ats} />
+  ), [payload, layout, accent, ats]);
+
   async function downloadResume() {
     if (!payload) return;
-    const blob = await pdf(<ResumePdf data={payload.resumeData} layout={layout} accent={accent} ats={ats} />).toBlob();
+    const blob = await pdf(resumeDoc).toBlob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "resume.pdf"; a.click(); URL.revokeObjectURL(url);
   }
 
   async function downloadCover() {
     if (!payload) return;
-    const blob = await pdf(<CoverLetterPdf text={payload.coverLetter} identity={payload.resumeData} layout={layout} accent={accent} ats={ats} />).toBlob();
+    const blob = await pdf(coverDoc).toBlob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf"; a.click(); URL.revokeObjectURL(url);
   }
@@ -43,12 +51,12 @@ export default function ResultsPage() {
   return (
     <main className="min-h-screen bg-zinc-50">
       <Head>
-        <title>Preview – TailorCV</title>
-        <meta name="description" content="Preview your tailored résumé and cover letter with customizable layouts, theme colours, and ATS-friendly mode. Download matching PDFs." />
+        <title>Preview &amp; Download – TailorCV</title>
+        <meta name="description" content="Side-by-side résumé and cover letter previews with matching PDF downloads. Customise layout, theme colours and ATS-friendly mode." />
       </Head>
       <div className="mx-auto px-6 py-8 max-w-[1800px] grid grid-cols-[320px_1fr] gap-8">
         {/* LEFT: controls */}
-        <aside className="space-y-5">
+        <aside className="space-y-5 sticky top-8">
           <h1 className="text-3xl font-semibold">Preview</h1>
 
           {/* Layout */}
@@ -93,12 +101,12 @@ export default function ResultsPage() {
         </aside>
 
         {/* RIGHT: two borderless previews */}
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <section className="grid grid-cols-2 gap-8">
           <div className="flex flex-col">
             <div className="text-sm font-medium mb-2">Résumé</div>
             <PdfCanvasPreview
               title="Résumé Preview"
-              doc={<ResumePdf data={payload?.resumeData} layout={layout} accent={accent} ats={ats} />}
+              doc={resumeDoc}
             />
           </div>
 
@@ -106,7 +114,7 @@ export default function ResultsPage() {
             <div className="text-sm font-medium mb-2">Cover Letter</div>
             <PdfCanvasPreview
               title="Cover Letter Preview"
-              doc={<CoverLetterPdf text={payload?.coverLetter} identity={payload?.resumeData} layout={layout} accent={accent} ats={ats} />}
+              doc={coverDoc}
             />
           </div>
         </section>
