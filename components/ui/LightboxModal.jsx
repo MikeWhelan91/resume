@@ -44,7 +44,7 @@ export default function LightboxModal({ open, onClose, children, onPrev, onNext,
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center"
+      className="fixed inset-0 z-[100] bg-black/80 flex items-start justify-center overflow-auto"
       onClick={onClose}
     >
       <button

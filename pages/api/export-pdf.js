@@ -3,23 +3,12 @@ import path from "path";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 
-import Classic from "../../components/templates/Classic";
-import TwoCol from "../../components/templates/TwoCol";
-import Centered from "../../components/templates/Centered";
-import Sidebar from "../../components/templates/Sidebar";
-import Modern from "../../components/templates/Modern";
+import { getTemplate, densityMap } from "../../lib/resumeConfig";
 
 export const config = {
   api: { bodyParser: { sizeLimit: "1mb" } },
 };
 
-const TEMPLATE_MAP = {
-  classic: Classic,
-  twocol: TwoCol,
-  centered: Centered,
-  sidebar: Sidebar,
-  modern: Modern,
-};
 
 async function launchBrowser() {
   // Try Vercel/serverless first (puppeteer-core + chrome-aws-lambda), then local/dev fallback
@@ -54,13 +43,8 @@ const INLINED_CSS = [
 
 /** Build a full HTML doc around a given template */
 function renderHtml({ data, template = "classic", mode = "ats", accent = '#1a73e8', density = 'normal' }) {
-  const Comp = TEMPLATE_MAP[String(template).toLowerCase()] || Classic;
-  const densityVars = {
-    compact: ['11px','1.5'],
-    normal: ['12.5px','1.75'],
-    cozy: ['14px','1.9']
-  };
-  const [fontSize, lineHeight] = densityVars[density] || densityVars.normal;
+  const Comp = getTemplate(template);
+  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
   const body = ReactDOMServer.renderToStaticMarkup(<Comp data={data || {}} />);
 
   // ATS mode: enforce monochrome, remove backgrounds/shadows; keep colors in design mode
