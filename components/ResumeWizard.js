@@ -1,15 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/router';
 import SkillsInput from './wizard/SkillsInput';
 import ExperienceCard from './wizard/ExperienceCard';
 import EducationCard from './wizard/EducationCard';
-import Classic from './templates/Classic';
-import TwoCol from './templates/TwoCol';
-import Centered from './templates/Centered';
-import Sidebar from './templates/Sidebar';
-import Modern from './templates/Modern';
 import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
 
@@ -26,38 +21,6 @@ const emptyResume = {
   education: []
 };
 
-const sampleData = {
-  name: 'Jane Doe',
-  title: 'Software Engineer',
-  email: 'jane@example.com',
-  phone: '555-123-4567',
-  location: 'San Francisco, CA',
-  summary: 'Experienced engineer with a passion for building scalable web applications.',
-  links: [{ label: 'GitHub', url: 'https://github.com/janedoe' }],
-  skills: ['JavaScript', 'React', 'Node.js'],
-  experience: [
-    {
-      company: 'Tech Corp',
-      role: 'Senior Developer',
-      start: '2020-01',
-      end: '2022-12',
-      location: 'Remote',
-      bullets: [
-        'Led a team of 5 engineers',
-        'Implemented performance optimizations'
-      ]
-    }
-  ],
-  education: [
-    {
-      school: 'State University',
-      degree: 'B.S. Computer Science',
-      start: '2016-09',
-      end: '2019-05',
-      grade: '3.8 GPA'
-    }
-  ]
-};
 
 const schemas = {
   basics: z.object({
@@ -97,11 +60,11 @@ const schemas = {
   })
 };
 
-export default function ResumeWizard({ initialData, onComplete, autosaveKey, template, onTemplateChange, templateInfo }) {
+export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const stepIds = ['basics', 'skills', 'work', 'education', 'template', 'review'];
-  const stepLabels = ['Basics','Skills','Experience','Education','Template & Theme','Review'];
+  const stepIds = ['basics', 'skills', 'work', 'education', 'review'];
+  const stepLabels = ['Basics','Skills','Experience','Education','Review'];
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
   const { register, handleSubmit, watch, setValue, getValues } = methods;
@@ -187,15 +150,6 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
     setValue('education', [...eds.slice(0,i+1), { ...eds[i] }, ...eds.slice(i+1)]);
   }
 
-  const TemplatePreview = useMemo(() => {
-    switch (template) {
-      case 'modern': return Modern;
-      case 'twoCol': return TwoCol;
-      case 'centered': return Centered;
-      case 'sidebar': return Sidebar;
-      default: return Classic;
-    }
-  }, [template]);
 
   async function submit(data) {
     if(step !== stepIds.length -1) return;
@@ -315,36 +269,6 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, tem
         )}
 
         {step === 4 && (
-          <section className="space-y-6">
-            <header className="space-y-1">
-              <h2 className="text-lg font-semibold">Finalize</h2>
-              <p className="text-sm text-zinc-500">Choose a template.</p>
-            </header>
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-600">Template</label>
-                <select value={template} onChange={e => onTemplateChange && onTemplateChange(e.target.value)} className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 bg-transparent focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-                  <option value="classic">Classic (ATS)</option>
-                  <option value="twoCol">Two-Column</option>
-                  <option value="centered">Centered Header</option>
-                  <option value="sidebar">Sidebar</option>
-                  <option value="modern">Modern</option>
-                </select>
-                {templateInfo && templateInfo[template] && (
-                  <p className="text-sm text-zinc-500 mt-1">{templateInfo[template]}</p>
-                )}
-              </div>
-              <div>
-                <div className="text-sm font-medium mb-2">Preview</div>
-                <div className="border rounded-lg p-4">
-                  <TemplatePreview data={sampleData} />
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {step === 5 && (
           <section className="space-y-6">
             <header className="space-y-1">
               <h2 className="text-lg font-semibold">Review</h2>

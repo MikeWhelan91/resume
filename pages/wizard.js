@@ -6,7 +6,6 @@ import ResumeWizard from '../components/ResumeWizard';
 export default function WizardPage(){
   const router = useRouter();
   const [initial, setInitial] = useState(undefined);
-  const [template, setTemplate] = useState('classic');
 
   useEffect(()=>{
     let saved = null;
@@ -25,9 +24,9 @@ export default function WizardPage(){
     <>
       <Head>
         <title>Resume Wizard – TailorCV</title>
-        <meta name="description" content="Step-by-step CV builder with real-time template rendering." />
+        <meta name="description" content="Step-by-step CV builder with real-time preview." />
       </Head>
-      <ResumeWizard initialData={initial} onComplete={handleComplete} autosaveKey="resumeWizardDraft" template={template} onTemplateChange={setTemplate} />
+      <ResumeWizard initialData={initial} onComplete={handleComplete} autosaveKey="resumeWizardDraft" />
     </>
   );
 }
