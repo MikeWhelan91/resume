@@ -43,7 +43,6 @@ export default function ResultsPage(){
 
   useEffect(() => {
     if (!result) return;
-    const pageHeight = 1123;
     const off = document.createElement('div');
     off.className = `paper ${atsMode ? 'ats-mode' : ''}`;
     Object.entries(styleVars).forEach(([k, v]) => off.style.setProperty(k, v));
@@ -52,6 +51,7 @@ export default function ResultsPage(){
     off.style.pointerEvents = 'none';
     off.style.left = '-10000px';
     document.body.appendChild(off);
+    const pageHeight = off.getBoundingClientRect().height;
     const root = createRoot(off);
     root.render(<TemplateComp data={result.resumeData} />);
     requestAnimationFrame(() => {
@@ -61,7 +61,9 @@ export default function ResultsPage(){
       let start = 0;
       while (start < total) {
         let end = start + pageHeight;
-        const crossing = items.find(el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end);
+        const crossing = items.find(
+          el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end
+        );
         if (crossing && crossing.offsetTop > start) {
           end = crossing.offsetTop;
         }
@@ -76,6 +78,8 @@ export default function ResultsPage(){
         </div>
       ));
       setResumePages(arr);
+      setPage(p => Math.min(p, arr.length - 1));
+      setRIndex(i => Math.min(i, arr.length - 1));
       root.unmount();
       document.body.removeChild(off);
     });
@@ -124,7 +128,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="View and export your tailored CV and cover letter with responsive A4 display, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
