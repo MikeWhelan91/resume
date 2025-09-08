@@ -85,8 +85,10 @@ export default function ResultsPage(){
 
   const coverPage = (
     <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
-      <div className="whitespace-pre-wrap text-[11px] leading-[1.6]">
-        {result.coverLetter || 'No cover letter returned.'}
+      <div className="text-[11px] leading-[1.6] space-y-[10px]">
+        {(result.coverLetter || 'No cover letter returned.').split(/\n+/).map((line, i) => (
+          <p key={i}>{line}</p>
+        ))}
       </div>
     </div>
   );
