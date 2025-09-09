@@ -98,6 +98,7 @@ export default function ResultsPage() {
         <meta
           name="description"
           content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks, zero duplication and no browser toolbars, presented in dark-bordered previews side by side with easy controls."
+
         />
       </Head>
       <MainShell
@@ -138,6 +139,7 @@ export default function ResultsPage() {
                   atsMode={atsMode}
                 />
               </PDFViewer>
+
             </div>
           </div>
         }
