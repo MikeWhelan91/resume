@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import "../styles/resume.css";
+import "../styles/results.css";
 import Head from "next/head";
 
 export default function MyApp({ Component, pageProps }) {

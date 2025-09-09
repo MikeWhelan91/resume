@@ -12,7 +12,8 @@ export default async function handler(req, res) {
 
   const tpl = getTemplate(templateId)
   const appData = await getCurrentResumeData(req)
-  const model = toTemplateModel(appData, { ats, density })
+  const baseModel = toTemplateModel(appData, { ats, density })
+  const model = { ...baseModel, isCoverLetter: true }
 
   const html = renderHtml({ html: tpl.html, css: tpl.css, model, options:{ mode:'print', accent, density, ats } })
 
@@ -29,6 +30,6 @@ export default async function handler(req, res) {
 
   await browser.close()
   res.setHeader('Content-Type','application/pdf')
-  res.setHeader('Content-Disposition', `inline; filename="${templateId || 'resume'}.pdf"`)
+  res.setHeader('Content-Disposition', `inline; filename="${templateId || 'cover-letter'}.pdf"`)
   res.end(pdf)
 }

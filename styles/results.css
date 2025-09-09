@@ -1,0 +1,68 @@
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --border: #e7eaf0;
+  --text: #121317;
+  --muted: #666a73;
+  --shadow: 0 12px 28px rgba(16,24,40,.08);
+}
+html, body { background: var(--bg); }
+.ResultsLayout {
+  display: grid;
+  grid-template-columns: 340px 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+  padding: 20px 24px 40px;
+}
+.ResultsSidebar {
+  position: sticky; top: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.Group { margin-bottom: 18px; }
+.Group h3 { font: 600 12px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial; letter-spacing:.06em; text-transform:uppercase; margin:0 0 8px; color:#222; }
+.Row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.RadioSwatch { width:22px; height:22px; border-radius:50%; border:2px solid #fff; outline:1px solid var(--border); cursor:pointer; }
+.Select, .Button {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  font: 500 14px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
+  color: var(--text);
+}
+.Button {
+  display:inline-flex; justify-content:center; align-items:center;
+  background:#10b39f; color:#fff; border:0; padding:12px 14px; cursor:pointer;
+  transition: filter .15s ease;
+}
+.Button:hover { filter: brightness(.96); }
+.Button.secondary { background:#fff; border:1px solid var(--border); color:#111; }
+.Previews {
+  display:grid; grid-template-columns: 1fr 1fr; gap:24px;
+}
+.PreviewCard {
+  display:grid; place-items:start; justify-items:center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.A4 {
+  width: 794px;  /* A4 @ ~96dpi for screen preview */
+  height: 1123px;
+  border: 0;
+  background: #fff;
+}
+@media (max-width: 1600px) {
+  .ResultsLayout { grid-template-columns: 320px 1fr; }
+  .Previews { grid-template-columns: 1fr; }
+}
+@media (max-width: 980px) {
+  .ResultsLayout { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,13 @@
+.page{font-family:'Inter',sans-serif;}
+h1{font-size:24pt;font-weight:700;margin:0 0 2mm;}
+.meta{font-size:10pt;color:var(--muted);margin:0 0 4mm;}
+.section{margin:4mm 0;}
+h2{font-size:11pt;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin:0 0 2mm;}
+.row{display:grid;grid-template-columns:1fr max-content;gap:4mm;align-items:baseline;}
+.company,.title{font-weight:700;}
+.dates{color:var(--muted);font-weight:600;}
+.bullets{padding-left:4.6mm;margin-top:1.6mm;}
+.bullets li{margin:0 0 1mm;}
+.item{page-break-inside:avoid;margin-bottom:3mm;}
+.columns{display:grid;grid-template-columns:2fr 1fr;gap:6mm;}
+.side{border-left:1px solid var(--rule);padding-left:4mm;}
