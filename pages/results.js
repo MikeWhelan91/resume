@@ -100,6 +100,7 @@ export default function ResultsPage() {
 
   const tpl = getTemplate(tplId);
   const model = toTemplateModel({ ...result.resumeData, accent, density, ats: atsMode });
+  const html = tpl.engine === 'html' ? renderHtml({ html: tpl.html, css: tpl.css, model }) : null;
 
   return (
     <>
@@ -133,7 +134,7 @@ export default function ResultsPage() {
               </select>
               {tpl.engine === 'html' ? (
                 <iframe style={{width:'794px', height:'1123px', border:'0', boxShadow:'0 10px 30px rgba(0,0,0,.15)'}}
-                        srcDoc={renderHtml({ html: tpl.html, css: tpl.css, model })} />
+                        srcDoc={html} />
               ) : (
                 <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
                   {(tpl.module.DocumentFor || tpl.module.default)({ model })}
