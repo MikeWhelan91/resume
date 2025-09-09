@@ -232,6 +232,12 @@ html,body{ background: var(--bg); color: var(--ink); }
   border-radius:0;
 }
 
+@media print {
+  .paper { page-break-after: always; }
+  .paper:last-child { page-break-after: auto; }
+}
+
+
 .avoid-break {
   break-inside: avoid;
   page-break-inside: avoid;
