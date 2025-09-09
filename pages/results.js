@@ -5,10 +5,8 @@ import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import { getTemplate, densityMap } from '../lib/resumeConfig';
-import PageCarousel from '../components/ui/PageCarousel';
-import LightboxModal from '../components/ui/LightboxModal';
-import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
 import { downloadPdfFromHtml } from '../components/export/downloadPdfFromHtml';
+import A4Page from '../components/A4Page';
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -18,9 +16,6 @@ export default function ResultsPage(){
   const [atsMode, setAtsMode] = useState(false);
   const [page, setPage] = useState(0);
   const [resumePages, setResumePages] = useState([]);
-  const [rIndex, setRIndex] = useState(0);
-  const [cIndex, setCIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(null);
 
   useEffect(()=>{
     try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
@@ -45,7 +40,7 @@ export default function ResultsPage(){
   useEffect(() => {
     if (!result) return;
     const off = document.createElement('div');
-    off.className = `paper ${atsMode ? 'ats-mode' : ''}`;
+    off.className = `a4-page ${atsMode ? 'ats-mode' : ''}`;
     Object.entries(styleVars).forEach(([k, v]) => off.style.setProperty(k, v));
     off.style.position = 'absolute';
     off.style.visibility = 'hidden';
@@ -79,16 +74,15 @@ export default function ResultsPage(){
         positions.push(start);
         start = end;
       }
-      const arr = positions.map((pos, i) => (
-        <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
-          <div style={{ position: 'relative', top: -pos }}>
-            <TemplateComp data={result.resumeData} />
-          </div>
+    const arr = positions.map((pos, i) => (
+      <div className={`${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
+        <div style={{ position: 'relative', top: -pos }}>
+          <TemplateComp data={result.resumeData} />
         </div>
-      ));
+      </div>
+    ));
       setResumePages(arr);
       setPage(p => Math.min(p, arr.length - 1));
-      setRIndex(i => Math.min(i, arr.length - 1));
       root.unmount();
       document.body.removeChild(off);
     });
@@ -97,7 +91,7 @@ export default function ResultsPage(){
   if(!result) return null;
 
   const coverPage = (
-    <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
+    <div className={`${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
       <div className="text-[11px] leading-[1.6] space-y-[10px]">
         {(result.coverLetter || 'No cover letter returned.').split(/\n+/).map((line, i) => (
           <p key={i}>{line}</p>
@@ -111,8 +105,10 @@ export default function ResultsPage(){
     if (!resumePages.length) return alert('No resume content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const pagesHtml = resumePages.map(p => renderToStaticMarkup(p)).join('');
-    const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
+      const pagesHtml = resumePages
+        .map(p => renderToStaticMarkup(<div className="a4-page">{p}</div>))
+        .join('');
+      const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
     } catch (e) {
@@ -124,7 +120,9 @@ export default function ResultsPage(){
     if (!coverPages.length) return alert('No cover letter content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const pagesHtml = coverPages.map(p => renderToStaticMarkup(p)).join('');
+    const pagesHtml = coverPages
+      .map(p => renderToStaticMarkup(<div className="a4-page">{p}</div>))
+      .join('');
     const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
@@ -144,23 +142,6 @@ export default function ResultsPage(){
     const blob = await res.blob();
     const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cover_letter.docx'; a.click(); URL.revokeObjectURL(url);
   }
-
-  function ResumePreviewWrapper({ children }) {
-    return (
-      <div id="resume-preview">
-        <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-      </div>
-    );
-  }
-
-  function CoverPreviewWrapper({ children }) {
-    return (
-      <div id="cover-preview">
-        <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-      </div>
-    );
-  }
-
   return (
     <>
       <Head>
@@ -187,57 +168,24 @@ export default function ResultsPage(){
             onExportClDocx={downloadClDocx}
             page={page}
             pageCount={resumePages.length || 1}
-            onPageChange={(p)=>{setPage(p); setRIndex(p);}}
+            onPageChange={(p)=>{setPage(p);}}
           />
         }
         right={
           <div id="print-root">
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-              <PageCarousel
-                title="Résumé"
-                pages={resumePages}
-                index={rIndex}
-                setIndex={(i)=>{setRIndex(i); setPage(i);}}
-                onOpenLightbox={()=>setLightbox({ type: 'resume' })}
-                Wrapper={ResumePreviewWrapper}
-              />
-              <PageCarousel
-                title="Cover Letter"
-                pages={coverPages}
-                index={cIndex}
-                setIndex={setCIndex}
-                onOpenLightbox={()=>setLightbox({ type: 'cover' })}
-                Wrapper={CoverPreviewWrapper}
-              />
+            <div id="resume-preview">
+              {resumePages.map((p, i) => (
+                <A4Page key={i}>{p}</A4Page>
+              ))}
+            </div>
+            <div id="cover-preview">
+              {coverPages.map((p, i) => (
+                <A4Page key={i}>{p}</A4Page>
+              ))}
             </div>
           </div>
         }
       />
-      <LightboxModal
-        open={!!lightbox}
-        onClose={()=>setLightbox(null)}
-        onPrev={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.max(0, i-1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.max(0, i-1));
-        }}
-        onNext={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.min((resumePages?.length ?? 1) - 1, i+1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.min((coverPages?.length ?? 1) - 1, i+1));
-        }}
-        canPrev={lightbox?.type === 'resume' ? rIndex > 0 : cIndex > 0}
-        canNext={lightbox?.type === 'resume'
-          ? rIndex < (resumePages?.length ?? 1) - 1
-          : cIndex < (coverPages?.length ?? 1) - 1}
-        pageLabel={
-          lightbox
-            ? `${lightbox.type === 'resume' ? rIndex + 1 : cIndex + 1} / ${lightbox.type === 'resume' ? (resumePages?.length ?? 1) : (coverPages?.length ?? 1)}`
-            : ''
-        }
-      >
-        {lightbox?.type === 'resume' ? resumePages?.[rIndex] : coverPages?.[cIndex]}
-      </LightboxModal>
     </>
   );
 }
