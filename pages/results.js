@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { renderToStaticMarkup } from 'react-dom/server';
 import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
@@ -108,10 +107,13 @@ export default function ResultsPage(){
   const coverPages = [coverPage];
 
   async function downloadResumePdf() {
-    if (!resumePages.length) return alert('No resume content to export');
+    const rootEl = document.getElementById('resume-preview');
+    const papers = rootEl ? rootEl.querySelectorAll('.paper') : [];
+    if (!papers.length) return alert('No resume content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const pagesHtml = resumePages.map(p => renderToStaticMarkup(p)).join('');
+    const pagesHtml = Array.from(papers).map(el => el.outerHTML).join('');
+
     const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
     const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
@@ -122,10 +124,13 @@ export default function ResultsPage(){
   }
 
   async function downloadCoverPdf() {
-    if (!coverPages.length) return alert('No cover letter content to export');
+    const rootEl = document.getElementById('cover-preview');
+    const papers = rootEl ? rootEl.querySelectorAll('.paper') : [];
+    if (!papers.length) return alert('No cover letter content to export');
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
-    const pagesHtml = coverPages.map(p => renderToStaticMarkup(p)).join('');
+    const pagesHtml = Array.from(papers).map(el => el.outerHTML).join('');
+
     const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
     const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
