@@ -121,24 +121,20 @@ export default function ResultsPage() {
         right={
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             <div id="resume-preview" className="h-[80vh]">
-              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
-                <ResumePdf
-                  data={result.resumeData}
-                  accent={accent}
-                  density={density}
-                  atsMode={atsMode}
+              {resumeUrl && (
+                <iframe
+                  src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-full border border-gray-800"
                 />
-              </PDFViewer>
+              )}
             </div>
             <div id="cover-preview" className="h-[80vh]">
-              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
-                <CoverLetterPdf
-                  text={result.coverLetter}
-                  accent={accent}
-                  density={density}
-                  atsMode={atsMode}
+              {coverUrl && (
+                <iframe
+                  src={`${coverUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-full border border-gray-800"
                 />
-              </PDFViewer>
+              )}
 
             </div>
           </div>
