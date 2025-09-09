@@ -1,38 +1,58 @@
-\
-<h1>{{name}}</h1>
-<p class="meta">{{label}} • {{email}} • {{phone}} • {{url}}</p>
+<header class="hdr">
+  <h1>{{name}}</h1>
+  <p class="meta">{{label}} • <a href="mailto:{{email}}">{{email}}</a> • {{phone}} • <a href="{{url}}">{{url}}</a></p>
+</header>
+
 {{#summary}}<section class="section"><h2>Profile</h2><p>{{summary}}</p></section>{{/summary}}
-{{#skills.length}}<section class="section"><h2>Skills</h2><p>{{skills}}</p></section>{{/skills.length}}
+
+{{#skills.length}}
+<section class="section">
+  <h2>Skills</h2>
+  <ul class="tags">{{#skills}}<li>{{.}}</li>{{/skills}}</ul>
+</section>
+{{/skills.length}}
+
 {{#experience.length}}
 <section class="section">
   <h2>Experience</h2>
   {{#experience}}
-  <div class="item">
+  <article class="item">
     <div class="row">
-      <div><span class="company">{{company}}</span> • <span class="title">{{title}}</span></div>
+      <div class="role"><strong class="title">{{title}}</strong> • <strong class="company">{{company}}</strong>{{#location}} — {{location}}{{/location}}</div>
       <div class="dates">{{start}} — {{end}}</div>
     </div>
     {{#bullets.length}}<ul class="bullets">{{#bullets}}<li>{{.}}</li>{{/bullets}}</ul>{{/bullets.length}}
-  </div>
+  </article>
   {{/experience}}
 </section>
 {{/experience.length}}
+
+{{#projects.length}}
+<section class="section">
+  <h2>Projects</h2>
+  {{#projects}}
+  <article class="item">
+    <div class="row">
+      <div class="role"><strong class="company">{{name}}</strong>{{#url}} — <a href="{{url}}">{{url}}</a>{{/url}}</div>
+      <div class="dates"></div>
+    </div>
+    {{#summary}}<p class="blurb">{{summary}}</p>{{/summary}}
+    {{#highlights.length}}<ul class="bullets">{{#highlights}}<li>{{.}}</li>{{/highlights}}</ul>{{/highlights.length}}
+  </article>
+  {{/projects}}
+</section>
+{{/projects.length}}
+
 {{#education.length}}
 <section class="section">
   <h2>Education</h2>
   {{#education}}
-  <div class="item">
+  <article class="item">
     <div class="row">
-      <div><span class="company">{{institution}}</span> • <span class="title">{{area}}</span></div>
+      <div class="role"><strong class="company">{{institution}}</strong> • <strong class="title">{{area}}</strong></div>
       <div class="dates">{{start}} — {{end}}</div>
     </div>
-  </div>
+  </article>
   {{/education}}
 </section>
 {{/education.length}}
-{{#isCoverLetter}}
-<section class="section">
-  <h2>Cover Letter</h2>
-  {{{coverLetter}}}
-</section>
-{{/isCoverLetter}}

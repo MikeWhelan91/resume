@@ -1,41 +1,72 @@
-\
-<div class="header">
+<header class="hdr">
   <h1>{{name}}</h1>
-  <p class="meta">{{label}} • {{email}} • {{phone}} • {{url}}</p>
-</div>
-<div class="columns">
-  <div class="main">
-    {{#summary}}<section class="section"><h2>Profile</h2><p>{{summary}}</p></section>{{/summary}}
-    {{#experience.length}}
-    <section class="section">
-      <h2>Experience</h2>
-      {{#experience}}
-      <div class="item">
-        <div class="row">
-          <div><span class="company">{{company}}</span> • <span class="title">{{title}}</span></div>
-          <div class="dates">{{start}} — {{end}}</div>
-        </div>
-        {{#bullets.length}}<ul class="bullets">{{#bullets}}<li>{{.}}</li>{{/bullets}}</ul>{{/bullets.length}}
-      </div>
-      {{/experience}}
+  <div class="subtitle">{{label}}</div>
+</header>
+
+<div class="layout">
+  <aside class="left">
+    <section class="card">
+      <h3>Contact</h3>
+      <ul class="plain">
+        <li>{{email}}</li>
+        <li>{{phone}}</li>
+        <li>{{url}}</li>
+      </ul>
     </section>
-    {{/experience.length}}
+
+    {{#skills.length}}
+    <section class="card">
+      <h3>Skills</h3>
+      <ul class="tags">{{#skills}}<li>{{.}}</li>{{/skills}}</ul>
+    </section>
+    {{/skills.length}}
+
     {{#education.length}}
-    <section class="section">
-      <h2>Education</h2>
+    <section class="card">
+      <h3>Education</h3>
       {{#education}}
-      <div class="item">
-        <div class="row">
-          <div><span class="company">{{institution}}</span> • <span class="title">{{area}}</span></div>
-          <div class="dates">{{start}} — {{end}}</div>
-        </div>
+      <div class="edu">
+        <strong>{{institution}}</strong>
+        <div class="muted">{{area}}</div>
+        <div class="muted">{{start}} — {{end}}</div>
       </div>
       {{/education}}
     </section>
     {{/education.length}}
-    {{#isCoverLetter}}<section class="section"><h2>Cover Letter</h2>{{{coverLetter}}}</section>{{/isCoverLetter}}
-  </div>
-  <aside class="side">
-    {{#skills.length}}<section class="section"><h2>Skills</h2><p>{{skills}}</p></section>{{/skills.length}}
   </aside>
+
+  <main class="right">
+    {{#summary}}<section class="section"><h2>Profile</h2><p>{{summary}}</p></section>{{/summary}}
+
+    {{#experience.length}}
+    <section class="section">
+      <h2>Experience</h2>
+      {{#experience}}
+      <article class="item">
+        <div class="row">
+          <div class="role"><strong class="title">{{title}}</strong> • <strong class="company">{{company}}</strong>{{#location}} — {{location}}{{/location}}</div>
+          <div class="dates">{{start}} — {{end}}</div>
+        </div>
+        {{#bullets.length}}<ul class="bullets">{{#bullets}}<li>{{.}}</li>{{/bullets}}</ul>{{/bullets.length}}
+      </article>
+      {{/experience}}
+    </section>
+    {{/experience.length}}
+
+    {{#projects.length}}
+    <section class="section">
+      <h2>Projects</h2>
+      {{#projects}}
+      <article class="item">
+        <div class="row">
+          <div class="role"><strong class="company">{{name}}</strong>{{#url}} — <a href="{{url}}">{{url}}</a>{{/url}}</div>
+          <div class="dates"></div>
+        </div>
+        {{#summary}}<p class="blurb">{{summary}}</p>{{/summary}}
+        {{#highlights.length}}<ul class="bullets">{{#highlights}}<li>{{.}}</li>{{/highlights}}</ul>{{/highlights.length}}
+      </article>
+      {{/projects}}
+    </section>
+    {{/projects.length}}
+  </main>
 </div>

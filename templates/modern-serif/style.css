@@ -1,11 +1,28 @@
-.page{font-family:'Georgia',serif;}
-h1{font-size:24pt;font-weight:700;margin:0 0 2mm;}
-.meta{font-size:10pt;color:var(--muted);margin:0 0 4mm;}
-.section{margin:4mm 0;}
-h2{font-size:11pt;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin:0 0 2mm;}
-.row{display:grid;grid-template-columns:1fr max-content;gap:4mm;align-items:baseline;}
-.company,.title{font-weight:700;}
-.dates{color:var(--muted);font-weight:600;}
-.bullets{padding-left:4.6mm;margin-top:1.6mm;}
-.bullets li{margin:0 0 1mm;}
-.item{page-break-inside:avoid;margin-bottom:3mm;}
+:root { --text:#111; --muted:#5b5f6a; --rule:#e7eaf0; --accent: var(--accent, #0a7f6d); --fs:11pt; --lh:1.42; }
+body { color:var(--text); font: var(--fs)/var(--lh) Georgia, 'Times New Roman', Times, serif; }
+a { color:var(--accent); text-decoration:none; } a:hover{text-decoration:underline;}
+
+.hdr { margin-bottom: 8mm; }
+.hdr h1 { font: 800 26pt/1.05 Georgia, serif; letter-spacing:.2px; margin:0 0 2mm; }
+.meta { color:var(--muted); }
+
+.section { page-break-inside: avoid; margin:0 0 7mm; }
+.section h2 {
+  font: 700 12pt/1.1 Georgia, serif; color:var(--accent);
+  text-transform:uppercase; letter-spacing:.08em; margin:0 0 3mm;
+  border-bottom: 1px solid var(--rule); padding-bottom: 2mm;
+}
+
+.item { margin:0 0 4.6mm; }
+.row { display:grid; grid-template-columns:1fr max-content; gap:7mm; align-items:baseline; }
+.role { font-weight:600; }
+.company { font-weight:800; }
+.title { font-weight:800; }
+.dates { white-space:nowrap; color:var(--muted); font-weight:700; }
+
+.bullets { margin:1.8mm 0 0; padding-left:4.8mm; }
+.bullets li { margin:0 0 1.1mm; }
+.tags { display:flex; gap:3mm; flex-wrap:wrap; list-style:none; margin:0; padding:0; }
+.tags li { border:1px solid var(--rule); border-radius:6px; padding:2px 8px; background:#fff; }
+.blurb { margin:1.4mm 0 0; }
+.item { page-break-inside: avoid; }
