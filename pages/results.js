@@ -97,7 +97,7 @@ export default function ResultsPage() {
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks and zero duplication, displayed side by side with easy controls."
+          content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks, zero duplication and no browser toolbars, presented in dark-bordered previews side by side with easy controls."
         />
       </Head>
       <MainShell
@@ -121,12 +121,18 @@ export default function ResultsPage() {
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             <div id="resume-preview" className="h-[80vh]">
               {resumeUrl && (
-                <object data={resumeUrl} type="application/pdf" className="w-full h-full" />
+                <iframe
+                  src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-full border border-gray-800"
+                />
               )}
             </div>
             <div id="cover-preview" className="h-[80vh]">
               {coverUrl && (
-                <object data={coverUrl} type="application/pdf" className="w-full h-full" />
+                <iframe
+                  src={`${coverUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-full border border-gray-800"
+                />
               )}
             </div>
           </div>
