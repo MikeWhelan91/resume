@@ -25,13 +25,13 @@ export default function Centered({ data = {} }) {
       {skills.length > 0 && (
         <>
           <h2>Skills</h2>
-          <div>{skills.map((s, i) => <span className="pill" key={i}>{s}</span>)}</div>
+          <div>{skills.map((s, i) => <span className="pill" key={`${s}-${i}`}>{s}</span>)}</div>
         </>
       )}
 
       {exp.length > 0 && <h2>Experience</h2>}
       {exp.map((x, i) => (
-        <section key={i} className="avoid-break">
+        <section key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} className="avoid-break">
           {x.company && <strong>{x.company}</strong>}
           {x.role && <div>{x.role}</div>}
           {(x.start || x.end != null) && (
@@ -40,14 +40,14 @@ export default function Centered({ data = {} }) {
           )}
           {x.location && <div className="muted">{x.location}</div>}
           {Array.isArray(x.bullets) && x.bullets.length > 0 && (
-            <ul>{x.bullets.map((b, j) => <li key={j}>{b}</li>)}</ul>
+            <ul>{x.bullets.map((b, j) => <li key={`${b}-${j}`}>{b}</li>)}</ul>
           )}
         </section>
       ))}
 
       {edu.length > 0 && <h2>Education</h2>}
       {edu.map((e, i) => (
-        <div key={i}>
+        <div key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} className="avoid-break">
           {e.school && <strong>{e.school}</strong>}
           {(e.degree || e.grade) && (
             <div>{[e.degree, e.grade].filter(Boolean).join(" — ")}</div>

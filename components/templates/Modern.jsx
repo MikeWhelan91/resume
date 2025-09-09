@@ -49,7 +49,7 @@ export default function Modern({ data = {} }) {
                 <h2 className="modern-h2">Skills</h2>
                 <ul className="modern-skill-list">
                   {skills.map((s, i) => (
-                    <li key={i} className="modern-skill">{s}</li>
+                    <li key={`${s}-${i}`} className="modern-skill">{s}</li>
                   ))}
                 </ul>
               </section>
@@ -61,7 +61,7 @@ export default function Modern({ data = {} }) {
                 <h2 className="modern-h2">Education</h2>
                 <ul className="modern-edu-list">
                   {education.map((e, i) => (
-                    <li key={i} className="modern-edu-item avoid-break">
+                    <li key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} className="modern-edu-item avoid-break">
                       <div className="modern-edu-line">
                         <span className="modern-edu-school">{e.school}</span>
                         {e.degree ? <span className="modern-edu-degree"> — {e.degree}</span> : null}
@@ -83,7 +83,7 @@ export default function Modern({ data = {} }) {
               <h2 className="modern-h2">Experience</h2>
               <ul className="modern-exp-list">
                 {(experience || []).map((x, i) => (
-                  <li key={i} className="modern-exp-item avoid-break">
+                  <li key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} className="modern-exp-item avoid-break">
                     <div className="modern-exp-head">
                       <div className="modern-exp-role">
                         <span className="modern-exp-company">{x.company}</span>
@@ -98,7 +98,7 @@ export default function Modern({ data = {} }) {
                     {(x.bullets || []).length ? (
                       <ul className="modern-bullets">
                         {x.bullets.map((b, j) => (
-                          <li key={j} className="modern-bullet">{b}</li>
+                          <li key={`${b}-${j}`} className="modern-bullet">{b}</li>
                         ))}
                       </ul>
                     ) : null}

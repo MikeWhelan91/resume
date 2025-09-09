@@ -71,11 +71,11 @@ function Header({ data }) {
         <View style={styles.linkRow}>
           {contacts.map((c, i) =>
             c.startsWith("http") ? (
-              <Link key={i} src={c} style={styles.linkText}>
+              <Link key={`${c}-${i}`} src={c} style={styles.linkText}>
                 {c}
               </Link>
             ) : (
-              <Text key={i} style={{ marginRight: 8 }}>
+              <Text key={`${c}-${i}`} style={{ marginRight: 8 }}>
                 {c}
               </Text>
             )
@@ -98,7 +98,7 @@ function Skills({ data }) {
       <SectionTitle>Skills</SectionTitle>
       <View style={styles.pillWrap}>
         {data.skills.map((s, i) => (
-          <Text key={i} style={styles.pill}>
+          <Text key={`${s}-${i}`} style={styles.pill}>
             {String(s)}
           </Text>
         ))}
@@ -116,7 +116,7 @@ function Experience({ data }) {
       {xp.map((x, i) => {
         const dates = [x.start, x.end || "Present"].filter(Boolean).join(" – ");
         return (
-          <View key={i} wrap={false}>
+          <View key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} wrap={false}>
             {x.company ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
             ) : null}
@@ -125,7 +125,7 @@ function Experience({ data }) {
 
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
-                <Text key={j} style={styles.li}>
+                <Text key={`${b}-${j}`} style={styles.li}>
                   • {String(b)}
                 </Text>
               ))}
@@ -147,7 +147,7 @@ function Education({ data }) {
         const dates = [e.start, e.end].filter(Boolean).join(" – ");
         const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
         return (
-          <View key={i} wrap={false} style={{ marginBottom: 4 }}>
+          <View key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} wrap={false} style={{ marginBottom: 4 }}>
             {e.school ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
             ) : null}

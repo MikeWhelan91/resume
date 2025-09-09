@@ -16,7 +16,7 @@ export default function CoverLetterPdf({ text }) {
     <Document>
       <Page size="A4" style={styles.page}>
         {body.split(/\n+/).map((line, i) => (
-          <Text key={i} style={styles.para}>{line}</Text>
+          <Text key={`${line}-${i}`} style={styles.para}>{line}</Text>
         ))}
       </Page>
     </Document>
