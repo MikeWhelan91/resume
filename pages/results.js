@@ -6,6 +6,13 @@ import { listTemplates, getTemplate } from '../templates'
 import { renderHtml } from '../lib/renderHtmlTemplate'
 import { toTemplateModel } from '../lib/templateModel'
 
+function toHtmlParagraphs(text) {
+  return String(text || '')
+    .split(/\n+/)
+    .map(p => `<p>${p}</p>`)
+    .join('')
+}
+
 export default function ResultsPage() {
   const [result, setResult] = useState(null)
   const templates = listTemplates()
@@ -40,7 +47,14 @@ export default function ResultsPage() {
 
   async function downloadCoverPdf() {
     if (!result) return
-    const data = { ...result.resumeData, coverLetter: result.coverLetter, accent, density, ats: atsMode, isCoverLetter: true }
+    const data = {
+      ...result.resumeData,
+      coverLetter: toHtmlParagraphs(result.coverLetter),
+      accent,
+      density,
+      ats: atsMode,
+      isCoverLetter: true
+    }
     const res = await fetch(`/api/pdf?template=${tplId}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -91,13 +105,13 @@ export default function ResultsPage() {
   const tpl = getTemplate(tplId)
   const model = toTemplateModel(appData)
   const cvHtml = renderHtml({ html: tpl.html, css: tpl.css, model })
-  const coverModel = { ...model, coverLetter: result.coverLetter, isCoverLetter: true }
+  const coverModel = { ...model, coverLetter: toHtmlParagraphs(result.coverLetter), isCoverLetter: true }
   const coverHtml = renderHtml({ html: tpl.html, css: tpl.css, model: coverModel })
 
   return (
     <>
       <Head>
-        <title>Results – TailorCV</title>
+        <title>Results – Tailored CV & Cover Letter | TailorCV</title>
         <meta
           name="description"
           content="Preview and download your tailored CV and cover letter with unified HTML A4 templates."
@@ -105,7 +119,7 @@ export default function ResultsPage() {
       </Head>
       <div style={{
         display:'grid',
-        gridTemplateColumns:'340px 1fr 1fr',
+        gridTemplateColumns:'340px auto auto',
         gap:'24px',
         alignItems:'start'
       }}>
