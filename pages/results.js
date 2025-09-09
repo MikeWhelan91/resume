@@ -5,6 +5,14 @@ import { listTemplates, getTemplate } from '../templates'
 import { renderHtml } from '../lib/renderHtmlTemplate'
 import { toTemplateModel } from '../lib/templateModel'
 
+function pickDocTemplate(tpl, docType, fallback) {
+  if (docType === 'cover') {
+    if (tpl.coverHtml) return { html: tpl.coverHtml, css: tpl.coverCss || '' }
+    return { html: fallback.coverHtml, css: fallback.coverCss }
+  }
+  return { html: tpl.html, css: tpl.css }
+}
+
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827']
 const DENSITIES = ['Compact','Normal','Relaxed']
 
@@ -45,6 +53,9 @@ export default function ResultsPage() {
     () => getTemplate(tplId) || (firstTplId ? getTemplate(firstTplId) : { html:'<div />', css:'' }),
     [tplId, firstTplId]
   )
+  const fallbackTpl = useMemo(() => getTemplate('_cover-default'), [])
+  const cvTpl = useMemo(() => pickDocTemplate(tpl, 'cv', fallbackTpl), [tpl, fallbackTpl])
+  const coverTpl = useMemo(() => pickDocTemplate(tpl, 'cover', fallbackTpl), [tpl, fallbackTpl])
 
   const model = useMemo(
     () => toTemplateModel(appData, { ats, density }),
@@ -53,18 +64,18 @@ export default function ResultsPage() {
 
   const cvHtml = useMemo(() =>
     renderHtml({
-      html: tpl.html, css: tpl.css, model,
+      html: cvTpl.html, css: cvTpl.css, model,
       options: { mode: 'preview', accent, density, ats }
     }),
-    [tpl, model, accent, density, ats]
+    [cvTpl, model, accent, density, ats]
   )
 
   const coverHtml = useMemo(() =>
     renderHtml({
-      html: tpl.html, css: tpl.css, model: { ...model, isCoverLetter: true },
+      html: coverTpl.html, css: coverTpl.css, model,
       options: { mode: 'preview', accent, density, ats }
     }),
-    [tpl, model, accent, density, ats]
+    [coverTpl, model, accent, density, ats]
   )
 
   const isLoading = result == null
@@ -73,7 +84,7 @@ export default function ResultsPage() {
     <>
       <Head>
         <title>Results – Tailored CV & Cover Letter | TailorCV</title>
-        <meta name="description" content="Preview and download your tailored CV and cover letter with unified HTML A4 templates." />
+        <meta name="description" content="Preview and download your tailored CV and cover letter with side-by-side A4 templates." />
       </Head>
 
       <div className="ResultsLayout">
@@ -146,12 +157,12 @@ export default function ResultsPage() {
 
         <section className="Previews">
           <div className="PreviewCard">
-            {isLoading ? <div className="A4" style={{display:'grid',placeItems:'center'}}>Loading…</div>
-                       : <PreviewFrame className="A4" htmlDoc={cvHtml} />}
+            {isLoading ? <div className="A4Preview" style={{display:'grid',placeItems:'center'}}>Loading…</div>
+                       : <PreviewFrame className="A4Preview" htmlDoc={cvHtml} />}
           </div>
           <div className="PreviewCard">
-            {isLoading ? <div className="A4" style={{display:'grid',placeItems:'center'}}>Loading…</div>
-                       : <PreviewFrame className="A4" htmlDoc={coverHtml} />}
+            {isLoading ? <div className="A4Preview" style={{display:'grid',placeItems:'center'}}>Loading…</div>
+                       : <PreviewFrame className="A4Preview" htmlDoc={coverHtml} />}
           </div>
         </section>
       </div>

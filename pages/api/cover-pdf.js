@@ -12,10 +12,15 @@ export default async function handler(req, res) {
 
   const tpl = getTemplate(templateId)
   const appData = await getCurrentResumeData(req)
-  const baseModel = toTemplateModel(appData, { ats, density })
-  const model = { ...baseModel, isCoverLetter: true }
+  const model = toTemplateModel(appData, { ats, density })
+  const coverTpl = tpl.coverHtml ? tpl : getTemplate('_cover-default')
 
-  const html = renderHtml({ html: tpl.html, css: tpl.css, model, options:{ mode:'print', accent, density, ats } })
+  const html = renderHtml({
+    html: coverTpl.coverHtml || coverTpl.html,
+    css: coverTpl.coverCss || coverTpl.css,
+    model,
+    options:{ mode:'print', accent, density, ats }
+  })
 
   const browser = await puppeteer.launch({ headless:'new' })
   const page = await browser.newPage()

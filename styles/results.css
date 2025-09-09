@@ -3,7 +3,6 @@
   --panel: #ffffff;
   --border: #e7eaf0;
   --text: #121317;
-  --muted: #666a73;
   --shadow: 0 12px 28px rgba(16,24,40,.08);
 }
 html, body { background: var(--bg); }
@@ -11,8 +10,8 @@ html, body { background: var(--bg); }
   display: grid;
   grid-template-columns: 340px 1fr 1fr;
   gap: 24px;
-  align-items: start;
   padding: 20px 24px 40px;
+  align-items: start;
 }
 .ResultsSidebar {
   position: sticky; top: 16px;
@@ -43,26 +42,30 @@ html, body { background: var(--bg); }
 .Button:hover { filter: brightness(.96); }
 .Button.secondary { background:#fff; border:1px solid var(--border); color:#111; }
 .Previews {
-  display:grid; grid-template-columns: 1fr 1fr; gap:24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  grid-column: span 2;
 }
 .PreviewCard {
-  display:grid; place-items:start; justify-items:center;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: var(--shadow);
+  display: grid;
+  place-items: start;
+  overflow: hidden;
 }
-.A4 {
-  width: 794px;  /* A4 @ ~96dpi for screen preview */
+.A4Preview {
+  width: 794px;    /* A4 @ ~96dpi */
   height: 1123px;
+  transform-origin: top left;
+  transform: scale(.66);   /* small previews */
   border: 0;
   background: #fff;
 }
 @media (max-width: 1600px) {
   .ResultsLayout { grid-template-columns: 320px 1fr; }
   .Previews { grid-template-columns: 1fr; }
-}
-@media (max-width: 980px) {
-  .ResultsLayout { grid-template-columns: 1fr; }
 }
