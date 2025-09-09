@@ -1,7 +1,5 @@
 import "../styles/globals.css";
 import "../styles/resume.css";
-import "../styles/a4.css";
-import "../styles/print.css";
 import Head from "next/head";
 
 export default function MyApp({ Component, pageProps }) {
