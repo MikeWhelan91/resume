@@ -1,5 +1,13 @@
 <h1>{{name}}</h1>
 <p class="meta">{{label}} • {{email}} • {{phone}} • {{url}}</p>
+
+{{#isCoverLetter}}
+<div class="section">
+  {{{coverLetter}}}
+</div>
+{{/isCoverLetter}}
+
+{{^isCoverLetter}}
 <div class="section">
   <h2>PROFILE</h2>
   <p>{{summary}}</p>
@@ -23,3 +31,4 @@
       <span style="float:right" class="meta">{{start}} — {{end}}</span></div>
   {{/education}}
 </div>
+{{/isCoverLetter}}
