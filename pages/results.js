@@ -1,14 +1,10 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import dynamic from 'next/dynamic';
 import PreviewFrame from '../components/PreviewFrame';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import { listTemplates, getTemplate } from '../templates';
 import { renderHtml } from '../lib/renderHtmlTemplate';
 import { toTemplateModel } from '../lib/templateModel';
-import { pdf } from '@react-pdf/renderer';
-
-const CoverLetterPdf = dynamic(() => import('../components/pdf/CoverLetterPdf'), { ssr: false });
 
 export default function ResultsPage() {
   const [result, setResult] = useState(null);
@@ -17,7 +13,6 @@ export default function ResultsPage() {
   const [accent, setAccent] = useState('#00C9A7');
   const [density, setDensity] = useState('normal');
   const [atsMode, setAtsMode] = useState(false);
-  const [coverUrl, setCoverUrl] = useState(null);
 
   useEffect(() => {
     try {
@@ -25,21 +20,6 @@ export default function ResultsPage() {
       if (r) setResult(r);
     } catch {}
   }, []);
-
-  useEffect(() => {
-    if (!result) return;
-    async function generateCover() {
-      const { default: CoverLetterPdfComponent } = await import('../components/pdf/CoverLetterPdf');
-      const cBlob = await pdf(
-        <CoverLetterPdfComponent text={result.coverLetter} accent={accent} density={density} atsMode={atsMode} />
-      ).toBlob();
-      setCoverUrl((u) => {
-        if (u) URL.revokeObjectURL(u);
-        return URL.createObjectURL(cBlob);
-      });
-    }
-    generateCover();
-  }, [result, accent, density, atsMode]);
 
   async function downloadResumePdf() {
     if (!result) return;
@@ -58,12 +38,21 @@ export default function ResultsPage() {
     URL.revokeObjectURL(url);
   }
 
-  function downloadCoverPdf() {
-    if (!coverUrl) return;
+  async function downloadCoverPdf() {
+    if (!result) return;
+    const body = { coverLetter: result.coverLetter, accent, density, ats: atsMode };
+    const res = await fetch('/api/pdf?template=cover-letter', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = coverUrl;
+    a.href = url;
     a.download = 'cover-letter.pdf';
     a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function downloadCvDocx() {
@@ -101,18 +90,7 @@ export default function ResultsPage() {
   const appData = { ...result.resumeData, accent, density, ats: atsMode };
   const tpl = getTemplate(tplId);
   const model = toTemplateModel(appData);
-  const ReactPdfDoc =
-    tpl.engine === 'react-pdf'
-      ? (tpl.module?.DocumentFor || tpl.module?.default)
-        ? (tpl.module.DocumentFor || tpl.module.default)({ model })
-        : null
-      : null;
   const htmlDoc = tpl.engine === 'html' ? renderHtml({ html: tpl.html, css: tpl.css, model }) : null;
-
-  const clDoc = (
-    <CoverLetterPdf text={result.coverLetter} accent={accent} density={density} atsMode={atsMode} />
-  );
-  const clTpl = { engine: 'react-pdf' };
 
   return (
     <>
@@ -148,10 +126,10 @@ export default function ResultsPage() {
           </div>
         </aside>
         <section>
-          <PreviewFrame engine={tpl.engine} htmlDoc={htmlDoc} ReactPdfDoc={ReactPdfDoc} />
+          <PreviewFrame engine={tpl.engine} htmlDoc={htmlDoc} templateId={tpl.id} />
         </section>
         <section id="cover-preview">
-          <PreviewFrame engine={clTpl.engine} htmlDoc={null} ReactPdfDoc={clDoc} />
+          <PreviewFrame engine="react-pdf" htmlDoc={null} templateId="cover-letter" />
         </section>
       </div>
     </>
