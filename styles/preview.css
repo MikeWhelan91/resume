@@ -1,0 +1,13 @@
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 820px 820px; /* sidebar + two A4 previews */
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1600px) {
+  .preview-grid { grid-template-columns: 1fr 820px; }
+}
+@media (max-width: 1100px) {
+  .preview-grid { grid-template-columns: 1fr; }
+}
