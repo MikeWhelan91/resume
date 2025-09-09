@@ -1,7 +1,7 @@
-import { getTemplate } from '../../templates'
-import { toTemplateModel } from '../../lib/templateModel'
-import { renderHtml } from '../../lib/renderHtmlTemplate'
-import { renderReactPdf } from '../../lib/renderReactPdf'
+import { getTemplate } from '@/templates'
+import { toTemplateModel } from '@/lib/templateModel'
+import { renderHtml } from '@/lib/renderHtmlTemplate'
+import { renderReactPdf } from '@/lib/renderReactPdf'
 import puppeteer from 'puppeteer'
 
 export default async function handler(req, res){

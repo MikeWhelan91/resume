@@ -4,9 +4,9 @@ import Head from 'next/head';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
-import { listTemplates, getTemplate } from '../templates';
-import { renderHtml } from '../lib/renderHtmlTemplate';
-import { toTemplateModel } from '../lib/templateModel';
+import { listTemplates, getTemplate } from '@/templates';
+import { renderHtml } from '@/lib/renderHtmlTemplate';
+import { toTemplateModel } from '@/lib/templateModel';
 import { pdf } from '@react-pdf/renderer';
 
 const PDFViewer = dynamic(() => import('@react-pdf/renderer').then(m => m.PDFViewer), { ssr: false });
