@@ -84,12 +84,14 @@ export default function ResultsPage() {
     <>
       <Head>
         <title>Results – Tailored CV & Cover Letter | TailorCV</title>
-        <meta name="description" content="Preview and download your tailored CV and cover letter with side-by-side A4 templates." />
+        <meta name="description" content="Preview your résumé and cover letter side by side, choose layout, colors and ATS mode, then download as PDF or DOCX." />
       </Head>
 
       <div className="ResultsLayout">
-        <aside className="ResultsSidebar">
-          <div className="Group">
+        <div className="Toolbar">
+          <h1>Preview</h1>
+
+          <div className="Group" style={{ minWidth: 160 }}>
             <h3>Theme</h3>
             <select className="Select" value={tplId} onChange={e => setTplId(e.target.value)}>
               {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -111,8 +113,8 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="Group">
-            <h3>Density</h3>
+          <div className="Group" style={{ minWidth: 140 }}>
+            <h3>Layout</h3>
             <select className="Select" value={density} onChange={e => setDensity(e.target.value)}>
               {DENSITIES.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -125,46 +127,45 @@ export default function ResultsPage() {
               <span>ATS mode</span>
             </label>
           </div>
-
-          <div className="Group">
-            <button
-              className="Button"
-              onClick={() => window.location.href =
-                `/api/pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}>
-              Download CV (PDF)
-            </button>
-            <div style={{ height: '10px' }} />
-            <button
-              className="Button secondary"
-              onClick={() => window.location.href = `/api/export-docx?template=${tplId}&ats=${ats?'1':'0'}`}>
-              Download CV (DOCX)
-            </button>
-            <div style={{ height: '10px' }} />
-            <button
-              className="Button secondary"
-              onClick={() => window.location.href =
-                `/api/cover-pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}>
-              Download Cover Letter (PDF)
-            </button>
-            <div style={{ height: '10px' }} />
-            <button
-              className="Button secondary"
-              onClick={() => window.location.href = `/api/export-cover-letter-docx?template=${tplId}&ats=${ats?'1':'0'}`}>
-              Download Cover Letter (DOCX)
-            </button>
-          </div>
-        </aside>
+        </div>
 
         <section className="Previews">
           <div className="PreviewCard">
+            <h2>Résumé</h2>
             {isLoading ? <div className="A4Preview" style={{display:'grid',placeItems:'center'}}>Loading…</div>
                        : <PreviewFrame className="A4Preview" htmlDoc={cvHtml} />}
           </div>
           <div className="PreviewCard">
+            <h2>Cover Letter</h2>
             {isLoading ? <div className="A4Preview" style={{display:'grid',placeItems:'center'}}>Loading…</div>
                        : <PreviewFrame className="A4Preview" htmlDoc={coverHtml} />}
           </div>
         </section>
+
+        <div className="Downloads">
+          <button
+            className="Button"
+            onClick={() => window.location.href =
+              `/api/pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}> 
+            Download CV (PDF)
+          </button>
+          <button
+            className="Button secondary"
+            onClick={() => window.location.href = `/api/export-docx?template=${tplId}&ats=${ats?'1':'0'}`}> 
+            Download CV (DOCX)
+          </button>
+          <button
+            className="Button secondary"
+            onClick={() => window.location.href =
+              `/api/cover-pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}> 
+            Download Cover Letter (PDF)
+          </button>
+          <button
+            className="Button secondary"
+            onClick={() => window.location.href = `/api/export-cover-letter-docx?template=${tplId}&ats=${ats?'1':'0'}`}> 
+            Download Cover Letter (DOCX)
+          </button>
+        </div>
       </div>
     </>
   )
