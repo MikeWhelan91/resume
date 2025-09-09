@@ -1,117 +1,105 @@
-/*
-Validation checklist:
-- Switch templates across all five → visual changes are clear; spacing consistent.
-- Toggle ATS mode → monochrome, no fills, same content order.
-- Long experience items never split mid-item; no duplication at page 2 start.
-- Export “Download CV (PDF)” for each template → A4 with correct margins; no clipped content.
-- Density control still works (map Density: Compact/Normal/Roomy → reduce/increase spacing scale by ±10–15%).
-*/
-import { Document, Page, Text, View } from '@react-pdf/renderer';
-import { densityMap } from '../../lib/resumeConfig';
-import { getTheme, styles, Section, H, Meta, Chip, Row } from './shared';
+import { Document, Page, View, Text } from '@react-pdf/renderer'
+import { styles, H, Bullet, Job, TYPE } from './shared'
 
 export default function ClassicPdf({ data = {}, accent = '#00C9A7', density = 'normal', atsMode = false }) {
-  const theme = getTheme(accent);
-  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
-  const pageStyle = { ...styles.page, fontSize: parseFloat(fontSize), lineHeight, color: atsMode ? '#000' : '#000' };
-  const gap = density === 'compact' ? 8 : density === 'cozy' ? 16 : 12;
-  const links = Array.isArray(data.links) ? data.links : [];
-  const skills = Array.isArray(data.skills) ? data.skills : [];
-  const exp = Array.isArray(data.experience) ? data.experience : [];
-  const edu = Array.isArray(data.education) ? data.education : [];
-  const certs = Array.isArray(data.certifications) ? data.certifications : [];
-  const fmt = (s) => (s ? String(s).replace(/-/g, '–') : '');
+  const links = Array.isArray(data.links) ? data.links : []
+  const skills = Array.isArray(data.skills) ? data.skills : []
+  const exp = Array.isArray(data.experience) ? data.experience : []
+  const edu = Array.isArray(data.education) ? data.education : []
+  const certs = Array.isArray(data.certifications) ? data.certifications : []
+  const fmt = s => (s ? String(s).replace(/-/g, '–') : '')
 
   return (
     <Document>
-      <Page size="A4" style={pageStyle} wrap>
-        <Section style={{ marginBottom: gap }}>
-          <Text style={styles.h1}>{data.name}</Text>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.section}>
+          <Text style={{ fontSize: TYPE.name, fontWeight: 700, textAlign: 'center' }}>{data.name}</Text>
           {(data.title || data.location) && (
-            <Meta>{[data.title, data.location].filter(Boolean).join(' • ')}</Meta>
+            <Text style={styles.meta}>{[data.title, data.location].filter(Boolean).join(' • ')}</Text>
           )}
           {(data.email || data.phone || links.length) && (
-            <Meta>{[data.email, data.phone, ...links.map((l) => l?.url).filter(Boolean)].join(' · ')}</Meta>
+            <Text style={styles.meta}>{[data.email, data.phone, ...links.map(l => l?.url).filter(Boolean)].join(' · ')}</Text>
           )}
-          <styles.Rule color={atsMode ? '#000' : theme.accent} style={{ marginTop: 6 }} />
-        </Section>
+          <View style={styles.hr} />
+        </View>
 
         {data.summary && (
-          <Section style={{ marginBottom: gap }} wrap={false}>
-            <H style={{ color: atsMode ? '#000' : theme.accent }}>Profile</H>
-            <Text>{data.summary}</Text>
-          </Section>
+          <View style={styles.section} wrap={false}>
+            <H>Profile</H>
+            <Text style={styles.p}>{data.summary}</Text>
+          </View>
         )}
 
         {skills.length > 0 && (
-          <Section style={{ marginBottom: gap }} wrap={false}>
-            <H style={{ color: atsMode ? '#000' : theme.accent }}>Skills</H>
-            <Row style={{ flexWrap: 'wrap' }}>
-              {skills.map((s, i) => (
-                <Chip key={`${s}-${i}`} theme={theme} atsMode={atsMode}>{s}</Chip>
-              ))}
-            </Row>
-          </Section>
+          <View style={styles.section} wrap={false}>
+            <H>Skills</H>
+            {skills.map((s, i) => (
+              <Bullet key={`${s}-${i}`}>{s}</Bullet>
+            ))}
+          </View>
         )}
 
         {exp.length > 0 && (
-          <Section style={{ marginBottom: gap }}>
-            <H style={{ color: atsMode ? '#000' : theme.accent }}>Experience</H>
+          <View style={styles.section}>
+            <H>Experience</H>
             {exp.map((x, i) => (
-              <View key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} wrap={false} style={{ marginBottom: gap/2 }}>
-                {x.company && <Text style={{ fontWeight: 700 }}>{x.company}</Text>}
-                {x.role && <Text>{x.role}</Text>}
-                {(x.start || x.end != null) && (
-                  <Meta>{fmt(x.start)} – {x.end == null ? 'Present' : fmt(x.end)}</Meta>
-                )}
-                {x.location && <Meta>{x.location}</Meta>}
-                {Array.isArray(x.bullets) && x.bullets.length > 0 && (
-                  <View style={{ marginTop: 4 }}>
-                    {x.bullets.map((b, j) => (
-                      <Text key={j}>• {b}</Text>
-                    ))}
-                  </View>
-                )}
-              </View>
+              <Job
+                key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`}
+                company={x.company}
+                title={x.role}
+                start={fmt(x.start)}
+                end={x.end == null ? 'Present' : fmt(x.end)}
+              >
+                {Array.isArray(x.bullets) &&
+                  x.bullets.map((b, j) => (
+                    <Bullet key={`${x.company}-${x.role}-${x.start}-${x.end}-${j}`}>{b}</Bullet>
+                  ))}
+              </Job>
             ))}
-          </Section>
+          </View>
         )}
 
         {edu.length > 0 && (
-          <Section style={{ marginBottom: gap }}>
-            <H style={{ color: atsMode ? '#000' : theme.accent }}>Education</H>
+          <View style={styles.section}>
+            <H>Education</H>
             {edu.map((e, i) => (
-              <View key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} wrap={false} style={{ marginBottom: gap/2 }}>
-                {e.school && <Text style={{ fontWeight: 700 }}>{e.school}</Text>}
-                {(e.degree || e.grade) && <Text>{[e.degree, e.grade].filter(Boolean).join(' — ')}</Text>}
-                {(e.start || e.end) && <Meta>{fmt(e.start)} – {fmt(e.end)}</Meta>}
-              </View>
+              <Job
+                key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`}
+                company={e.school}
+                title={[e.degree, e.grade].filter(Boolean).join(' — ')}
+                start={fmt(e.start)}
+                end={fmt(e.end)}
+              >
+                {Array.isArray(e.bullets) &&
+                  e.bullets.map((b, j) => (
+                    <Bullet key={`${e.school}-${e.degree}-${e.start}-${e.end}-${j}`}>{b}</Bullet>
+                  ))}
+              </Job>
             ))}
-          </Section>
+          </View>
         )}
 
         {(certs.length > 0 || links.length > 0) && (
-          <Section style={{ marginBottom: gap }}>
+          <View style={styles.section}>
             {certs.length > 0 && (
-              <View wrap={false} style={{ marginBottom: gap/2 }}>
-                <H style={{ color: atsMode ? '#000' : theme.accent }}>Certifications</H>
+              <View wrap={false} style={{ marginBottom: 6 }}>
+                <H>Certifications</H>
                 {certs.map((c, i) => (
-                  <Text key={`${c}-${i}`}>{c}</Text>
+                  <Text key={`${c}-${i}`} style={styles.p}>{c}</Text>
                 ))}
               </View>
             )}
             {links.length > 0 && (
               <View wrap={false}>
-                <H style={{ color: atsMode ? '#000' : theme.accent }}>Links</H>
+                <H>Links</H>
                 {links.map((l, i) => (
-                  <Text key={`${l.url}-${i}`}>{l.url}</Text>
+                  <Text key={`${l.url}-${i}`} style={styles.p}>{l.url}</Text>
                 ))}
               </View>
             )}
-          </Section>
+          </View>
         )}
       </Page>
     </Document>
-  );
+  )
 }
-

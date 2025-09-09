@@ -1,99 +1,61 @@
-import { StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Font, StyleSheet, View, Text } from '@react-pdf/renderer'
 
-// Accent theme tokens
-export const theme = {
-  teal: '#00C9A7',
-  blue: '#3388FF',
-  purple: '#7A5AF8',
-  green: '#22C55E',
-  orange: '#FF8A3D',
-  gray: '#475569',
-};
+// Disable auto-hyphenation globally: prevents "ware- houses", "environ- ment"
+Font.registerHyphenationCallback(word => [word])
 
-export function getTheme(accent) {
-  const color = theme[accent] || accent || theme.teal;
-  return { accent: color };
+// Typographic scale (pt). Recruiter-safe, ATS-friendly.
+export const TYPE = {
+  name: 18,
+  section: 11,
+  body: 10,
+  meta: 9
 }
 
-function hexToRgb(hex) {
-  const v = hex.replace('#', '');
-  const bigint = parseInt(v, 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return { r, g, b };
-}
+// Base styles used by all templates
+export const styles = StyleSheet.create({
+  page: { paddingTop: 18, paddingBottom: 18, paddingHorizontal: 16 },
+  section: { marginTop: 10, marginBottom: 6 },
+  sectionTitle: { fontSize: TYPE.section, letterSpacing: 0.8, fontWeight: 700, textAlign: 'left', marginBottom: 6 },
+  p: { fontSize: TYPE.body, lineHeight: 1.35, textAlign: 'left' },      // never center, never justify
+  meta: { fontSize: TYPE.meta, color: '#475569', textAlign: 'left' },
+  hr: { height: 1, backgroundColor: '#E5E7EB', marginTop: 6, marginBottom: 6 },
 
-export function withAlpha(hex, alpha) {
-  const { r, g, b } = hexToRgb(hex);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+  // Role row: Company • Title .............. Dates (right-aligned)
+  roleRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 4 },
+  company: { fontSize: TYPE.body, fontWeight: 700 },
+  title:   { fontSize: TYPE.body, fontWeight: 700 },
+  dot:     { fontSize: TYPE.body, fontWeight: 400 },
+  spacer:  { flexGrow: 1 },
+  dates:   { fontSize: TYPE.meta, color: '#334155', textAlign: 'right' },
 
-export function dedupe(arr = []) {
-  return arr.filter((x, i) => i === 0 || JSON.stringify(x) !== JSON.stringify(arr[i - 1]));
-}
+  // Bullet with hanging indent
+  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 },
+  bullet: { width: 10, textAlign: 'center', fontSize: TYPE.body, lineHeight: 1.35 },
+  bulletText: { flex: 1, fontSize: TYPE.body, lineHeight: 1.35, textAlign: 'left' }
+})
 
-const base = StyleSheet.create({
-  page: {
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 16,
-    fontFamily: 'Helvetica',
-    fontSize: 9.5,
-    lineHeight: 1.35,
-    color: '#000',
-  },
-  h1: { fontSize: 18, fontWeight: 700 },
-  h2: { fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-  text: { fontSize: 9.5, fontWeight: 400 },
-  meta: { fontSize: 8.5, color: '#555' },
-  chip: { fontSize: 9.5, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, borderWidth: 0.5, marginRight: 4, marginBottom: 4 },
-  row: { flexDirection: 'row' },
-  col: { flexDirection: 'column' },
-});
+// Helpers
+export const H = ({ children }) => (
+  <View style={styles.section}><Text style={styles.sectionTitle}>{children}</Text><View style={styles.hr}/></View>
+)
 
-export const styles = {
-  ...base,
-  Rule: ({ color = '#000', style }) => <View style={[{ height: 1, backgroundColor: color }, style]} />, // hairline rule
-};
+export const Bullet = ({ children }) => (
+  <View style={styles.bulletRow}>
+    <Text style={styles.bullet}>•</Text>
+    <Text style={styles.bulletText}>{children}</Text>
+  </View>
+)
 
-export function Section({ children, style, ...rest }) {
-  return (
-    <View style={[{ marginBottom: 12 }, style]} {...rest}>
-      {children}
+// Reusable Job block (no page split inside a job)
+export const Job = ({ company, title, start, end, children }) => (
+  <View wrap={false} style={{ marginBottom: 6 }}>
+    <View style={styles.roleRow}>
+      <Text style={styles.company}>{company}</Text>
+      <Text style={styles.dot}> • </Text>
+      <Text style={styles.title}>{title}</Text>
+      <View style={styles.spacer} />
+      <Text style={styles.dates}>{start} — {end}</Text>
     </View>
-  );
-}
-
-export function H({ children, style }) {
-  return <Text style={[base.h2, style]}>{children}</Text>;
-}
-
-export function Meta({ children, style }) {
-  return <Text style={[base.meta, style]}>{children}</Text>;
-}
-
-export function Chip({ children, theme: t, atsMode, style }) {
-  const fill = atsMode ? 'transparent' : withAlpha(t.accent, 0.08);
-  const borderColor = atsMode ? '#000' : t.accent;
-  return (
-    <Text style={[base.chip, { backgroundColor: fill, borderColor }, style]}>{children}</Text>
-  );
-}
-
-export function Row({ children, style, ...rest }) {
-  return (
-    <View style={[base.row, style]} {...rest}>
-      {children}
-    </View>
-  );
-}
-
-export function Col({ children, style, ...rest }) {
-  return (
-    <View style={[base.col, style]} {...rest}>
-      {children}
-    </View>
-  );
-}
-
+    {children}
+  </View>
+)
