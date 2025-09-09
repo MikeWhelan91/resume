@@ -3,8 +3,20 @@ import Head from 'next/head';
 import { pdf, PDFViewer } from '@react-pdf/renderer';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
-import ResumePdf from '../components/pdf/ResumePdf';
+import ClassicPdf from '../components/pdf/ClassicPdf';
+import TwoColPdf from '../components/pdf/TwoColPdf';
+import SidebarPdf from '../components/pdf/SidebarPdf';
+import CenteredPdf from '../components/pdf/CenteredPdf';
+import ModernPdf from '../components/pdf/ModernPdf';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
+
+const pdfTemplates = {
+  classic: ClassicPdf,
+  twoCol: TwoColPdf,
+  sidebar: SidebarPdf,
+  centered: CenteredPdf,
+  modern: ModernPdf,
+};
 
 export default function ResultsPage() {
   const [result, setResult] = useState(null);
@@ -14,6 +26,8 @@ export default function ResultsPage() {
   const [atsMode, setAtsMode] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
   const [coverUrl, setCoverUrl] = useState(null);
+
+  const Template = pdfTemplates[template] || ClassicPdf;
 
   useEffect(() => {
     try {
@@ -26,7 +40,7 @@ export default function ResultsPage() {
     if (!result) return;
     async function generate() {
       const rBlob = await pdf(
-        <ResumePdf data={result.resumeData} accent={accent} density={density} atsMode={atsMode} />
+        <Template data={result.resumeData} accent={accent} density={density} atsMode={atsMode} />
       ).toBlob();
       setResumeUrl((u) => {
         if (u) URL.revokeObjectURL(u);
@@ -41,7 +55,7 @@ export default function ResultsPage() {
       });
     }
     generate();
-  }, [result, accent, density, atsMode]);
+  }, [result, accent, density, atsMode, template]);
 
   function downloadResumePdf() {
     if (!resumeUrl) return;
@@ -97,8 +111,7 @@ export default function ResultsPage() {
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks, zero duplication and no browser toolbars, presented in dark-bordered previews side by side with easy controls."
-
+          content="Preview and download your tailored CV and cover letter as clean PDFs across Classic, Two-Column, Sidebar, Centered and Modern templates with smart page breaks and easy controls."
         />
       </Head>
       <MainShell
@@ -122,7 +135,7 @@ export default function ResultsPage() {
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             <div id="resume-preview" className="h-[80vh]">
               <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
-                <ResumePdf
+                <Template
                   data={result.resumeData}
                   accent={accent}
                   density={density}
