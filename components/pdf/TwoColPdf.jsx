@@ -63,7 +63,7 @@ function Skills({ data }) {
     <View>
       <Text style={[styles.h2, { marginTop: 0 }]}>Skills</Text>
       {data.skills.map((s, i) => (
-        <Text key={i} style={styles.pill}>
+        <Text key={`${s}-${i}`} style={styles.pill}>
           {String(s)}
         </Text>
       ))}
@@ -81,7 +81,7 @@ function Education({ data }) {
         const dateRange = [e.start, e.end].filter(Boolean).join(" – ");
         const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
         return (
-          <View key={i} style={{ marginBottom: 6 }}>
+          <View key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} wrap={false} style={{ marginBottom: 6 }}>
             <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{e.school}</Text>
             {detail ? <Text style={styles.muted}>{detail}</Text> : null}
             {dateRange ? <Text style={styles.muted}>{dateRange}</Text> : null}
@@ -112,7 +112,7 @@ function Experience({ data }) {
       {xp.map((x, i) => {
         const dates = [x.start, x.end || "Present"].filter(Boolean).join(" – ");
         return (
-          <View key={i} wrap={false}>
+          <View key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} wrap={false}>
             {x.company ? (
               <Text style={{ fontFamily: "InterBold", fontWeight: 700 }}>{x.company}</Text>
             ) : null}
@@ -121,7 +121,7 @@ function Experience({ data }) {
 
             <View style={styles.ul}>
               {(Array.isArray(x.bullets) ? x.bullets : []).map((b, j) => (
-                <Text key={j} style={styles.li}>
+                <Text key={`${b}-${j}`} style={styles.li}>
                   • {String(b)}
                 </Text>
               ))}

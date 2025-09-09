@@ -8,6 +8,7 @@ import PageCarousel from '../components/ui/PageCarousel';
 import LightboxModal from '../components/ui/LightboxModal';
 import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
 import { downloadPdfFromHtml } from '../components/export/downloadPdfFromHtml';
+import { dedupeAtBoundary } from '../lib/paginate';
 
 export default function ResultsPage(){
   const [result, setResult] = useState(null);
@@ -78,7 +79,11 @@ export default function ResultsPage(){
         positions.push(start);
         start = end;
       }
-      const arr = positions.map((pos, i) => (
+      const clean = positions.reduce((acc, pos) => {
+        const [prev, next] = dedupeAtBoundary(acc, [pos]);
+        return prev.concat(next);
+      }, []);
+      const arr = clean.map((pos, i) => (
         <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
           <div style={{ position: 'relative', top: -pos }}>
             <TemplateComp data={result.resumeData} />

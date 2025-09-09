@@ -23,7 +23,7 @@ export default function Sidebar({ data = {} }) {
         {skills.length > 0 && (
           <>
             <h2>Skills</h2>
-            <div>{skills.map((s, i) => <span className="pill" key={i}>{s}</span>)}</div>
+            <div>{skills.map((s, i) => <span className="pill" key={`${s}-${i}`}>{s}</span>)}</div>
           </>
         )}
 
@@ -36,7 +36,7 @@ export default function Sidebar({ data = {} }) {
                 .join(" – ");
               const detail = [e.degree, e.grade].filter(Boolean).join(" • ");
               return (
-                <div key={i}>
+                <div key={`${e.school}-${e.degree}-${e.start}-${e.end}-${i}`} className="avoid-break">
                   <strong>{e.school}</strong>
                   {detail && <div>{detail}</div>}
                   {dateRange && <div className="muted">{dateRange}</div>}
@@ -52,7 +52,7 @@ export default function Sidebar({ data = {} }) {
         {data.summary && (<><h2>Profile</h2><p>{data.summary}</p></>)}
         {exp.length > 0 && <h2>Experience</h2>}
         {exp.map((x, i) => (
-          <section key={i} className="avoid-break">
+          <section key={`${x.company}-${x.role}-${x.start}-${x.end}-${i}`} className="avoid-break">
             {x.company && <strong>{x.company}</strong>}
             {x.role && <div>{x.role}</div>}
             {(x.start || x.end != null) && (
@@ -61,7 +61,7 @@ export default function Sidebar({ data = {} }) {
             )}
             {x.location && <div className="muted">{x.location}</div>}
             {Array.isArray(x.bullets) && x.bullets.length > 0 && (
-              <ul>{x.bullets.map((b, j) => <li key={j}>{b}</li>)}</ul>
+              <ul>{x.bullets.map((b, j) => <li key={`${b}-${j}`}>{b}</li>)}</ul>
             )}
           </section>
         ))}
