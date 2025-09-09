@@ -1,24 +1,28 @@
-import React from "react";
-import { Page, Text, Document, StyleSheet } from "@react-pdf/renderer";
-import "./registerFonts";
+import { Document, Page, Text, StyleSheet } from '@react-pdf/renderer';
+import { densityMap } from '../../lib/resumeConfig';
+import './registerFonts';
 
 const styles = StyleSheet.create({
-  page: { fontFamily: "InterRegular", fontSize: 11, lineHeight: 1.6, padding: 72 },
-  h1:   { fontFamily: "InterBold", fontWeight: 700, fontSize: 16, marginBottom: 12 },
-  para: { fontFamily: "InterRegular", marginBottom: 10 },
-  sign: { fontFamily: "InterBold", fontWeight: 700, marginTop: 18 },
+  page: {
+    padding: 40,
+    fontFamily: 'InterRegular',
+  },
+  paragraph: { marginBottom: 8 },
 });
 
+export default function CoverLetterPdf({ text = '', accent = '#000', density = 'normal', atsMode = false }) {
+  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
+  const pageStyle = { ...styles.page, fontSize: parseFloat(fontSize), lineHeight, color: atsMode ? '#000000' : '#374151' };
+  const lines = String(text).split(/\n+/).filter(Boolean);
 
-export default function CoverLetterPdf({ text }) {
-  const body = String(text || "");
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {body.split(/\n+/).map((line, i) => (
-          <Text key={`${line}-${i}`} style={styles.para}>{line}</Text>
+      <Page size="A4" style={pageStyle} wrap>
+        {lines.map((line, i) => (
+          <Text key={i} style={styles.paragraph}>{line}</Text>
         ))}
       </Page>
     </Document>
   );
 }
+
