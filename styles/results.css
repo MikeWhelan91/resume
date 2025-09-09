@@ -5,28 +5,40 @@
   --text: #121317;
   --shadow: 0 12px 28px rgba(16,24,40,.08);
 }
+
 html, body { background: var(--bg); }
+
 .ResultsLayout {
-  display: grid;
-  grid-template-columns: 340px 1fr 1fr;
-  gap: 24px;
+  max-width: 1360px;
+  margin: 0 auto;
   padding: 20px 24px 40px;
-  align-items: start;
 }
-.ResultsSidebar {
-  position: sticky; top: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: var(--shadow);
+
+.Toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
 }
-.Group { margin-bottom: 18px; }
-.Group h3 { font: 600 12px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial; letter-spacing:.06em; text-transform:uppercase; margin:0 0 8px; color:#222; }
-.Row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.RadioSwatch { width:22px; height:22px; border-radius:50%; border:2px solid #fff; outline:1px solid var(--border); cursor:pointer; }
+.Toolbar h1 {
+  font: 600 20px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
+  margin: 0 24px 0 0;
+  color: #222;
+}
+
+.Group { margin-bottom: 0; }
+.Group h3 {
+  font: 600 12px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  color: #222;
+}
+.Row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.RadioSwatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; outline: 1px solid var(--border); cursor: pointer; }
+
 .Select, .Button {
-  width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -34,19 +46,27 @@ html, body { background: var(--bg); }
   font: 500 14px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
   color: var(--text);
 }
+
 .Button {
-  display:inline-flex; justify-content:center; align-items:center;
-  background:#10b39f; color:#fff; border:0; padding:12px 14px; cursor:pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background: #10b39f;
+  color: #fff;
+  border: 0;
+  padding: 12px 14px;
+  cursor: pointer;
   transition: filter .15s ease;
 }
 .Button:hover { filter: brightness(.96); }
-.Button.secondary { background:#fff; border:1px solid var(--border); color:#111; }
+.Button.secondary { background: #fff; border: 1px solid var(--border); color: #111; }
+
 .Previews {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  grid-column: span 2;
 }
+
 .PreviewCard {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -57,6 +77,12 @@ html, body { background: var(--bg); }
   place-items: start;
   overflow: hidden;
 }
+.PreviewCard h2 {
+  font: 600 14px/1.4 Inter, system-ui, -apple-system, Segoe UI, Arial;
+  margin: 0 0 12px;
+  color: #222;
+}
+
 .A4Preview {
   width: 794px;    /* A4 @ ~96dpi */
   height: 1123px;
@@ -65,7 +91,15 @@ html, body { background: var(--bg); }
   border: 0;
   background: #fff;
 }
+
+.Downloads {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+}
+
 @media (max-width: 1600px) {
-  .ResultsLayout { grid-template-columns: 320px 1fr; }
   .Previews { grid-template-columns: 1fr; }
 }
