@@ -113,6 +113,7 @@ export default function ResultsPage(){
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
     const pagesHtml = Array.from(papers).map(el => el.outerHTML).join('');
+
     const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
     const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
@@ -129,6 +130,7 @@ export default function ResultsPage(){
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
     const pagesHtml = Array.from(papers).map(el => el.outerHTML).join('');
+
     const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
     const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
