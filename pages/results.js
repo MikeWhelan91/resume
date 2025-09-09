@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { pdf } from '@react-pdf/renderer';
+import { pdf, PDFViewer } from '@react-pdf/renderer';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import ResumePdf from '../components/pdf/ResumePdf';
@@ -98,6 +98,7 @@ export default function ResultsPage() {
         <meta
           name="description"
           content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks, zero duplication and no browser toolbars, presented in dark-bordered previews side by side with easy controls."
+
         />
       </Head>
       <MainShell
@@ -134,6 +135,7 @@ export default function ResultsPage() {
                   className="w-full h-full border border-gray-800"
                 />
               )}
+
             </div>
           </div>
         }
