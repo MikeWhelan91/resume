@@ -221,12 +221,20 @@ html,body{ background: var(--bg); color: var(--ink); }
   height:297mm;
   box-sizing:border-box;
   background:#fff;
-  border:1px solid var(--border);
-  border-radius:8px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.08);
   overflow:hidden;
   padding:1in;
   position:relative;
+}
+
+.print-mode .paper{
+  box-shadow:none;
+  border:0;
+  border-radius:0;
+}
+
+@media print {
+  .paper { page-break-after: always; }
+  .paper:last-child { page-break-after: auto; }
 }
 
 .avoid-break {
