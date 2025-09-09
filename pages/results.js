@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { pdf } from '@react-pdf/renderer';
+import { pdf, PDFViewer } from '@react-pdf/renderer';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
 import ResumePdf from '../components/pdf/ResumePdf';
@@ -97,7 +97,7 @@ export default function ResultsPage() {
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks and zero duplication, displayed side by side with easy controls."
+          content="Preview and download your tailored CV and cover letter as clean PDFs with smart page breaks, zero duplication and no browser toolbars, presented in dark-bordered previews side by side with easy controls."
         />
       </Head>
       <MainShell
@@ -120,14 +120,24 @@ export default function ResultsPage() {
         right={
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             <div id="resume-preview" className="h-[80vh]">
-              {resumeUrl && (
-                <object data={resumeUrl} type="application/pdf" className="w-full h-full" />
-              )}
+              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
+                <ResumePdf
+                  data={result.resumeData}
+                  accent={accent}
+                  density={density}
+                  atsMode={atsMode}
+                />
+              </PDFViewer>
             </div>
             <div id="cover-preview" className="h-[80vh]">
-              {coverUrl && (
-                <object data={coverUrl} type="application/pdf" className="w-full h-full" />
-              )}
+              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
+                <CoverLetterPdf
+                  text={result.coverLetter}
+                  accent={accent}
+                  density={density}
+                  atsMode={atsMode}
+                />
+              </PDFViewer>
             </div>
           </div>
         }
