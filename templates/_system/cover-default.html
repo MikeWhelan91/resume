@@ -1,0 +1,15 @@
+<header class="hdr">
+  <h1>{{name}}</h1>
+  <p class="meta">{{label}} • {{email}} • {{phone}} • {{url}}</p>
+</header>
+<section class="letter">
+  {{#coverLetter.addressee}}<p>{{coverLetter.addressee}}</p>{{/coverLetter.addressee}}
+  {{#coverLetter.company}}<p>{{coverLetter.company}}</p>{{/coverLetter.company}}
+  {{#coverLetter.address}}<p>{{coverLetter.address}}</p>{{/coverLetter.address}}
+  {{#coverLetter.city}}<p>{{coverLetter.city}}</p>{{/coverLetter.city}}
+  <p>{{today}}</p>
+  {{#coverLetter.salutation}}<p>{{coverLetter.salutation}}</p>{{/coverLetter.salutation}}
+  {{#coverLetter.body}}<p>{{{coverLetter.bodyHtml}}}</p>{{/coverLetter.body}}
+  {{#coverLetter.closing}}<p>{{coverLetter.closing}}</p>{{/coverLetter.closing}}
+  <p>{{name}}</p>
+</section>

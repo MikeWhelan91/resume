@@ -1,0 +1,7 @@
+:root { --text:#111; --fs:11pt; --lh:1.5; }
+body { color:var(--text); font: var(--fs)/var(--lh) Inter, Arial, sans-serif; }
+.hdr { margin-bottom: 8mm; }
+.hdr h1 { margin:0 0 2mm; font: 800 22pt/1.05 Inter, sans-serif; }
+.meta { color:#666; }
+.letter p { margin:0 0 3mm; }
+.letter { margin-top: 6mm; }
