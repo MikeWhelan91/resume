@@ -53,18 +53,23 @@ export default function ResultsPage(){
     off.style.left = '-10000px';
     document.body.appendChild(off);
     const pageHeight = off.getBoundingClientRect().height;
+    const computed = window.getComputedStyle(off);
+    const padTop = parseFloat(computed.paddingTop) || 0;
+    const padBottom = parseFloat(computed.paddingBottom) || 0;
     // Allow content to expand so we can measure its full height
     off.style.height = 'auto';
     off.style.overflow = 'visible';
+    off.style.padding = '0';
     const root = createRoot(off);
     root.render(<TemplateComp data={result.resumeData} />);
     requestAnimationFrame(() => {
       const total = off.scrollHeight;
       const items = Array.from(off.querySelectorAll('.avoid-break'));
       const positions = [];
+      const innerHeight = pageHeight - padTop - padBottom;
       let start = 0;
       while (start < total) {
-        let end = start + pageHeight;
+        let end = start + innerHeight;
         const crossing = items.find(
           el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end
         );
@@ -162,7 +167,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, multi-page PDF export, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, consistent page margins, multi-page PDF export, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
