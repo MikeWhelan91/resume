@@ -1,33 +1,24 @@
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { pdf, PDFViewer } from '@react-pdf/renderer';
 import MainShell from '../components/layout/MainShell';
 import ControlsPanel from '../components/ui/ControlsPanel';
-import ClassicPdf from '../components/pdf/ClassicPdf';
-import TwoColPdf from '../components/pdf/TwoColPdf';
-import SidebarPdf from '../components/pdf/SidebarPdf';
-import CenteredPdf from '../components/pdf/CenteredPdf';
-import ModernPdf from '../components/pdf/ModernPdf';
 import CoverLetterPdf from '../components/pdf/CoverLetterPdf';
+import { listTemplates, getTemplate } from '../templates';
+import { renderHtml } from '../lib/renderHtmlTemplate';
+import { toTemplateModel } from '../lib/templateModel';
+import { pdf } from '@react-pdf/renderer';
 
-const pdfTemplates = {
-  classic: ClassicPdf,
-  twoCol: TwoColPdf,
-  sidebar: SidebarPdf,
-  centered: CenteredPdf,
-  modern: ModernPdf,
-};
+const PDFViewer = dynamic(() => import('@react-pdf/renderer').then(m => m.PDFViewer), { ssr: false });
 
 export default function ResultsPage() {
   const [result, setResult] = useState(null);
-  const [template, setTemplate] = useState('classic');
+  const templates = listTemplates();
+  const [tplId, setTplId] = useState(templates[0]?.id);
   const [accent, setAccent] = useState('#00C9A7');
   const [density, setDensity] = useState('normal');
   const [atsMode, setAtsMode] = useState(false);
-  const [resumeUrl, setResumeUrl] = useState(null);
   const [coverUrl, setCoverUrl] = useState(null);
-
-  const Template = pdfTemplates[template] || ClassicPdf;
 
   useEffect(() => {
     try {
@@ -38,14 +29,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!result) return;
-    async function generate() {
-      const rBlob = await pdf(
-        <Template data={result.resumeData} accent={accent} density={density} atsMode={atsMode} />
-      ).toBlob();
-      setResumeUrl((u) => {
-        if (u) URL.revokeObjectURL(u);
-        return URL.createObjectURL(rBlob);
-      });
+    async function generateCover() {
       const cBlob = await pdf(
         <CoverLetterPdf text={result.coverLetter} accent={accent} density={density} atsMode={atsMode} />
       ).toBlob();
@@ -54,15 +38,24 @@ export default function ResultsPage() {
         return URL.createObjectURL(cBlob);
       });
     }
-    generate();
-  }, [result, accent, density, atsMode, template]);
+    generateCover();
+  }, [result, accent, density, atsMode]);
 
-  function downloadResumePdf() {
-    if (!resumeUrl) return;
+  async function downloadResumePdf() {
+    if (!result) return;
+    const appData = { ...result.resumeData, accent, density, ats: atsMode };
+    const res = await fetch(`/api/pdf?template=${tplId}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ data: appData })
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = resumeUrl;
+    a.href = url;
     a.download = 'resume.pdf';
     a.click();
+    URL.revokeObjectURL(url);
   }
 
   function downloadCoverPdf() {
@@ -105,20 +98,21 @@ export default function ResultsPage() {
 
   if (!result) return null;
 
+  const tpl = getTemplate(tplId);
+  const model = toTemplateModel({ ...result.resumeData, accent, density, ats: atsMode });
+
   return (
     <>
       <Head>
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and download your tailored CV and cover letter as clean PDFs across Classic, Two-Column, Sidebar, Centered and Modern templates with smart page breaks and easy controls."
+          content="Preview and download your tailored CV with selectable HTML or React-PDF templates, consistent A4 output, and easy export options."
         />
       </Head>
       <MainShell
         left={
           <ControlsPanel
-            template={template}
-            setTemplate={setTemplate}
             accent={accent}
             setAccent={setAccent}
             density={density}
@@ -133,15 +127,18 @@ export default function ResultsPage() {
         }
         right={
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <div id="resume-preview" className="h-[80vh]">
-              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
-                <Template
-                  data={result.resumeData}
-                  accent={accent}
-                  density={density}
-                  atsMode={atsMode}
-                />
-              </PDFViewer>
+            <div className="space-y-4">
+              <select value={tplId} onChange={e => setTplId(e.target.value)} className="border p-2 rounded">
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+              {tpl.engine === 'html' ? (
+                <iframe style={{width:'794px', height:'1123px', border:'0', boxShadow:'0 10px 30px rgba(0,0,0,.15)'}}
+                        srcDoc={renderHtml({ html: tpl.html, css: tpl.css, model })} />
+              ) : (
+                <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
+                  {(tpl.module.DocumentFor || tpl.module.default)({ model })}
+                </PDFViewer>
+              )}
             </div>
             <div id="cover-preview" className="h-[80vh]">
               <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
@@ -159,4 +156,3 @@ export default function ResultsPage() {
     </>
   );
 }
-
