@@ -254,6 +254,18 @@ body.print-mode {
   padding:1in;
 }
 
+.print-mode .paper,
+.print-mode .cover-letter {
+  padding: 0 !important;
+}
+
+@media print {
+  .paper,
+  .cover-letter {
+    padding: 0 !important;
+  }
+}
+
 /* Pager controls */
 .pager-btn{
   width:32px;
@@ -301,7 +313,7 @@ body.print-mode {
 
 @page {
   size: A4;
-  margin: 0;
+  margin: 1in;
 }
 
 /* When printing or when we build HTML for Puppeteer, kill preview scaling */
