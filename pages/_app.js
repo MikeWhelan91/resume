@@ -1,6 +1,5 @@
 import "../styles/globals.css";
 import "../styles/resume.css";
-import "../styles/preview.css";
 import Head from "next/head";
 
 export default function MyApp({ Component, pageProps }) {
@@ -43,6 +42,7 @@ export default function MyApp({ Component, pageProps }) {
 
         <title>TailorCV</title>
       </Head>
+      <style jsx global>{`body { background: #f6f7f9; }`}</style>
       <Component {...pageProps} />
     </>
   );

@@ -23,7 +23,7 @@ function scanTemplates() {
     const css  = readMaybe(cssPath)
     items.push({
       id: m.id, name: m.name, engine: m.engine, dir,
-      html, css // may be empty for react-pdf templates
+      html, css
     })
   }
   return items
