@@ -13,7 +13,7 @@ Notes:
  - Cross-references job description skills with your resume so cover letters only mention verified abilities and highlight willingness to learn any missing skills.
 
 ## Export
-- PDF export uses @react-pdf/renderer for vector, selectable-text PDFs.
+- PDF export prints the same HTML preview in a headless Chrome instance to produce a binary PDF without duplicated sections.
 - DOCX export unchanged.
 - HTML preview rebuilt for reliability.
- - Multi-page PDF export supported.
+- Multi-page PDF export supported.

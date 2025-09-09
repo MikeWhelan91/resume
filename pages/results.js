@@ -51,43 +51,50 @@ export default function ResultsPage(){
     off.style.pointerEvents = 'none';
     off.style.left = '-10000px';
     document.body.appendChild(off);
-    const pageHeight = off.getBoundingClientRect().height;
-    const computed = window.getComputedStyle(off);
-    const padTop = parseFloat(computed.paddingTop) || 0;
-    const padBottom = parseFloat(computed.paddingBottom) || 0;
-    // Allow content to expand so we can measure its full height
-    off.style.height = 'auto';
-    off.style.overflow = 'visible';
-    off.style.padding = '0';
     const root = createRoot(off);
     root.render(<TemplateComp data={result.resumeData} />);
     requestAnimationFrame(() => {
-      const total = off.scrollHeight;
-      const items = Array.from(off.querySelectorAll('.avoid-break'));
-      const positions = [];
+      const computed = window.getComputedStyle(off);
+      const padTop = parseFloat(computed.paddingTop) || 0;
+      const padBottom = parseFloat(computed.paddingBottom) || 0;
+      const pageHeight = off.offsetHeight;
       const innerHeight = pageHeight - padTop - padBottom;
-      let start = 0;
-      while (start < total) {
-        let end = start + innerHeight;
-        const crossing = items.find(
-          el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end
-        );
-        if (crossing && crossing.offsetTop > start) {
-          end = crossing.offsetTop;
+      const src = off.firstElementChild;
+      const makePage = () => {
+        const p = document.createElement('div');
+        p.className = `paper ${atsMode ? 'ats-mode' : ''}`;
+        Object.entries(styleVars).forEach(([k, v]) => p.style.setProperty(k, v));
+        const inner = document.createElement('div');
+        inner.className = src.className;
+        if (src.getAttribute('data-paper') != null) inner.setAttribute('data-paper', '');
+        p.appendChild(inner);
+        return { page: p, container: inner };
+      };
+      const pages = [];
+      let { page: currPage, container } = makePage();
+      pages.push(currPage);
+      const children = Array.from(src.children);
+      for (const child of children) {
+        const clone = child.cloneNode(true);
+        container.appendChild(clone);
+        if (container.offsetHeight > innerHeight) {
+          container.removeChild(clone);
+          ({ page: currPage, container } = makePage());
+          pages.push(currPage);
+          container.appendChild(clone);
         }
-        positions.push(start);
-        start = end;
       }
-      const arr = positions.map((pos, i) => (
-        <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
-          <div style={{ position: 'relative', top: -pos }}>
-            <TemplateComp data={result.resumeData} />
-          </div>
-        </div>
+      const arr = pages.map((p, i) => (
+        <div
+          key={i}
+          className={p.className}
+          style={styleVars}
+          dangerouslySetInnerHTML={{ __html: p.innerHTML }}
+        />
       ));
       setResumePages(arr);
-      setPage(p => Math.min(p, arr.length - 1));
-      setRIndex(i => Math.min(i, arr.length - 1));
+      setPage((p) => Math.min(p, arr.length - 1));
+      setRIndex((i) => Math.min(i, arr.length - 1));
       root.unmount();
       document.body.removeChild(off);
     });
