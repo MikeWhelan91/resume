@@ -237,6 +237,7 @@ html,body{ background: var(--bg); color: var(--ink); }
   .paper:last-child { page-break-after: auto; }
 }
 
+
 .avoid-break {
   break-inside: avoid;
   page-break-inside: avoid;
