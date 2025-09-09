@@ -1,8 +1,6 @@
 // AUTO-GENERATED. Do not edit by hand.
-import html_minimal_html from './minimal-html/template.html?raw'
-import css_minimal_html from './minimal-html/style.css?raw'
-import * as T_minimal_reactpdf from './minimal-reactpdf/index.jsx'
+// Templates registry with embedded HTML/CSS as strings.
 export const templates = [
-  { id: 'minimal-html', name: 'Minimal HTML', engine: 'html', html: html_minimal_html, css: css_minimal_html },
-  { id: 'minimal-reactpdf', name: 'Minimal React-PDF', engine: 'react-pdf', module: T_minimal_reactpdf },
+  { id: "minimal-html", name: "Minimal HTML", engine: "html", html: "<h1>{{name}}</h1>\n<p class=\"meta\">{{label}} • {{email}} • {{phone}} • {{url}}</p>\n<div class=\"section\">\n  <h2>PROFILE</h2>\n  <p>{{summary}}</p>\n</div>\n<div class=\"section\">\n  <h2>EXPERIENCE</h2>\n  {{#experience}}\n  <div style=\"margin-bottom:6pt;\">\n    <div><span class=\"bold\">{{company}}</span> • <span class=\"bold\">{{title}}</span>\n      <span style=\"float:right\" class=\"meta\">{{start}} — {{end}}</span></div>\n    <ul class=\"list\">\n      {{#bullets}}<li>{{.}}</li>{{/bullets}}\n    </ul>\n  </div>\n  {{/experience}}\n</div>\n<div class=\"section\">\n  <h2>EDUCATION</h2>\n  {{#education}}\n    <div><span class=\"bold\">{{institution}}</span> • <span class=\"bold\">{{area}}</span>\n      <span style=\"float:right\" class=\"meta\">{{start}} — {{end}}</span></div>\n  {{/education}}\n</div>\n", css: "body { font-family: Helvetica, Arial, sans-serif; color:#111; }\nh1 { font-size: 20pt; margin:0 0 6pt; }\nh2 { font-size: 11pt; letter-spacing:.5pt; margin:14pt 0 6pt; }\np, li { font-size: 10pt; line-height: 1.35; margin: 0 0 4pt; }\n.section { margin: 10pt 0; }\n.list { padding-left: 12pt; }\n.bold { font-weight: 700; }\n.meta { color:#475569; font-size:9pt; }\n" },
+  { id: "minimal-reactpdf", name: "Minimal React-PDF", engine: "react-pdf", html: "", css: "" },
 ]
