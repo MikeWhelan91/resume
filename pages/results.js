@@ -112,7 +112,8 @@ export default function ResultsPage(){
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
     const pagesHtml = resumePages.map(p => renderToStaticMarkup(p)).join('');
-    const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
+    const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
+    const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'resume.pdf', 'resume');
     } catch (e) {
@@ -125,7 +126,8 @@ export default function ResultsPage(){
     const head = document.head.cloneNode(true);
     head.querySelectorAll('script').forEach(s => s.remove());
     const pagesHtml = coverPages.map(p => renderToStaticMarkup(p)).join('');
-    const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}</head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
+    const extra = `@page{margin:0;}body{margin:0}.paper{padding-bottom:calc(1in + 0.5in);overflow:hidden} .paper{page-break-after:always;} .paper:last-child{page-break-after:auto;}`;
+    const html = `<!doctype html><html class="print-mode"><head><base href="${location.origin}">${head.innerHTML}<style>${extra}</style></head><body class="print-mode"><div id="print-root">${pagesHtml}</div></body></html>`;
     try {
       await downloadPdfFromHtml(html, 'cover-letter.pdf', 'cover');
     } catch (e) {
@@ -167,7 +169,7 @@ export default function ResultsPage(){
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, exact PDF replication, consistent page margins, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
+          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, duplicate-free PDF replication, consistent page margins with extra bottom spacing, scrollable full-screen zoom, arrow navigation for multi-page previews, seamless downloads, customizable templates, themes, density, and ATS-friendly mode."
         />
       </Head>
       <MainShell
