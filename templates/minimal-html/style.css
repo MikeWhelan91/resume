@@ -1,0 +1,8 @@
+body { font-family: Helvetica, Arial, sans-serif; color:#111; }
+h1 { font-size: 20pt; margin:0 0 6pt; }
+h2 { font-size: 11pt; letter-spacing:.5pt; margin:14pt 0 6pt; }
+p, li { font-size: 10pt; line-height: 1.35; margin: 0 0 4pt; }
+.section { margin: 10pt 0; }
+.list { padding-left: 12pt; }
+.bold { font-weight: 700; }
+.meta { color:#475569; font-size:9pt; }
