@@ -1,40 +1,37 @@
-import puppeteer from 'puppeteer'
-import { getTemplate } from '@/templates'
-import { toTemplateModel } from '@/lib/templateModel'
-import { renderHtml } from '@/lib/renderHtmlTemplate'
-import { getCurrentResumeData } from '@/lib/getCurrentResumeData'
+import chromium from 'chrome-aws-lambda';
+import { getTemplate } from '../../templates';
+import { renderHtml } from '../../lib/renderHtmlTemplate';
+import { toTemplateModel } from '../../lib/templateModel';
 
-export default async function handler(req, res) {
-  const templateId = (req.query.template || '').toString()
-  const accent = (req.query.accent || '#10b39f').toString()
-  const density = (req.query.density || 'Normal').toString()
-  const ats = req.query.ats === '1'
+function pickCover(tpl){
+  if (tpl?.coverHtml) return { html: tpl.coverHtml, css: tpl.coverCss || '' };
+  const fb = getTemplate('_cover-default');
+  return { html: fb?.coverHtml || '<main><h1>{{name}}</h1><p>{{{coverLetter.bodyHtml}}}</p></main>', css: fb?.coverCss || '' };
+}
 
-  const tpl = getTemplate(templateId)
-  const appData = await getCurrentResumeData(req)
-  const model = toTemplateModel(appData, { ats, density })
-  const coverTpl = tpl.coverHtml ? tpl : getTemplate('_cover-default')
+export default async function handler(req, res){
+  try{
+    const { template:id, accent='#10b39f', density='Normal', ats='0' } = req.query;
+    const tpl = getTemplate(id);
+    const src = pickCover(tpl);
+    const model = toTemplateModel(JSON.parse(req.cookies.resumeResult || '{}'), { ats: ats==='1', density });
+    const html = renderHtml({ html: src.html, css: src.css, model, options:{ mode:'print', accent, density, ats: ats==='1' } });
 
-  const html = renderHtml({
-    html: coverTpl.coverHtml || coverTpl.html,
-    css: coverTpl.coverCss || coverTpl.css,
-    model,
-    options:{ mode:'print', accent, density, ats }
-  })
+    const executablePath = await chromium.executablePath;
+    const puppeteer = await (executablePath ? import('puppeteer-core') : import('puppeteer'));
+    const browser = await puppeteer.launch(executablePath ? {
+      args: chromium.args, executablePath, headless: chromium.headless
+    } : { headless: 'new' });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil:'networkidle0' });
+    await page.emulateMediaType('print');
+    const pdf = await page.pdf({ printBackground:true, preferCSSPageSize:true, margin:{top:'0', right:'0', bottom:'0', left:'0'} });
+    await browser.close();
 
-  const browser = await puppeteer.launch({ headless:'new' })
-  const page = await browser.newPage()
-  await page.setContent(html, { waitUntil:'networkidle0' })
-  await page.emulateMediaType('print')
-
-  const pdf = await page.pdf({
-    printBackground: true,
-    preferCSSPageSize: true,
-    margin: { top:'0', right:'0', bottom:'0', left:'0' }
-  })
-
-  await browser.close()
-  res.setHeader('Content-Type','application/pdf')
-  res.setHeader('Content-Disposition', `inline; filename="${templateId || 'cover-letter'}.pdf"`)
-  res.end(pdf)
+    res.setHeader('Content-Type','application/pdf');
+    res.setHeader('Content-Disposition','attachment; filename="cover-letter.pdf"');
+    res.send(pdf);
+  }catch(e){
+    res.status(500).send('PDF error');
+  }
 }

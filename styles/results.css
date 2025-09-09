@@ -1,105 +1,77 @@
-:root {
-  --bg: #f6f7f9;
-  --panel: #ffffff;
-  --border: #e7eaf0;
-  --text: #121317;
-  --shadow: 0 12px 28px rgba(16,24,40,.08);
+:root{
+  --bg:#f7f8fb;
+  --panel:#fff;
+  --border:#e7eaf0;
+  --text:#121317;
+  --shadow:0 10px 26px rgba(16,24,40,.08);
 }
 
-html, body { background: var(--bg); }
+html,body{ background:var(--bg); }
 
-.ResultsLayout {
-  max-width: 1360px;
-  margin: 0 auto;
-  padding: 20px 24px 40px;
+.ResultsLayout{
+  display:grid;
+  grid-template-columns: 340px 1fr 1fr;
+  gap:24px;
+  padding:20px 24px 40px;
+  align-items:start;
 }
 
-.Toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.Toolbar h1 {
-  font: 600 20px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
-  margin: 0 24px 0 0;
-  color: #222;
+.ResultsSidebar{
+  position:sticky; top:16px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  box-shadow:var(--shadow);
 }
 
-.Group { margin-bottom: 0; }
-.Group h3 {
-  font: 600 12px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  margin: 0 0 8px;
-  color: #222;
+.Group{ margin-bottom:16px; }
+.Group h3{ margin:0 0 8px; font:600 14px/1.3 Inter,system-ui,Arial,sans-serif; color:#334155; }
+.Select, .Button{
+  width:100%; height:40px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:0 12px;
+  font:500 14px/1 Inter,system-ui,Arial,sans-serif;
 }
-.Row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.RadioSwatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; outline: 1px solid var(--border); cursor: pointer; }
-
-.Select, .Button {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px 12px;
-  font: 500 14px/1.2 Inter, system-ui, -apple-system, Segoe UI, Arial;
-  color: var(--text);
+.Button{ background:#10b39f; color:#fff; border-color:#10b39f; cursor:pointer; }
+.Button.secondary{ background:#fff; color:#0f172a; border-color:var(--border); }
+.Row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.RadioSwatch{
+  width:26px; height:26px; border-radius:999px; border:2px solid #fff;
+  outline:2px solid var(--border); cursor:pointer;
 }
 
-.Button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  background: #10b39f;
-  color: #fff;
-  border: 0;
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: filter .15s ease;
-}
-.Button:hover { filter: brightness(.96); }
-.Button.secondary { background: #fff; border: 1px solid var(--border); color: #111; }
-
-.Previews {
-  display: grid;
+.Previews{
+  grid-column: span 2;
+  display:grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap:24px;
 }
 
-.PreviewCard {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: var(--shadow);
-  display: grid;
-  place-items: start;
-  overflow: hidden;
-}
-.PreviewCard h2 {
-  font: 600 14px/1.4 Inter, system-ui, -apple-system, Segoe UI, Arial;
-  margin: 0 0 12px;
-  color: #222;
+.PreviewCard{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
 }
 
-.A4Preview {
-  width: 794px;    /* A4 @ ~96dpi */
-  height: 1123px;
+.PreviewHeader{
+  font:600 14px/1.3 Inter,system-ui,Arial,sans-serif;
+  color:#475569; margin:4px 4px 8px;
+}
+
+.A4Preview{
+  width:794px; height:1123px;  /* A4 @ ~96dpi */
+  border:0; background:#fff;
   transform-origin: top left;
-  transform: scale(.66);   /* small previews */
-  border: 0;
-  background: #fff;
+  transform: scale(0.66); /* small preview */
 }
 
-.Downloads {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 320px;
-}
-
-@media (max-width: 1600px) {
-  .Previews { grid-template-columns: 1fr; }
+@media (max-width: 1600px){
+  .ResultsLayout{ grid-template-columns: 320px 1fr; }
+  .Previews{ grid-template-columns: 1fr; }
 }
