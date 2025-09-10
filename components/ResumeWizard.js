@@ -22,38 +22,6 @@ const emptyResume = {
   education: []
 };
 
-const sampleData = {
-  name: 'Jane Doe',
-  title: 'Software Engineer',
-  email: 'jane@example.com',
-  phone: '555-123-4567',
-  location: 'San Francisco, CA',
-  summary: 'Experienced engineer with a passion for building scalable web applications.',
-  links: [{ label: 'GitHub', url: 'https://github.com/janedoe' }],
-  skills: ['JavaScript', 'React', 'Node.js'],
-  experience: [
-    {
-      company: 'Tech Corp',
-      role: 'Senior Developer',
-      start: '2020-01',
-      end: '2022-12',
-      location: 'Remote',
-      bullets: [
-        'Led a team of 5 engineers',
-        'Implemented performance optimizations'
-      ]
-    }
-  ],
-  education: [
-    {
-      school: 'State University',
-      degree: 'B.S. Computer Science',
-      start: '2016-09',
-      end: '2019-05',
-      grade: '3.8 GPA'
-    }
-  ]
-};
 
 const schemas = {
   basics: z.object({
@@ -324,6 +292,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 4 && (
           <section className="space-y-6">
             <header className="space-y-1">
+
               <h2 className="text-lg font-semibold">Review</h2>
               <p className="text-sm text-zinc-500">Tailor your documents.</p>
             </header>

@@ -442,6 +442,7 @@ export default function ResultsPage() {
                   style={{background:c, outlineColor: c===accent ? c : 'var(--border)'}}
                   onClick={() => setAccent(c)}
                   aria-label={`Accent ${c}`}
+
                 />
               ))}
             </div>
