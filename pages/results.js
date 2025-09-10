@@ -111,7 +111,7 @@ export default function ResultsPage() {
         <title>Results – TailorCV</title>
         <meta
           name="description"
-          content="Preview and download your tailored CV and cover letter as clean PDFs across Classic, Two-Column, Sidebar, Centered and Modern templates with smart page breaks and easy controls."
+          content="Preview and download your tailored A4 CV and cover letter as clean PDFs across Classic, Two-Column, Sidebar, Centered and Modern templates with smart page breaks and easy controls."
         />
       </Head>
       <MainShell
@@ -133,8 +133,15 @@ export default function ResultsPage() {
         }
         right={
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <div id="resume-preview" className="h-[80vh]">
-              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
+            <div
+              id="resume-preview"
+              className="h-[80vh] flex items-center justify-center overflow-auto"
+            >
+              <PDFViewer
+                showToolbar={false}
+                className="border border-gray-300 shadow"
+                style={{ width: 794, height: 1123 }}
+              >
                 <Template
                   data={result.resumeData}
                   accent={accent}
@@ -143,8 +150,15 @@ export default function ResultsPage() {
                 />
               </PDFViewer>
             </div>
-            <div id="cover-preview" className="h-[80vh]">
-              <PDFViewer showToolbar={false} className="w-full h-full border border-gray-800">
+            <div
+              id="cover-preview"
+              className="h-[80vh] flex items-center justify-center overflow-auto"
+            >
+              <PDFViewer
+                showToolbar={false}
+                className="border border-gray-300 shadow"
+                style={{ width: 794, height: 1123 }}
+              >
                 <CoverLetterPdf
                   text={result.coverLetter}
                   accent={accent}
