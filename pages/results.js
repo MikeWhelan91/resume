@@ -15,6 +15,26 @@ export default function ResultsPage() {
   const [userData, setUserData] = useState(null);
 
   // Download functions
+  const triggerDownload = async (endpoint, filename, payload) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   const downloadCV = async () => {
     if (!userData) {
       alert('No data available. Please generate a resume first.');
@@ -22,25 +42,11 @@ export default function ResultsPage() {
     }
 
     try {
-      const response = await fetch('/api/download-cv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          template,
-          accent,
-          data: userData
-        }),
+      await triggerDownload('/api/download-cv', 'cv.pdf', {
+        template,
+        accent,
+        data: userData,
       });
-
-      const { html } = await response.json();
-      
-      // Create a new window and print it
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.print();
     } catch (error) {
       console.error('Download error:', error);
       alert('Error generating PDF. Please try again.');
@@ -54,24 +60,10 @@ export default function ResultsPage() {
     }
 
     try {
-      const response = await fetch('/api/download-cover-letter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accent,
-          data: userData
-        }),
+      await triggerDownload('/api/download-cover-letter', 'cover-letter.pdf', {
+        accent,
+        data: userData,
       });
-
-      const { html } = await response.json();
-      
-      // Create a new window and print it
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.print();
     } catch (error) {
       console.error('Download error:', error);
       alert('Error generating PDF. Please try again.');
@@ -409,8 +401,8 @@ export default function ResultsPage() {
   return (
     <>
       <Head>
-        <title>Results Preview – TailorCV</title>
-        <meta name="description" content="Preview your resume and cover letter side-by-side."/>
+        <title>Results Preview & Download – TailorCV</title>
+        <meta name="description" content="Preview your resume and cover letter side-by-side with one-click PDF downloads."/>
       </Head>
       
       <div className="ResultsLayout">

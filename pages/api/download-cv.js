@@ -4,9 +4,11 @@ function safeProp(obj, path, fallback = '') {
   return (value === null || value === undefined || value === 'null' || value === 'undefined') ? fallback : value;
 }
 
-export default function handler(req, res) {
+import puppeteer from 'puppeteer';
+
+export default async function handler(req, res) {
   const { template, accent, data } = req.body;
-  
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -17,9 +19,21 @@ export default function handler(req, res) {
 
   // Generate HTML that matches the preview exactly
   const html = generateCVHTML(data, template, accent);
-  
-  // Return HTML for client-side PDF generation
-  res.status(200).json({ html });
+
+  try {
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="cv.pdf"');
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    return res.status(500).json({ error: 'Failed to generate PDF' });
+  }
 }
 
 function generateCVHTML(userData, template, accent) {
