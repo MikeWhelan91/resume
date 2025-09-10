@@ -48,7 +48,17 @@ html,body{ background:var(--bg); }
   padding:0 12px;
   font:500 14px/1 Inter,system-ui,Arial,sans-serif;
 }
+.Textarea{
+  width:100%; min-height:120px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:12px;
+  font:400 14px/1.4 Inter,system-ui,Arial,sans-serif;
+  resize:vertical;
+}
 .Button{ background:#10b39f; color:#fff; border-color:#10b39f; cursor:pointer; }
+.Button:disabled{ background:#94a3b8; border-color:#94a3b8; cursor:not-allowed; }
 .Button.secondary{ background:#fff; color:#0f172a; border-color:var(--border); }
 .Row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .RadioSwatch{

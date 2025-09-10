@@ -64,8 +64,9 @@ const schemas = {
 export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const stepIds = ['basics', 'skills', 'work', 'education', 'review'];
-  const stepLabels = ['Basics','Skills','Experience','Education','Review'];
+  const stepIds = ['goal', 'basics', 'skills', 'work', 'education', 'review'];
+  const stepLabels = ['Goal', 'Basics','Skills','Experience','Education','Review'];
+  const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
   const { register, handleSubmit, watch, setValue, getValues } = methods;
@@ -78,6 +79,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   useEffect(() => {
     const sub = watch(() => {
       const key = stepIds[step];
+      if(key === 'goal'){
+        setIsValid(true);
+        setMessage('');
+        return;
+      }
       if(key === 'review'){
         const ok = jd.trim().length > 0;
         setIsValid(ok);
@@ -179,6 +185,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       fd.append('resumeData', JSON.stringify(data));
       fd.append('jobDesc', jd);
       fd.append('tone', tone);
+      fd.append('userGoal', userGoal);
       const res = await fetch('/api/generate',{method:'POST', body:fd});
       const out = await res.json();
       if(res.ok){
@@ -198,6 +205,61 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       <StepNav steps={stepLabels} current={step} onChange={(i)=>{ if(i<=step || isValid) setStep(i); }} allowNext={isValid} />
       <div className="space-y-8">
         {step === 0 && (
+          <section className="space-y-6">
+            <header className="space-y-1">
+              <h2 className="text-lg font-semibold">What do you want to create?</h2>
+              <p className="text-sm text-zinc-500">Choose what you'd like to optimize based on the job description.</p>
+            </header>
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                <label className="flex items-center space-x-3 p-4 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="goal" 
+                    value="cv" 
+                    checked={userGoal === 'cv'} 
+                    onChange={(e) => setUserGoal(e.target.value)}
+                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                  />
+                  <div>
+                    <div className="font-medium">CV/Resume Only</div>
+                    <div className="text-sm text-zinc-500">Optimize your resume for the job description</div>
+                  </div>
+                </label>
+                <label className="flex items-center space-x-3 p-4 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="goal" 
+                    value="cover-letter" 
+                    checked={userGoal === 'cover-letter'} 
+                    onChange={(e) => setUserGoal(e.target.value)}
+                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                  />
+                  <div>
+                    <div className="font-medium">Cover Letter Only</div>
+                    <div className="text-sm text-zinc-500">Generate a tailored cover letter for the job</div>
+                  </div>
+                </label>
+                <label className="flex items-center space-x-3 p-4 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="goal" 
+                    value="both" 
+                    checked={userGoal === 'both'} 
+                    onChange={(e) => setUserGoal(e.target.value)}
+                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                  />
+                  <div>
+                    <div className="font-medium">Both CV and Cover Letter</div>
+                    <div className="text-sm text-zinc-500">Get a complete application package</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {step === 1 && (
           <section className="space-y-6">
             <header className="space-y-1">
               <h2 className="text-lg font-semibold">Basics</h2>
@@ -245,7 +307,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           </section>
         )}
 
-        {step === 1 && (
+        {step === 2 && (
           <section className="space-y-6">
             <header className="space-y-1">
               <h2 className="text-lg font-semibold">Skills</h2>
@@ -255,7 +317,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           </section>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <section className="space-y-6">
             <header className="space-y-1">
               <h2 className="text-lg font-semibold">Work Experience</h2>
@@ -272,7 +334,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <section className="space-y-6">
             <header className="space-y-1">
               <h2 className="text-lg font-semibold">Education</h2>
@@ -289,7 +351,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           </section>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <section className="space-y-6">
             <header className="space-y-1">
 

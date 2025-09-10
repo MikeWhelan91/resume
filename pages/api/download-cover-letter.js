@@ -44,6 +44,7 @@ export default async function handler(req, res) {
 }
 
 function generateCoverLetterHTML(userData, accent) {
+  const scale = 1.75; // Use 1.75x scaling for PDF to match CV scaling
   const today = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -58,8 +59,8 @@ function generateCoverLetterHTML(userData, accent) {
       }
       body { 
         margin: 0; 
-        padding: 15px; 
-        font-size: 10px; 
+        padding: ${15 * scale}px; 
+        font-size: ${10 * scale}px; 
         line-height: 1.5; 
         font-family: Arial, sans-serif;
         color: #333;
@@ -72,8 +73,8 @@ function generateCoverLetterHTML(userData, accent) {
   `;
 
   const coverLetterContent = userData.coverLetter ?
-    limitCoverLetter(userData.coverLetter).map(p => `<p style="font-size: 9px; margin-bottom: 8px; text-align: justify;">${p.trim()}</p>`).join('') :
-    `<p style="font-size: 9px; text-align: justify;">
+    limitCoverLetter(userData.coverLetter).map(p => `<p style="font-size: ${9 * scale}px; margin-bottom: ${8 * scale}px; text-align: justify;">${p.trim()}</p>`).join('') :
+    `<p style="font-size: ${9 * scale}px; text-align: justify;">
       Dear Hiring Manager,<br/><br/>
       I am writing to express my interest in the position at your company. With my background and experience, I believe I would be a valuable addition to your team.<br/><br/>
       Thank you for considering my application. I look forward to hearing from you.
@@ -88,31 +89,19 @@ function generateCoverLetterHTML(userData, accent) {
       ${baseStyles}
     </head>
     <body>
-      <div style="margin-bottom: 20px;">
-        <h1 style="font-size: 14px; margin-bottom: 4px; color: ${accent}; font-weight: bold;">
-          ${userData.resumeData?.name || userData.name || 'Your Name'}
-        </h1>
-        <p style="font-size: 9px; color: #666; margin-bottom: 2px;">
-          ${userData.resumeData?.email || userData.email || 'email@example.com'}
-        </p>
-        <p style="font-size: 9px; color: #666; margin-bottom: 2px;">
-          ${userData.resumeData?.phone || userData.phone || 'Phone'}
-        </p>
-      </div>
-
-      <div style="margin-bottom: 15px; text-align: right;">
-        <p style="font-size: 9px; color: #666;">
+      <div style="margin-bottom: ${15 * scale}px; text-align: right;">
+        <p style="font-size: ${9 * scale}px; color: #666;">
           ${today}
         </p>
       </div>
 
-      <div style="margin-bottom: 15px;">
+      <div style="margin-bottom: ${15 * scale}px;">
         ${coverLetterContent}
       </div>
 
-      <div style="margin-top: 20px;">
-        <p style="font-size: 9px;">Sincerely,</p>
-        <p style="font-size: 9px; margin-top: 15px; font-weight: bold;">
+      <div style="margin-top: ${20 * scale}px;">
+        <p style="font-size: ${9 * scale}px;">Sincerely,</p>
+        <p style="font-size: ${9 * scale}px; margin-top: ${15 * scale}px; font-weight: bold;">
           ${userData.resumeData?.name || userData.name || 'Your Name'}
         </p>
       </div>

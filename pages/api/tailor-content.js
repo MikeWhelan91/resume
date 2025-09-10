@@ -1,38 +1,5 @@
-import os from "os";
-import fs from "fs";
-import formidable from "formidable";
-import pdfParse from "pdf-parse";
-import mammoth from "mammoth";
-import OpenAI from "openai";
-import { normalizeResumeData } from "../../lib/normalizeResume";
-import { withLimiter } from "../../lib/ratelimit";
-
-export const config = { api: { bodyParser: false } };
-
-function firstFile(f){ return Array.isArray(f) ? f[0] : f; }
-
-async function extractTextFromFile(file){
-  const f = firstFile(file); if (!f) return "";
-  const p = f.filepath || f.path;
-  const mime = (f.mimetype || f.type || "").toLowerCase();
-  if (!p) return "";
-  const buf = fs.readFileSync(p);
-  let text = "";
-  if (mime.includes("pdf") || p.toLowerCase().endsWith(".pdf")){
-    const r = await pdfParse(buf); text = r.text || "";
-  } else if (mime.includes("wordprocessingml") || p.toLowerCase().endsWith(".docx")){
-    const { value } = await mammoth.extractRawText({ buffer: buf }); text = value || "";
-  } else {
-    text = buf.toString("utf8");
-  }
-  try{ fs.unlinkSync(p); }catch{}
-  return text;
-}
-
-function parseForm(req){
-  const form = formidable({ multiples:true, uploadDir: os.tmpdir(), keepExtensions:true, maxFileSize: 20*1024*1024 });
-  return new Promise((resolve,reject)=>form.parse(req,(err,fields,files)=>err?reject(err):resolve({fields,files})));
-}
+import OpenAI from 'openai';
+import { normalizeResumeData } from '../../lib/normalizeResume';
 
 // ---- JSON helpers ----
 function stripCodeFence(s=""){
@@ -41,8 +8,9 @@ function stripCodeFence(s=""){
 }
 function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { return null; } }
 
-// ---- NEW: pass 1 — inventory skills strictly from résumé ----
-async function extractAllowedSkills(client, resumeText){
+// ---- Extract allowed skills strictly from résumé ----
+async function extractAllowedSkills(client, resumeData){
+  const resumeText = JSON.stringify(resumeData);
   const sys = "Output ONLY JSON: {\"skills\": string[]} Extract skills mentioned IN THE RESUME TEXT ONLY. No guessing or synonyms. Ignore any job description.";
   const user = `RESUME_TEXT:\n${resumeText}`;
   const r = await client.chat.completions.create({
@@ -57,7 +25,7 @@ async function extractAllowedSkills(client, resumeText){
   return uniq;
 }
 
-// ---- NEW: inventory skills from job description ----
+// ---- Extract skills from job description ----
 async function extractJobSkills(client, jobDesc){
   const sys = "Output ONLY JSON: {\\\"skills\\\": string[]} Extract skills explicitly mentioned IN THE JOB DESCRIPTION ONLY. No guessing or synonyms.";
   const user = `JOB_DESCRIPTION:\n${jobDesc}`;
@@ -73,7 +41,7 @@ async function extractJobSkills(client, jobDesc){
   return uniq;
 }
 
-// ---- NEW: dynamically expand skills with synonyms ----
+// ---- Dynamically expand skills with synonyms ----
 async function expandSkills(client, skills){
   if(!skills || skills.length === 0) return [];
   const sys = "Output ONLY JSON: {\\\"synonyms\\\": {<skill>: string[]}} For each SKILL in SKILLS, list up to three common keyword variants or synonyms that might appear in job postings.";
@@ -94,7 +62,7 @@ async function expandSkills(client, skills){
   return Array.from(expanded);
 }
 
-// ---- NEW: post-process bullets with action verbs/metrics ----
+// ---- Post-process bullets with action verbs/metrics ----
 async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
   const sys = "Output ONLY JSON: {\\\"bullets\\\": string[]} Rephrase BULLETS using strong action verbs, quantified outcomes, and relevant JOB_DESC keywords supported by RESUME_CONTEXT. Do not fabricate skills or experience. Keep each bullet under 25 words.";
@@ -110,7 +78,7 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   return arr && arr.length === bullets.length ? arr : bullets;
 }
 
-// ---- NEW: verify rewritten bullets against resume ----
+// ---- Verify rewritten bullets against resume ----
 async function verifyBullets(client, resumeContext, original, rewritten){
   if(!rewritten || rewritten.length === 0) return rewritten;
   const sys = "Output ONLY JSON: {\\\"valid\\\": boolean[]} For each bullet in NEW_BULLETS, return true if it is fully supported by RESUME_CONTEXT or ORIGINAL_BULLETS. Return false otherwise.";
@@ -126,81 +94,78 @@ async function verifyBullets(client, resumeContext, original, rewritten){
   return rewritten.map((b,i)=> flags[i] ? b : original[i]);
 }
 
-async function coreHandler(req, res){
-  if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
-  if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  try{
-    const { fields, files } = await parseForm(req);
-    const resumeDataField = Array.isArray(fields?.resumeData) ? fields.resumeData[0] : fields?.resumeData;
-    let resumeData = null;
-    if (resumeDataField) {
-      resumeData = normalizeResumeData(safeJSON(resumeDataField) || {});
-    }
-    const resumeText = resumeData ? "" : await extractTextFromFile(files?.resume);
-    const coverText  = await extractTextFromFile(files?.coverLetter);
-    const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
-    const tone       = Array.isArray(fields?.tone) ? fields.tone[0] : (fields?.tone || "professional");
-    const userGoal   = Array.isArray(fields?.userGoal) ? fields.userGoal[0] : (fields?.userGoal || "both");
+  const { userData, jobDescription } = req.body;
 
-    if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
-    if (!jobDesc || jobDesc.trim().length < 30) return res.status(400).json({ error:"Job description too short", code:"E_BAD_INPUT" });
+  if (!userData || !jobDescription) {
+    return res.status(400).json({ error: 'User data and job description are required' });
+  }
 
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'OpenAI API key not configured' });
+  }
+
+  if (!jobDescription || jobDescription.trim().length < 30) {
+    return res.status(400).json({ error: "Job description too short", code: "E_BAD_INPUT" });
+  }
+
+  try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const resumeData = userData.resumeData;
+    const tone = 'professional';
 
     // Pass 1: résumé-only allow-list
     const allowedSkillsBase = resumeData
       ? (resumeData.skills || []).map(s=>String(s).toLowerCase())
-      : await extractAllowedSkills(client, resumeText);
+      : await extractAllowedSkills(client, resumeData);
     const allowedSkills = await expandSkills(client, allowedSkillsBase);
     const expanded = new Set(allowedSkills);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
     // Pass 2: derive job-only skills
-    const jobSkills = await extractJobSkills(client, jobDesc);
+    const jobSkills = await extractJobSkills(client, jobDescription);
     const jobOnlySkills = jobSkills.filter(s => !expanded.has(s));
     const jobOnlySkillsCSV = jobOnlySkills.join(", ");
 
-    // Pass 3: generate with hard constraints
-    const coverLetterNeeded = userGoal === 'cover-letter' || userGoal === 'both';
-    const resumeNeeded = userGoal === 'cv' || userGoal === 'both';
-    
-    const outputKeys = [];
-    if (coverLetterNeeded) outputKeys.push('- coverLetterText: string');
-    if (resumeNeeded) outputKeys.push('- resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])');
-    
+    // Pass 3: generate with hard constraints - EXACT SAME SYSTEM PROMPT AS generate.js
     const system = `
 You output ONLY JSON with keys:
-${outputKeys.join('\n')}
+- coverLetterText: string
+- resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])
 
 STRICT RULES:
-${resumeNeeded ? `- Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
+- Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
     - For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
-- The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.` : ''}
-${coverLetterNeeded ? `- The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
-- The coverLetterText must adopt a ${tone} tone.` : ''}
+- The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
+- The coverLetterText must adopt a ${tone} tone.
+- The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
 - Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
 `.trim();
 
-    const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
-    const userPromptParts = [`Generate JSON${coverLetterNeeded && resumeNeeded ? ' for a tailored cover letter and a revised resume (ATS-friendly)' : coverLetterNeeded ? ' for a tailored cover letter' : ' for a revised resume (ATS-friendly)'}.`];
-    
-    if (coverLetterNeeded) {
-      userPromptParts.push(`Cover Letter Tone:\n${tone}`);
-    }
-    
-    userPromptParts.push(`Job Description:\n${jobDesc}`);
-    userPromptParts.push(`Resume Data:\n${resumePayload}`);
-    
-    if (coverLetterNeeded && coverText) {
-      userPromptParts.push(`Previous Cover Letter (optional):\n${coverText}`);
-    }
-    
-    const user = userPromptParts.join('\n\n');
+    const resumePayload = JSON.stringify(resumeData);
+    const user = `
+Generate JSON for a tailored cover letter and a revised resume (ATS-friendly).
+
+Cover Letter Tone:
+${tone}
+
+Job Description:
+${jobDescription}
+
+Resume Data:
+${resumePayload}
+
+Previous Cover Letter (optional):
+${userData.coverLetter || ''}
+`.trim();
 
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -213,39 +178,31 @@ JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
     const json = safeJSON(raw);
     if (!json) return res.status(502).json({ error:"Bad model output", code:"E_BAD_MODEL_OUTPUT", raw });
 
-    // Normalize + enforce subset in code
-    let rd = null;
-    if (resumeNeeded) {
-      const allowed = new Set(allowedSkills);
-      rd = normalizeResumeData(json.resumeData || {});
-      rd.skills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
+    // Normalize + enforce subset in code - EXACT SAME LOGIC AS generate.js
+    const allowed = new Set(allowedSkills);
+    const rd = normalizeResumeData(json.resumeData || {});
+    rd.skills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
 
-      const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
-      for (const exp of rd.experience || []) {
-        const originalBullets = exp.bullets || [];
-        const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);
-        exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
-      }
+    const resumeContext = JSON.stringify(resumeData);
+    for (const exp of rd.experience || []) {
+      const originalBullets = exp.bullets || [];
+      const rewritten = await rewriteBullets(client, jobDescription, resumeContext, originalBullets);
+      exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
     }
 
     const payload = {
-      userGoal: userGoal
+      ...userData,
+      resumeData: rd,
+      coverLetter: String(json.coverLetterText || ""),
     };
-    
-    if (coverLetterNeeded) {
-      payload.coverLetter = String(json.coverLetterText || "");
-    }
-    
-    if (resumeNeeded) {
-      payload.resumeData = rd;
-    }
 
     return res.status(200).json(payload);
-  }catch(err){
-    console.error(err);
-    return res.status(500).json({ error:"Server error", detail:String(err?.message || err) });
+
+  } catch (error) {
+    console.error('Tailoring error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to tailor content', 
+      detail: error.message 
+    });
   }
 }
-
-export default withLimiter(coreHandler, { limit: 10, windowMs: 60_000 });
-
