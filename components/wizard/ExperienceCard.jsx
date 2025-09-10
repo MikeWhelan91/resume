@@ -35,11 +35,11 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-zinc-600">Role*</label>
+          <label className="text-xs font-medium text-zinc-600">Job Title*</label>
           <input
             className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
-            value={value.role}
-            onChange={e => updateField('role', e.target.value)}
+            value={value.title}
+            onChange={e => updateField('title', e.target.value)}
             required
           />
         </div>

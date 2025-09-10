@@ -40,7 +40,7 @@ const schemas = {
   work: z.object({
     experience: z.array(z.object({
       company: z.string().min(1, 'Company required'),
-      role: z.string().min(1, 'Role required'),
+      title: z.string().min(1, 'Job title required'),
       location: z.string().optional(),
       start: z.string().optional(),
       end: z.string().optional(),
@@ -119,7 +119,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
 
   function addExp() {
     const exps = getValues('experience');
-    setValue('experience', [...exps, { company:'', role:'', start:'', end:'', location:'', bullets:[] }]);
+    setValue('experience', [...exps, { company:'', title:'', start:'', end:'', location:'', bullets:[] }]);
   }
   function updateExp(i, val) {
     const exps = getValues('experience');

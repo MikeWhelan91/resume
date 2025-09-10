@@ -169,7 +169,7 @@ You output ONLY JSON with keys:
 STRICT RULES:
 - Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
-    - For resumeData.experience[], each item must include company, role, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
+    - For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - The coverLetterText must adopt a ${tone} tone.
