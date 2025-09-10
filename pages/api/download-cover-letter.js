@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { limitCoverLetter } from '../../lib/renderUtils';
 
 export default async function handler(req, res) {
   const { accent, data } = req.body;
@@ -54,8 +55,8 @@ function generateCoverLetterHTML(userData, accent) {
     </style>
   `;
 
-  const coverLetterContent = userData.coverLetter ? 
-    userData.coverLetter.split('\n\n').filter(p => p.trim()).map(p => `<p style="font-size: 9px; margin-bottom: 8px; text-align: justify;">${p.trim()}</p>`).join('') :
+  const coverLetterContent = userData.coverLetter ?
+    limitCoverLetter(userData.coverLetter).map(p => `<p style="font-size: 9px; margin-bottom: 8px; text-align: justify;">${p.trim()}</p>`).join('') :
     `<p style="font-size: 9px; text-align: justify;">
       Dear Hiring Manager,<br/><br/>
       I am writing to express my interest in the position at your company. With my background and experience, I believe I would be a valuable addition to your team.<br/><br/>

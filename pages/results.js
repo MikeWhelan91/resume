@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
+import { limitExperience, limitEducation, limitCoverLetter } from '../lib/renderUtils';
 
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 
@@ -120,7 +121,7 @@ export default function ResultsPage() {
           {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
             <div style={{ marginBottom: '12px' }}>
               <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Experience</h2>
-              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+              {limitExperience(userData.resumeData.experience).map((exp, i) => (
                 <div key={i} style={{ marginBottom: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <div>
@@ -129,7 +130,7 @@ export default function ResultsPage() {
                     </div>
                     <div style={{ fontSize: '8px', color: '#666' }}>{exp.start} - {exp.end}</div>
                   </div>
-                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                  {exp.bullets && exp.bullets.map((bullet, j) => (
                     <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>▪ {bullet}</div>
                   ))}
                 </div>
@@ -140,7 +141,7 @@ export default function ResultsPage() {
           {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
             <div>
               <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Education</h2>
-              {userData.resumeData.education.slice(0, 2).map((edu, i) => (
+              {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
                 <div key={i} style={{ marginBottom: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div>
@@ -197,7 +198,7 @@ export default function ResultsPage() {
             {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
               <div>
                 <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Education</h2>
-                {userData.resumeData.education.slice(0, 2).map((edu, i) => (
+                {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
                   <div key={i} style={{ marginBottom: '6px' }}>
                     <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
                     <div style={{ fontSize: '8px', color: '#666' }}>{edu.institution}</div>
@@ -211,14 +212,14 @@ export default function ResultsPage() {
           {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
             <div>
               <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Experience</h2>
-              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+              {limitExperience(userData.resumeData.experience).map((exp, i) => (
                 <div key={i} style={{ marginBottom: '10px', padding: '6px', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
                     <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
                     <div style={{ fontSize: '8px', color: '#666', backgroundColor: '#f0f0f0', padding: '1px 4px', borderRadius: '2px' }}>{exp.start} - {exp.end}</div>
                   </div>
                   <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>{exp.company}</div>
-                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                  {exp.bullets && exp.bullets.map((bullet, j) => (
                     <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>→ {bullet}</div>
                   ))}
                 </div>
@@ -263,12 +264,12 @@ export default function ResultsPage() {
                 <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Experience</h2>
                 <div style={{ height: '1px', width: '30px', backgroundColor: accent, margin: '2px auto' }}></div>
               </div>
-              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+              {limitExperience(userData.resumeData.experience).map((exp, i) => (
                 <div key={i} style={{ marginBottom: '10px', position: 'relative', paddingLeft: '12px' }}>
                   <div style={{ position: 'absolute', left: '0', top: '2px', width: '4px', height: '4px', backgroundColor: accent, borderRadius: '50%' }}></div>
                   <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
                   <div style={{ fontSize: '9px', color: '#666', fontStyle: 'italic' }}>{exp.company} • {exp.start} - {exp.end}</div>
-                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                  {exp.bullets && exp.bullets.map((bullet, j) => (
                     <div key={j} style={{ fontSize: '8px', marginTop: '2px', color: '#555' }}>• {bullet}</div>
                   ))}
                 </div>
@@ -299,7 +300,7 @@ export default function ResultsPage() {
                   <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Education</h2>
                   <div style={{ height: '1px', width: '20px', backgroundColor: accent, margin: '2px auto' }}></div>
                 </div>
-                {userData.resumeData.education.slice(0, 1).map((edu, i) => (
+                {limitEducation(userData.resumeData.education, 1).map((edu, i) => (
                   <div key={i} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
                     <div style={{ fontSize: '8px', color: '#666', fontStyle: 'italic' }}>{edu.institution}</div>
@@ -367,7 +368,7 @@ export default function ResultsPage() {
 
               <div style={{ marginBottom: '15px' }}>
                 {userData.coverLetter ? (
-                  userData.coverLetter.split('\n\n').filter(p => p.trim()).slice(0, 3).map((paragraph, i) => (
+                  limitCoverLetter(userData.coverLetter).map((paragraph, i) => (
                     <p key={i} style={{ fontSize: '9px', marginBottom: '8px', textAlign: 'justify' }}>
                       {paragraph.trim()}
                     </p>
@@ -401,8 +402,8 @@ export default function ResultsPage() {
   return (
     <>
       <Head>
-        <title>Results Preview & Download – TailorCV</title>
-        <meta name="description" content="Preview your resume and cover letter side-by-side with one-click PDF downloads."/>
+        <title>Resume & Cover Letter Preview – TailorCV</title>
+        <meta name="description" content="Preview resumes and cover letters with consistent formatting and download matching PDFs instantly."/>
       </Head>
       
       <div className="ResultsLayout">
