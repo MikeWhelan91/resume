@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
 
@@ -12,6 +13,7 @@ const TEMPLATES = [
 ];
 
 export default function ResultsPage() {
+  const router = useRouter();
   const [accent, setAccent] = useState(ACCENTS[0]);
   const [template, setTemplate] = useState(TEMPLATES[0].id);
   const [userData, setUserData] = useState(null);
@@ -199,6 +201,10 @@ export default function ResultsPage() {
           </div>
 
           <div className="Group">
+            <button className="Button" onClick={() => router.push('/')}>
+              ← Back to Wizard
+            </button>
+            <div style={{height:10}} />
             <button className="Button" onClick={downloadCV}>
               Download CV PDF
             </button>

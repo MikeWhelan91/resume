@@ -1,69 +1,80 @@
 import React from 'react';
 import { limitExperience, limitEducation } from '../lib/renderUtils';
 
-const ProfessionalTemplate = ({ userData, accent }) => (
-  <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
+// Helper function to safely get values and handle null/undefined
+function safeProp(obj, path, fallback = '') {
+  const value = path.split('.').reduce((o, p) => o && o[p], obj);
+  return (value === null || value === undefined || value === 'null' || value === 'undefined') ? fallback : value;
+}
+
+const formatDate = (date) => {
+  if (!date || date === 'null' || date === 'undefined') return 'Present';
+  return date.toString().trim();
+};
+
+const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
+  <div style={{ padding: `${15 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
     {userData ? (
       <>
-        <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: '8px', marginBottom: '12px' }}>
-          <h1 style={{ fontSize: '16px', marginBottom: '2px', color: accent, fontWeight: 'bold' }}>
+        <div style={{ borderBottom: `${2 * scale}px solid ${accent}`, paddingBottom: `${8 * scale}px`, marginBottom: `${12 * scale}px` }}>
+          <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
-          <p style={{ fontSize: '9px', color: '#666' }}>
+          <p style={{ fontSize: `${9 * scale}px`, color: '#666' }}>
             {userData.resumeData?.email || userData.email || 'your.email@example.com'} •
             {userData.resumeData?.phone || userData.phone || 'Your Phone'}
           </p>
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Summary</h2>
-            <p style={{ fontSize: '9px', textAlign: 'justify' }}>{userData.resumeData.summary}</p>
+          <div style={{ marginBottom: `${12 * scale}px` }}>
+            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Summary</h2>
+            <p style={{ fontSize: `${9 * scale}px`, textAlign: 'justify' }}>{userData.resumeData.summary}</p>
           </div>
         )}
 
         {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Core Competencies</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ marginBottom: `${12 * scale}px` }}>
+            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Core Competencies</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${4 * scale}px` }}>
               {userData.resumeData.skills.map((skill, i) => (
-                <span key={i} style={{ fontSize: '8px', padding: '2px 6px', backgroundColor: '#f0f0f0', borderRadius: '3px' }}>{skill}</span>
+                <span key={i} style={{ fontSize: `${8 * scale}px`, padding: `${2 * scale}px ${6 * scale}px`, backgroundColor: '#f0f0f0', borderRadius: `${3 * scale}px` }}>{skill}</span>
               ))}
             </div>
           </div>
         )}
 
         {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Experience</h2>
+          <div className="section-content may-break-page" style={{ marginBottom: `${12 * scale}px` }}>
+            <h2 className="section-header may-break-page" style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Experience</h2>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{exp.title}</div>
-                    <div style={{ fontSize: '9px', color: '#666' }}>{exp.company}</div>
-                  </div>
-                  <div style={{ fontSize: '8px', color: '#666' }}>{exp.start} - {exp.end}</div>
+              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px` }}>
+                <div>
+                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold' }}>{safeProp(exp, 'title')}</div>
+                  <div style={{ fontSize: `${9 * scale}px`, color: '#666' }}>{safeProp(exp, 'company')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
-                {exp.bullets && exp.bullets.map((bullet, j) => (
-                  <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>▪ {bullet}</div>
-                ))}
+                {exp.bullets && exp.bullets.length > 0 && (
+                  <div className="bullet-list">
+                    {exp.bullets.map((bullet, j) => (
+                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>▪ {bullet}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
         {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
-          <div>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Education</h2>
+          <div className="section-content may-break-page">
+            <h2 className="section-header may-break-page" style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Education</h2>
             {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
-              <div key={i} style={{ marginBottom: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
-                    <div style={{ fontSize: '8px', color: '#666' }}>{edu.institution}</div>
-                  </div>
-                  <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+              <div key={i} className="education-item" style={{ marginBottom: `${4 * scale}px` }}>
+                <div>
+                  <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               </div>
             ))}
@@ -78,45 +89,45 @@ const ProfessionalTemplate = ({ userData, accent }) => (
   </div>
 );
 
-const ModernTemplate = ({ userData, accent }) => (
-  <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Helvetica, sans-serif', lineHeight: '1.4' }}>
+const ModernTemplate = ({ userData, accent, scale = 1 }) => (
+  <div style={{ padding: `${15 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Helvetica, sans-serif', lineHeight: '1.4' }}>
     {userData ? (
       <>
-        <div style={{ background: `linear-gradient(135deg, ${accent}20, ${accent}10)`, padding: '12px', marginBottom: '12px', borderRadius: '8px' }}>
-          <h1 style={{ fontSize: '16px', marginBottom: '2px', color: accent, fontWeight: 'bold' }}>
+        <div style={{ background: `linear-gradient(135deg, ${accent}20, ${accent}10)`, padding: `${12 * scale}px`, marginBottom: `${12 * scale}px`, borderRadius: `${8 * scale}px` }}>
+          <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
-          <p style={{ fontSize: '9px', color: '#666' }}>
+          <p style={{ fontSize: `${9 * scale}px`, color: '#666' }}>
             {userData.resumeData?.email || userData.email || 'your.email@example.com'} •
             {userData.resumeData?.phone || userData.phone || 'Your Phone'}
           </p>
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#f8f9fa', borderLeft: `4px solid ${accent}`, borderRadius: '4px' }}>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>About</h2>
-            <p style={{ fontSize: '9px' }}>{userData.resumeData.summary}</p>
+          <div style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, backgroundColor: '#f8f9fa', borderLeft: `${4 * scale}px solid ${accent}`, borderRadius: `${4 * scale}px` }}>
+            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>About</h2>
+            <p style={{ fontSize: `${9 * scale}px` }}>{userData.resumeData.summary}</p>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${12 * scale}px`, marginBottom: `${12 * scale}px` }}>
           {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
             <div>
-              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Skills</h2>
+              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Skills</h2>
               {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
-                <div key={i} style={{ fontSize: '8px', marginBottom: '2px', padding: '2px', backgroundColor: '#f0f0f0' }}>{skill}</div>
+                <div key={i} style={{ fontSize: `${8 * scale}px`, marginBottom: `${2 * scale}px`, padding: `${2 * scale}px`, backgroundColor: '#f0f0f0' }}>{skill}</div>
               ))}
             </div>
           )}
 
           {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
             <div>
-              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Education</h2>
+              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Education</h2>
               {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
-                <div key={i} style={{ marginBottom: '6px' }}>
-                  <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
-                  <div style={{ fontSize: '8px', color: '#666' }}>{edu.institution}</div>
-                  <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+                <div key={i} style={{ marginBottom: `${6 * scale}px` }}>
+                  <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               ))}
             </div>
@@ -125,17 +136,21 @@ const ModernTemplate = ({ userData, accent }) => (
 
         {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
           <div>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Experience</h2>
+            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Experience</h2>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} style={{ marginBottom: '10px', padding: '6px', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
-                  <div style={{ fontSize: '8px', color: '#666', backgroundColor: '#f0f0f0', padding: '1px 4px', borderRadius: '2px' }}>{exp.start} - {exp.end}</div>
+              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px`, padding: `${6 * scale}px`, border: `${1 * scale}px solid #e0e0e0`, borderRadius: `${4 * scale}px` }}>
+                <div style={{ marginBottom: `${3 * scale}px` }}>
+                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent }}>{safeProp(exp, 'title')}</div>
+                  <div style={{ fontSize: `${9 * scale}px`, color: '#666' }}>{safeProp(exp, 'company')}</div>
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#666', backgroundColor: '#f0f0f0', padding: `${1 * scale}px ${4 * scale}px`, borderRadius: `${2 * scale}px`, display: 'inline-block', marginTop: `${2 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
-                <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>{exp.company}</div>
-                {exp.bullets && exp.bullets.map((bullet, j) => (
-                  <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>→ {bullet}</div>
-                ))}
+                {exp.bullets && exp.bullets.length > 0 && (
+                  <div className="bullet-list">
+                    {exp.bullets.map((bullet, j) => (
+                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>→ {bullet}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -149,79 +164,88 @@ const ModernTemplate = ({ userData, accent }) => (
   </div>
 );
 
-const CreativeTemplate = ({ userData, accent }) => (
-  <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Georgia, serif', lineHeight: '1.4' }}>
+const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
+  <div style={{ padding: `${15 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Georgia, serif', lineHeight: '1.4' }}>
     {userData ? (
       <>
-        <div style={{ textAlign: 'center', marginBottom: '15px' }}>
-          <h1 style={{ fontSize: '18px', marginBottom: '4px', color: accent, fontWeight: 'bold', letterSpacing: '1px' }}>
+        <div style={{ textAlign: 'center', marginBottom: `${15 * scale}px` }}>
+          <h1 style={{ fontSize: `${18 * scale}px`, marginBottom: `${4 * scale}px`, color: accent, fontWeight: 'bold', letterSpacing: '1px' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
-          <div style={{ height: '2px', width: '40px', backgroundColor: accent, margin: '4px auto' }}></div>
-          <p style={{ fontSize: '9px', color: '#666', fontStyle: 'italic' }}>
+          <div style={{ height: `${2 * scale}px`, width: `${40 * scale}px`, backgroundColor: accent, margin: `${4 * scale}px auto` }}></div>
+          <p style={{ fontSize: `${9 * scale}px`, color: '#666', fontStyle: 'italic' }}>
             {userData.resumeData?.email || userData.email || 'your.email@example.com'} •
             {userData.resumeData?.phone || userData.phone || 'Your Phone'}
           </p>
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: '12px', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', fontStyle: 'italic' }}>Profile</h2>
-            <p style={{ fontSize: '9px', fontStyle: 'italic', maxWidth: '80%', margin: '0 auto' }}>{userData.resumeData.summary}</p>
+          <div style={{ marginBottom: `${12 * scale}px`, textAlign: 'center' }}>
+            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', fontStyle: 'italic' }}>Profile</h2>
+            <p style={{ fontSize: `${9 * scale}px`, fontStyle: 'italic', maxWidth: '80%', margin: '0 auto' }}>{userData.resumeData.summary}</p>
           </div>
         )}
 
         {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Experience</h2>
-              <div style={{ height: '1px', width: '30px', backgroundColor: accent, margin: '2px auto' }}></div>
+          <div style={{ marginBottom: `${12 * scale}px` }}>
+            <div style={{ textAlign: 'center', marginBottom: `${8 * scale}px` }}>
+              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, fontWeight: 'bold', fontStyle: 'italic', margin: '0' }}>Experience</h2>
+              <div style={{ height: `${1 * scale}px`, width: `${30 * scale}px`, backgroundColor: accent, margin: `${2 * scale}px auto` }}></div>
             </div>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} style={{ marginBottom: '10px', position: 'relative', paddingLeft: '12px' }}>
-                <div style={{ position: 'absolute', left: '0', top: '2px', width: '4px', height: '4px', backgroundColor: accent, borderRadius: '50%' }}></div>
-                <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
-                <div style={{ fontSize: '9px', color: '#666', fontStyle: 'italic' }}>{exp.company} • {exp.start} - {exp.end}</div>
-                {exp.bullets && exp.bullets.map((bullet, j) => (
-                  <div key={j} style={{ fontSize: '8px', marginTop: '2px', color: '#555' }}>• {bullet}</div>
-                ))}
+              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px`, position: 'relative', paddingLeft: `${12 * scale}px` }}>
+                <div style={{ position: 'absolute', left: '0', top: `${2 * scale}px`, width: `${4 * scale}px`, height: `${4 * scale}px`, backgroundColor: accent, borderRadius: '50%' }}></div>
+                <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent }}>{safeProp(exp, 'title')}</div>
+                <div style={{ fontSize: `${9 * scale}px`, color: '#666', fontStyle: 'italic' }}>{safeProp(exp, 'company')}</div>
+                <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
+                {exp.bullets && exp.bullets.length > 0 && (
+                  <div className="bullet-list">
+                    {exp.bullets.map((bullet, j) => (
+                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px`, color: '#555' }}>• {bullet}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-          {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
-            <div style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-                <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Skills</h2>
-                <div style={{ height: '1px', width: '20px', backgroundColor: accent, margin: '2px auto' }}></div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
-                  <span key={i} style={{ fontSize: '8px', color: accent, fontWeight: 'bold' }}>
-                    {skill}{i < userData.resumeData.skills.slice(0, 6).length - 1 ? ' • ' : ''}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
-            <div style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-                <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Education</h2>
-                <div style={{ height: '1px', width: '20px', backgroundColor: accent, margin: '2px auto' }}></div>
-              </div>
-              {limitEducation(userData.resumeData.education, 1).map((edu, i) => (
-                <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
-                  <div style={{ fontSize: '8px', color: '#666', fontStyle: 'italic' }}>{edu.institution}</div>
-                  <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${12 * scale}px` }}>
+          <div>
+            {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: `${6 * scale}px` }}>
+                  <h2 style={{ fontSize: `${11 * scale}px`, color: accent, fontWeight: 'bold', fontStyle: 'italic', margin: '0' }}>Skills</h2>
+                  <div style={{ height: `${1 * scale}px`, width: `${20 * scale}px`, backgroundColor: accent, margin: `${2 * scale}px auto` }}></div>
                 </div>
-              ))}
-            </div>
-          )}
+                <div style={{ textAlign: 'center' }}>
+                  {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
+                    <span key={i} style={{ fontSize: `${8 * scale}px`, color: accent, fontWeight: 'bold' }}>
+                      {skill}{i < userData.resumeData.skills.slice(0, 6).length - 1 ? ' • ' : ''}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div>
+            {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: `${6 * scale}px` }}>
+                  <h2 style={{ fontSize: `${11 * scale}px`, color: accent, fontWeight: 'bold', fontStyle: 'italic', margin: '0' }}>Education</h2>
+                  <div style={{ height: `${1 * scale}px`, width: `${20 * scale}px`, backgroundColor: accent, margin: `${2 * scale}px auto` }}></div>
+                </div>
+                {limitEducation(userData.resumeData.education, 1).map((edu, i) => (
+                  <div key={i} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
+                    <div style={{ fontSize: `${8 * scale}px`, color: '#666', fontStyle: 'italic' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                    <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       </>
     ) : (
@@ -232,15 +256,17 @@ const CreativeTemplate = ({ userData, accent }) => (
   </div>
 );
 
-export default function ResumeTemplate({ userData, template, accent }) {
+export default function ResumeTemplate({ userData, template, accent, isPDF = false }) {
+  const scale = isPDF ? 1.75 : 1; // Scale up for PDF
+  
   switch (template) {
     case 'modern':
-      return <ModernTemplate userData={userData} accent={accent} />;
+      return <ModernTemplate userData={userData} accent={accent} scale={scale} />;
     case 'creative':
-      return <CreativeTemplate userData={userData} accent={accent} />;
+      return <CreativeTemplate userData={userData} accent={accent} scale={scale} />;
     case 'professional':
     default:
-      return <ProfessionalTemplate userData={userData} accent={accent} />;
+      return <ProfessionalTemplate userData={userData} accent={accent} scale={scale} />;
   }
 }
 
@@ -249,25 +275,105 @@ export const resumeBaseStyles = `
     @page {
       margin: 0;
       size: A4;
+      padding: 0; /* Remove any default padding */
     }
+    
+    @page :first {
+      margin-top: 0; /* No margin on first page */
+    }
+    
+    @page :left, @page :right {
+      margin-top: 0; /* No margin on subsequent pages */
+    }
+    
     body {
       margin: 0;
+      padding: 0;
+      background: white;
+      font-family: Arial, sans-serif;
+      width: 794px;
+      min-height: 1123px; /* Allow multiple pages */
     }
-    .a4-scope * { box-sizing: border-box; }
-    .a4-scope img,
-    .a4-scope canvas,
-    .a4-scope svg,
-    .a4-scope iframe,
-    .a4-scope video {
-      max-width: none !important;
-      width: auto;
-      height: auto;
+    .a4-outer {
+      width: 794px;
+      min-height: 1123px; /* Allow multiple pages */
+      background: white;
+      margin: 0;
+      padding: 0;
     }
+    .a4-scope {
+      width: 794px;
+      min-height: 1123px; /* Allow multiple pages */
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-sizing: border-box;
+      overflow: visible; /* Allow content to flow to next page */
+      margin: 0; /* No margin */
+      padding: 0; /* No padding at container level */
+      /* Add default spacing that works across page breaks */
+      line-height: 1.4;
+    }
+    .a4-scope * { 
+      box-sizing: border-box; 
+    }
+    
+    /* Page break rules for PDF generation */
+    
+    /* Force padding on elements that start new pages */
+    .experience-item:nth-child(n+3), 
+    .education-item:nth-child(n+3),
+    h2:nth-of-type(n+2) {
+      margin-top: 40px !important;
+    }
+    
+    /* Avoid breaking inside experience/education items */
+    .experience-item, .education-item {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin-bottom: 1.5em;
+      padding-bottom: 0.5em;
+    }
+    
+    /* Ensure bullets stay with their parent */
+    .bullet-list {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin-top: 0.3em;
+    }
+    
+    /* Add proper spacing for new pages */
+    h1, h2 {
+      page-break-after: avoid;
+      break-after: avoid;
+      margin-top: 1.5em;
+      margin-bottom: 0.8em;
+    }
+    
+    /* First heading shouldn't have top margin */
+    h1:first-of-type, h2:first-of-type {
+      margin-top: 0;
+    }
+    
+    /* Ensure sections don't break badly */
+    .section-content {
+      orphans: 2;
+      widows: 2;
+    }
+    
+    /* Alternative: Add spacing to any element that appears after a page break */
+    * {
+      page-break-before: auto;
+    }
+    
+    /* Add a specific class for elements that should have top spacing when they start a new page */
+    .may-break-page {
+      margin-top: 0;
+    }
+    
     @media print {
-      .a4-outer {
-        width: 794px !important;
-        height: 1123px !important;
-        overflow: visible !important;
+      .may-break-page {
+        margin-top: 40px;
       }
     }
   </style>

@@ -16,10 +16,22 @@ export default async function handler(req, res) {
   const html = generateCoverLetterHTML(data, accent);
 
   try {
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
+    await page.setViewport({ width: 794, height: 1123 });
     await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    const pdfBuffer = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      margin: { 
+        top: '0px', 
+        bottom: '0px', 
+        left: '0px', 
+        right: '0px' 
+      },
+      preferCSSPageSize: true,
+      displayHeaderFooter: false
+    });
     await browser.close();
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -51,6 +63,10 @@ function generateCoverLetterHTML(userData, accent) {
         line-height: 1.5; 
         font-family: Arial, sans-serif;
         color: #333;
+        width: 794px;
+        height: 1123px;
+        background: white;
+        box-sizing: border-box;
       }
     </style>
   `;

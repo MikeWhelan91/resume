@@ -90,11 +90,13 @@ html,body{ background:var(--bg); }
 
 .A4Preview{
   width: 100%; 
-  aspect-ratio: 210 / 297; /* Proper A4 ratio */
+  min-height: 400px; /* Minimum height but allow growth */
+  max-height: 600px; /* Maximum height before scrolling */
   border:1px solid #e5e7eb; 
   background:#fff;
   border-radius:8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Allow vertical scrolling */
 }
 
 @media (max-width: 1200px){
