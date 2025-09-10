@@ -1,6 +1,4 @@
 export default function ControlsPanel({
-  template,
-  setTemplate,
   accent,
   setAccent,
   density,
@@ -12,21 +10,9 @@ export default function ControlsPanel({
   onExportClPdf,
   onExportClDocx,
 }) {
-  const templates = ['classic', 'twoCol', 'centered', 'sidebar', 'modern'];
   const colors = ['#00C9A7','#A3FF6F','#0EA5A6','#2563EB','#F59E0B','#EF4444'];
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold mb-2">Template</h3>
-        <div className="space-y-1">
-          {templates.map(t => (
-            <label key={t} className="flex items-center gap-2">
-              <input type="radio" name="template" value={t} checked={template===t} onChange={()=>setTemplate(t)} />
-              <span className="capitalize">{t}</span>
-            </label>
-          ))}
-        </div>
-      </div>
       <div>
         <h3 className="font-semibold mb-2">Theme</h3>
         <div className="flex gap-2 mb-2">
@@ -59,4 +45,3 @@ export default function ControlsPanel({
     </div>
   );
 }
-
