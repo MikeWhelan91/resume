@@ -5,6 +5,7 @@ function safeProp(obj, path, fallback = '') {
 }
 
 import puppeteer from 'puppeteer';
+import { limitExperience, limitEducation } from '../../lib/renderUtils';
 
 export default async function handler(req, res) {
   const { template, accent, data } = req.body;
@@ -43,8 +44,10 @@ function generateCVHTML(userData, template, accent) {
   const getPhone = () => safeProp(userData, 'resumeData.phone') || safeProp(userData, 'phone') || 'Phone';
   const getSummary = () => safeProp(userData, 'resumeData.summary');
   const getSkills = () => userData?.resumeData?.skills?.filter(skill => skill && skill.trim()) || [];
-  const getExperience = () => userData?.resumeData?.experience?.filter(exp => exp && exp.title) || [];
-  const getEducation = () => userData?.resumeData?.education?.filter(edu => edu && (edu.area || edu.degree)) || [];
+  const getExperience = (max = 2, bulletMax = 2) =>
+    limitExperience(userData?.resumeData?.experience, max, bulletMax);
+  const getEducation = (max = 2) =>
+    limitEducation(userData?.resumeData?.education, max);
 
   const formatDate = (date) => {
     if (!date || date === 'null' || date === 'undefined') return 'Present';
@@ -109,7 +112,7 @@ function generateCVHTML(userData, template, accent) {
                 </div>
                 <div style="font-size: 8px; color: #666;">${formatDate(exp.start)} - ${formatDate(exp.end)}</div>
               </div>
-              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.filter(bullet => bullet && bullet.trim()).map(bullet => `<div style="font-size: 8px; margin-left: 8px; margin-top: 2px;">▪ ${bullet}</div>`).join('') : ''}
+              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.map(bullet => `<div style="font-size: 8px; margin-left: 8px; margin-top: 2px;">▪ ${bullet}</div>`).join('') : ''}
             </div>
           `).join('')}
         </div>
@@ -118,7 +121,7 @@ function generateCVHTML(userData, template, accent) {
       ${getEducation().length > 0 ? `
         <div>
           <h2 style="font-size: 11px; color: ${accent}; margin-bottom: 4px; font-weight: bold; text-transform: uppercase;">Education</h2>
-          ${getEducation().map(edu => `
+          ${getEducation(2).map(edu => `
             <div style="margin-bottom: 4px;">
               <div style="display: flex; justify-content: space-between;">
                 <div>
@@ -161,7 +164,7 @@ function generateCVHTML(userData, template, accent) {
         ${getEducation().length > 0 ? `
           <div>
             <h2 style="font-size: 11px; color: ${accent}; margin-bottom: 4px; font-weight: bold;">Education</h2>
-            ${getEducation().slice(0, 2).map(edu => `
+          ${getEducation(2).map(edu => `
               <div style="margin-bottom: 6px;">
                 <div style="font-size: 9px; font-weight: bold;">${safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
                 <div style="font-size: 8px; color: #666;">${safeProp(edu, 'institution')}</div>
@@ -175,14 +178,14 @@ function generateCVHTML(userData, template, accent) {
       ${getExperience().length > 0 ? `
         <div>
           <h2 style="font-size: 11px; color: ${accent}; margin-bottom: 4px; font-weight: bold;">Experience</h2>
-          ${getExperience().slice(0, 2).map(exp => `
+      ${getExperience().map(exp => `
             <div style="margin-bottom: 10px; padding: 6px; border: 1px solid #e0e0e0; border-radius: 4px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
                 <div style="font-size: 10px; font-weight: bold; color: ${accent};">${safeProp(exp, 'title')}</div>
                 <div style="font-size: 8px; color: #666; background-color: #f0f0f0; padding: 1px 4px; border-radius: 2px;">${formatDate(exp.start)} - ${formatDate(exp.end)}</div>
               </div>
               <div style="font-size: 9px; color: #666; margin-bottom: 3px;">${safeProp(exp, 'company')}</div>
-              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.filter(bullet => bullet && bullet.trim()).slice(0, 2).map(bullet => `<div style="font-size: 8px; margin-left: 8px; margin-top: 2px;">→ ${bullet}</div>`).join('') : ''}
+              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.map(bullet => `<div style="font-size: 8px; margin-left: 8px; margin-top: 2px;">→ ${bullet}</div>`).join('') : ''}
             </div>
           `).join('')}
         </div>
@@ -213,12 +216,12 @@ function generateCVHTML(userData, template, accent) {
             <h2 style="font-size: 11px; color: ${accent}; font-weight: bold; font-style: italic; margin: 0;">Experience</h2>
             <div style="height: 1px; width: 30px; background-color: ${accent}; margin: 2px auto;"></div>
           </div>
-          ${getExperience().slice(0, 2).map(exp => `
+          ${getExperience().map(exp => `
             <div style="margin-bottom: 10px; position: relative; padding-left: 12px;">
               <div style="position: absolute; left: 0; top: 2px; width: 4px; height: 4px; background-color: ${accent}; border-radius: 50%;"></div>
               <div style="font-size: 10px; font-weight: bold; color: ${accent};">${safeProp(exp, 'title')}</div>
               <div style="font-size: 9px; color: #666; font-style: italic;">${safeProp(exp, 'company')} • ${formatDate(exp.start)} - ${formatDate(exp.end)}</div>
-              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.filter(bullet => bullet && bullet.trim()).slice(0, 2).map(bullet => `<div style="font-size: 8px; margin-top: 2px; color: #555;">• ${bullet}</div>`).join('') : ''}
+              ${exp.bullets && exp.bullets.length > 0 ? exp.bullets.map(bullet => `<div style="font-size: 8px; margin-top: 2px; color: #555;">• ${bullet}</div>`).join('') : ''}
             </div>
           `).join('')}
         </div>
@@ -243,7 +246,7 @@ function generateCVHTML(userData, template, accent) {
               <h2 style="font-size: 11px; color: ${accent}; font-weight: bold; font-style: italic; margin: 0;">Education</h2>
               <div style="height: 1px; width: 20px; background-color: ${accent}; margin: 2px auto;"></div>
             </div>
-            ${getEducation().slice(0, 1).map(edu => `
+            ${getEducation(1).map(edu => `
               <div>
                 <div style="font-size: 9px; font-weight: bold;">${safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
                 <div style="font-size: 8px; color: #666; font-style: italic;">${safeProp(edu, 'institution')}</div>
