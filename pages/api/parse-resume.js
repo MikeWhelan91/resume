@@ -50,7 +50,7 @@ export default async function handler(req,res){
     if (!resumeText) return res.status(400).json({ error:"No readable file" });
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const system = `Output ONLY JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[]}}
-Experience items must include company, role, start, end, location?, bullets[].
+Experience items must include company, title, start, end, location?, bullets[].
 Education items must include school, degree, start, end, grade?.
 Use ONLY details present in RESUME_TEXT. Do not fabricate.`;
     const user = `RESUME_TEXT:\n${resumeText}`;

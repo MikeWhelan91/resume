@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
     docChildren.push(h("Experience"));
     (data.experience || []).forEach((x) => {
-      const heading = `${x.company} — ${x.role}`;
+      const heading = `${x.company} — ${x.title}`;
       const dates = `${x.start} – ${x.end || "Present"}`;
       docChildren.push(new Paragraph({ children: [
         new TextRun({ text: heading, bold: true }),
