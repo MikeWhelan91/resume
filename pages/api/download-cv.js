@@ -56,17 +56,34 @@ function generateCVHTML(userData, template, accent) {
 
   const baseStyles = `
     <style>
-      @page { 
-        margin: 0; 
-        size: A4; 
+      @page {
+        margin: 0;
+        size: A4;
       }
-      body { 
-        margin: 0; 
-        padding: 15px; 
-        font-size: 10px; 
-        line-height: 1.4; 
+      body {
+        margin: 0;
+        padding: 15px;
+        font-size: 10px;
+        line-height: 1.4;
         font-family: Arial, sans-serif;
         color: #333;
+      }
+      .a4-scope * { box-sizing: border-box; }
+      .a4-scope img,
+      .a4-scope canvas,
+      .a4-scope svg,
+      .a4-scope iframe,
+      .a4-scope video {
+        max-width: none !important;
+        width: auto;
+        height: auto;
+      }
+      @media print {
+        .a4-outer {
+          width: 794px !important;
+          height: 1123px !important;
+          overflow: visible !important;
+        }
       }
     </style>
   `;
@@ -267,8 +284,10 @@ function generateCVHTML(userData, template, accent) {
       <title>Resume</title>
       ${baseStyles}
     </head>
-    <body>
-      ${templateHTML}
+    <body class="a4-outer">
+      <div class="a4-scope">
+        ${templateHTML}
+      </div>
     </body>
     </html>
   `;
