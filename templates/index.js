@@ -1,13 +1,6 @@
 /*
-  Make sure the registry exposes two things per template:
-  {
-    id, name, engine:'html',
-    html, css,
-    // optional:
-    coverHtml, coverCss,
-    internal?: boolean
-  }
-
+  Templates registry exposes objects of the shape:
+  { id, name, html, css, internal? }
 */
 import { templates as REGISTRY } from './registry.generated.js';
 

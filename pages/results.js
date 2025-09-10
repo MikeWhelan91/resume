@@ -6,16 +6,7 @@ import { renderHtml } from '../lib/renderHtmlTemplate';
 import { toTemplateModel } from '../lib/templateModel';
 
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
-const DENSITIES = ['Compact','Normal','Relaxed'];
-
-function pickDocTemplate(tpl, docType){
-  if (docType === 'cover') {
-    const src = tpl?.coverHtml ? { html: tpl.coverHtml, css: (tpl.coverCss||'') } 
-                               : { html: getTemplate('_cover-default')?.coverHtml, css: getTemplate('_cover-default')?.coverCss || '' };
-    return src || { html: '<main><h1>{{name}}</h1><p>{{{coverLetter.bodyHtml}}}</p></main>', css: '' };
-  }
-  return { html: tpl?.html || '<main></main>', css: tpl?.css || '' };
-}
+const DENSITIES = ['compact','normal','cozy'];
 
 export default function ResultsPage() {
   // Stable templates list
@@ -24,7 +15,7 @@ export default function ResultsPage() {
 
   const [tplId, setTplId]     = useState(firstTplId);
   const [accent, setAccent]   = useState(ACCENTS[0]);
-  const [density, setDensity] = useState('Normal');
+  const [density, setDensity] = useState('normal');
   const [ats, setAts]         = useState(false);
   const [result, setResult]   = useState(null);
 
@@ -38,6 +29,14 @@ export default function ResultsPage() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    if (result) {
+      try {
+        document.cookie = `resumeResult=${encodeURIComponent(JSON.stringify(result))}; path=/`;
+      } catch {}
+    }
+  }, [result]);
+
   // Null-safe fallbacks so hooks always run
   const resume  = result?.resumeData  ?? {};
   const letter  = result?.coverLetter ?? {};
@@ -46,34 +45,32 @@ export default function ResultsPage() {
   const tpl = useMemo(() => getTemplate(tplId) || getTemplate(firstTplId) || {}, [tplId, firstTplId]);
 
   const model = useMemo(
-    () => toTemplateModel(appData, { ats, density }),
+    () => toTemplateModel(appData, { ats, density, isCoverLetter:false }),
     [appData, ats, density]
   );
-
-  // Build two separate documents
-  const cvSrc     = useMemo(() => pickDocTemplate(tpl, 'cv'), [tpl]);
-  const coverSrc  = useMemo(() => pickDocTemplate(tpl, 'cover'), [tpl]);
+  const tplDensity = model.density;
+  const coverModel = useMemo(() => ({ ...model, isCoverLetter:true }), [model]);
 
   const cvHtml = useMemo(() =>
-    renderHtml({ html: cvSrc.html, css: cvSrc.css, model, options: { mode:'preview', accent, density, ats } }),
-    [cvSrc, model, accent, density, ats]
+    renderHtml({ html: tpl.html, css: tpl.css, model, options: { mode:'preview', accent, density: tplDensity, ats } }),
+    [tpl, model, accent, tplDensity, ats]
   );
   const coverHtml = useMemo(() =>
-    renderHtml({ html: coverSrc.html, css: coverSrc.css, model, options: { mode:'preview', accent, density, ats } }),
-    [coverSrc, model, accent, density, ats]
+    renderHtml({ html: tpl.html, css: tpl.css, model: coverModel, options: { mode:'preview', accent, density: tplDensity, ats } }),
+    [tpl, coverModel, accent, tplDensity, ats]
   );
 
   const isLoading = result == null;
 
   return (
     <>
-      <Head><title>Preview</title><meta name="description" content="Preview and download your resume and cover letter side-by-side."/></Head>
+      <Head><title>Results Preview – TailorCV</title><meta name="description" content="Preview and download your resume and cover letter side-by-side."/></Head>
       <div className="ResultsLayout">
         <aside className="ResultsSidebar">
           <div className="Group">
             <h3>Layout</h3>
             <select className="Select" value={density} onChange={e => setDensity(e.target.value)}>
-              {DENSITIES.map(d => <option key={d} value={d}>{d}</option>)}
+              {DENSITIES.map(d => <option key={d} value={d}>{d[0].toUpperCase()+d.slice(1)}</option>)}
             </select>
           </div>
 
@@ -105,13 +102,13 @@ export default function ResultsPage() {
           <div className="Group">
             <button className="Button"
               onClick={() => window.location.href =
-                `/api/pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}>
+                `/api/pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${density}&ats=${ats?'1':'0'}`}> 
               Download Résumé (PDF)
             </button>
             <div style={{height:10}} />
             <button className="Button secondary"
               onClick={() => window.location.href =
-                `/api/cover-pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${encodeURIComponent(density)}&ats=${ats?'1':'0'}`}>
+                `/api/cover-pdf?template=${tplId}&accent=${encodeURIComponent(accent)}&density=${density}&ats=${ats?'1':'0'}`}> 
               Download Cover Letter (PDF)
             </button>
           </div>
