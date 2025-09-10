@@ -1,235 +1,465 @@
-import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
-import MainShell from '../components/layout/MainShell';
-import ControlsPanel from '../components/ui/ControlsPanel';
-import { getTemplate, densityMap } from '../lib/resumeConfig';
-import PageCarousel from '../components/ui/PageCarousel';
-import LightboxModal from '../components/ui/LightboxModal';
-import ResponsiveA4Preview from '../components/ui/ResponsiveA4Preview';
 
-export default function ResultsPage(){
-  const [result, setResult] = useState(null);
-  const [template, setTemplate] = useState('classic');
-  const [accent, setAccent] = useState('#00C9A7');
-  const [density, setDensity] = useState('normal');
-  const [atsMode, setAtsMode] = useState(false);
-  const [page, setPage] = useState(0);
-  const [resumePages, setResumePages] = useState([]);
-  const [rIndex, setRIndex] = useState(0);
-  const [cIndex, setCIndex] = useState(0);
-  const [lightbox, setLightbox] = useState(null);
+const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 
-  useEffect(()=>{
-    try{ const r = JSON.parse(localStorage.getItem('resumeResult')||'null'); if(r) setResult(r); }catch{}
-  },[]);
+const TEMPLATES = [
+  { id: 'professional', name: 'Professional' },
+  { id: 'modern', name: 'Modern' },
+  { id: 'creative', name: 'Creative' }
+];
+
+export default function ResultsPage() {
+  const [accent, setAccent] = useState(ACCENTS[0]);
+  const [template, setTemplate] = useState(TEMPLATES[0].id);
+  const [userData, setUserData] = useState(null);
+
+  // Download functions
+  const triggerDownload = async (endpoint, filename, payload) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const downloadCV = async () => {
+    if (!userData) {
+      alert('No data available. Please generate a resume first.');
+      return;
+    }
+
+    try {
+      await triggerDownload('/api/download-cv', 'cv.pdf', {
+        template,
+        accent,
+        data: userData,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error generating PDF. Please try again.');
+    }
+  };
+
+  const downloadCoverLetter = async () => {
+    if (!userData) {
+      alert('No data available. Please generate a resume first.');
+      return;
+    }
+
+    try {
+      await triggerDownload('/api/download-cover-letter', 'cover-letter.pdf', {
+        accent,
+        data: userData,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error generating PDF. Please try again.');
+    }
+  };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("print") === "1") {
-      document.documentElement.classList.add("print-mode");
-      // Optional: if ?doc=resume or ?doc=cover, hide the other column:
-      const doc = params.get("doc");
-      if (doc === "resume") { const c = document.getElementById("cover-preview"); if (c) c.style.display = "none"; }
-      if (doc === "cover")  { const r = document.getElementById("resume-preview"); if (r) r.style.display = "none"; }
+    // Load user data from localStorage
+    try {
+      const data = localStorage.getItem('resumeResult');
+      if (data) {
+        const parsed = JSON.parse(data);
+        setUserData(parsed);
+        console.log('Loaded user data:', parsed);
+      }
+    } catch (e) {
+      console.error('Error loading user data:', e);
     }
   }, []);
 
-  const TemplateComp = getTemplate(template);
-  const { fontSize, lineHeight } = densityMap[density] || densityMap.normal;
-  const styleVars = { '--accent': accent, '--font-size': fontSize, '--line-height': lineHeight };
-
-  useEffect(() => {
-    if (!result) return;
-    const off = document.createElement('div');
-    off.className = `paper ${atsMode ? 'ats-mode' : ''}`;
-    Object.entries(styleVars).forEach(([k, v]) => off.style.setProperty(k, v));
-    off.style.position = 'absolute';
-    off.style.visibility = 'hidden';
-    off.style.pointerEvents = 'none';
-    off.style.left = '-10000px';
-    document.body.appendChild(off);
-    const pageHeight = off.getBoundingClientRect().height;
-    const root = createRoot(off);
-    root.render(<TemplateComp data={result.resumeData} />);
-    requestAnimationFrame(() => {
-      const total = off.scrollHeight;
-      const items = Array.from(off.querySelectorAll('.avoid-break'));
-      const positions = [];
-      let start = 0;
-      while (start < total) {
-        let end = start + pageHeight;
-        const crossing = items.find(
-          el => el.offsetTop < end && (el.offsetTop + el.offsetHeight) > end
-        );
-        if (crossing && crossing.offsetTop > start) {
-          end = crossing.offsetTop;
-        }
-        positions.push(start);
-        start = end;
-      }
-      const arr = positions.map((pos, i) => (
-        <div className={`paper ${atsMode ? 'ats-mode' : ''}`} style={styleVars} key={i}>
-          <div style={{ position: 'relative', top: -pos }}>
-            <TemplateComp data={result.resumeData} />
+  // Professional Template
+  const renderProfessionalCV = () => (
+    <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
+      {userData ? (
+        <>
+          <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: '8px', marginBottom: '12px' }}>
+            <h1 style={{ fontSize: '16px', marginBottom: '2px', color: accent, fontWeight: 'bold' }}>
+              {userData.resumeData?.name || userData.name || 'Your Name'}
+            </h1>
+            <p style={{ fontSize: '9px', color: '#666' }}>
+              {userData.resumeData?.email || userData.email || 'your.email@example.com'} • 
+              {userData.resumeData?.phone || userData.phone || 'Your Phone'}
+            </p>
           </div>
+          
+          {userData.resumeData?.summary && (
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Summary</h2>
+              <p style={{ fontSize: '9px', textAlign: 'justify' }}>{userData.resumeData.summary}</p>
+            </div>
+          )}
+
+          {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Core Competencies</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {userData.resumeData.skills.map((skill, i) => (
+                  <span key={i} style={{ fontSize: '8px', padding: '2px 6px', backgroundColor: '#f0f0f0', borderRadius: '3px' }}>{skill}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Experience</h2>
+              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+                <div key={i} style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{exp.title}</div>
+                      <div style={{ fontSize: '9px', color: '#666' }}>{exp.company}</div>
+                    </div>
+                    <div style={{ fontSize: '8px', color: '#666' }}>{exp.start} - {exp.end}</div>
+                  </div>
+                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                    <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>▪ {bullet}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Education</h2>
+              {userData.resumeData.education.slice(0, 2).map((edu, i) => (
+                <div key={i} style={{ marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
+                      <div style={{ fontSize: '8px', color: '#666' }}>{edu.institution}</div>
+                    </div>
+                    <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+          No data available. Please generate a resume first.
         </div>
-      ));
-      setResumePages(arr);
-      setPage(p => Math.min(p, arr.length - 1));
-      setRIndex(i => Math.min(i, arr.length - 1));
-      root.unmount();
-      document.body.removeChild(off);
-    });
-  }, [result, template, accent, density, atsMode]);
+      )}
+    </div>
+  );
 
-  if(!result) return null;
+  // Modern Template
+  const renderModernCV = () => (
+    <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Helvetica, sans-serif', lineHeight: '1.4' }}>
+      {userData ? (
+        <>
+          <div style={{ background: `linear-gradient(135deg, ${accent}20, ${accent}10)`, padding: '12px', marginBottom: '12px', borderRadius: '8px' }}>
+            <h1 style={{ fontSize: '16px', marginBottom: '2px', color: accent, fontWeight: 'bold' }}>
+              {userData.resumeData?.name || userData.name || 'Your Name'}
+            </h1>
+            <p style={{ fontSize: '9px', color: '#666' }}>
+              {userData.resumeData?.email || userData.email || 'your.email@example.com'} • 
+              {userData.resumeData?.phone || userData.phone || 'Your Phone'}
+            </p>
+          </div>
+          
+          {userData.resumeData?.summary && (
+            <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#f8f9fa', borderLeft: `4px solid ${accent}`, borderRadius: '4px' }}>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>About</h2>
+              <p style={{ fontSize: '9px' }}>{userData.resumeData.summary}</p>
+            </div>
+          )}
 
-  const coverPage = (
-    <div className={`paper cover-letter ${atsMode ? 'ats-mode' : ''}`} style={styleVars}>
-      <div className="text-[11px] leading-[1.6] space-y-[10px]">
-        {(result.coverLetter || 'No cover letter returned.').split(/\n+/).map((line, i) => (
-          <p key={i}>{line}</p>
-        ))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Skills</h2>
+                {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
+                  <div key={i} style={{ fontSize: '8px', marginBottom: '2px', padding: '2px', backgroundColor: '#f0f0f0' }}>{skill}</div>
+                ))}
+              </div>
+            )}
+            
+            {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Education</h2>
+                {userData.resumeData.education.slice(0, 2).map((edu, i) => (
+                  <div key={i} style={{ marginBottom: '6px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
+                    <div style={{ fontSize: '8px', color: '#666' }}>{edu.institution}</div>
+                    <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold' }}>Experience</h2>
+              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+                <div key={i} style={{ marginBottom: '10px', padding: '6px', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
+                    <div style={{ fontSize: '8px', color: '#666', backgroundColor: '#f0f0f0', padding: '1px 4px', borderRadius: '2px' }}>{exp.start} - {exp.end}</div>
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>{exp.company}</div>
+                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                    <div key={j} style={{ fontSize: '8px', marginLeft: '8px', marginTop: '2px' }}>→ {bullet}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+          No data available. Please generate a resume first.
+        </div>
+      )}
+    </div>
+  );
+
+  // Creative Template
+  const renderCreativeCV = () => (
+    <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Georgia, serif', lineHeight: '1.4' }}>
+      {userData ? (
+        <>
+          <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+            <h1 style={{ fontSize: '18px', marginBottom: '4px', color: accent, fontWeight: 'bold', letterSpacing: '1px' }}>
+              {userData.resumeData?.name || userData.name || 'Your Name'}
+            </h1>
+            <div style={{ height: '2px', width: '40px', backgroundColor: accent, margin: '4px auto' }}></div>
+            <p style={{ fontSize: '9px', color: '#666', fontStyle: 'italic' }}>
+              {userData.resumeData?.email || userData.email || 'your.email@example.com'} • 
+              {userData.resumeData?.phone || userData.phone || 'Your Phone'}
+            </p>
+          </div>
+          
+          {userData.resumeData?.summary && (
+            <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+              <h2 style={{ fontSize: '11px', color: accent, marginBottom: '4px', fontWeight: 'bold', fontStyle: 'italic' }}>Profile</h2>
+              <p style={{ fontSize: '9px', fontStyle: 'italic', maxWidth: '80%', margin: '0 auto' }}>{userData.resumeData.summary}</p>
+            </div>
+          )}
+
+          {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Experience</h2>
+                <div style={{ height: '1px', width: '30px', backgroundColor: accent, margin: '2px auto' }}></div>
+              </div>
+              {userData.resumeData.experience.slice(0, 2).map((exp, i) => (
+                <div key={i} style={{ marginBottom: '10px', position: 'relative', paddingLeft: '12px' }}>
+                  <div style={{ position: 'absolute', left: '0', top: '2px', width: '4px', height: '4px', backgroundColor: accent, borderRadius: '50%' }}></div>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: accent }}>{exp.title}</div>
+                  <div style={{ fontSize: '9px', color: '#666', fontStyle: 'italic' }}>{exp.company} • {exp.start} - {exp.end}</div>
+                  {exp.bullets && exp.bullets.slice(0, 2).map((bullet, j) => (
+                    <div key={j} style={{ fontSize: '8px', marginTop: '2px', color: '#555' }}>• {bullet}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+            {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
+              <div style={{ flex: 1 }}>
+                <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+                  <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Skills</h2>
+                  <div style={{ height: '1px', width: '20px', backgroundColor: accent, margin: '2px auto' }}></div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
+                    <span key={i} style={{ fontSize: '8px', color: accent, fontWeight: 'bold' }}>
+                      {skill}{i < userData.resumeData.skills.slice(0, 6).length - 1 ? ' • ' : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
+              <div style={{ flex: 1 }}>
+                <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+                  <h2 style={{ fontSize: '11px', color: accent, fontWeight: 'bold', fontStyle: 'italic' }}>Education</h2>
+                  <div style={{ height: '1px', width: '20px', backgroundColor: accent, margin: '2px auto' }}></div>
+                </div>
+                {userData.resumeData.education.slice(0, 1).map((edu, i) => (
+                  <div key={i} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{edu.area || edu.degree}</div>
+                    <div style={{ fontSize: '8px', color: '#666', fontStyle: 'italic' }}>{edu.institution}</div>
+                    <div style={{ fontSize: '8px', color: '#666' }}>{edu.start} - {edu.end}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+          No data available. Please generate a resume first.
+        </div>
+      )}
+    </div>
+  );
+
+  // CV Preview with template switching
+  const renderCVPreview = () => {
+    const getTemplateRenderer = () => {
+      switch (template) {
+        case 'modern': return renderModernCV();
+        case 'creative': return renderCreativeCV();
+        case 'professional':
+        default: return renderProfessionalCV();
+      }
+    };
+
+    return (
+      <div className="PreviewCard">
+        <div className="PreviewHeader">CV Preview</div>
+        <div className="A4Preview">
+          {getTemplateRenderer()}
+        </div>
+      </div>
+    );
+  };
+
+  // Cover Letter Preview
+  const renderCoverLetterPreview = () => (
+    <div className="PreviewCard">
+      <div className="PreviewHeader">Cover Letter Preview</div>
+      <div className="A4Preview">
+        <div style={{ padding: '15px', fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
+          {userData ? (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <h1 style={{ fontSize: '14px', marginBottom: '4px', color: accent, fontWeight: 'bold' }}>
+                  {userData.resumeData?.name || userData.name || 'Your Name'}
+                </h1>
+                <p style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
+                  {userData.resumeData?.email || userData.email || 'your.email@example.com'}
+                </p>
+                <p style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
+                  {userData.resumeData?.phone || userData.phone || 'Your Phone'}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '15px', textAlign: 'right' }}>
+                <p style={{ fontSize: '9px', color: '#666' }}>
+                  {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                {userData.coverLetter ? (
+                  userData.coverLetter.split('\n\n').filter(p => p.trim()).slice(0, 3).map((paragraph, i) => (
+                    <p key={i} style={{ fontSize: '9px', marginBottom: '8px', textAlign: 'justify' }}>
+                      {paragraph.trim()}
+                    </p>
+                  ))
+                ) : (
+                  <p style={{ fontSize: '9px', textAlign: 'justify' }}>
+                    Dear Hiring Manager,<br/><br/>
+                    I am writing to express my interest in the position at your company. With my background and experience, I believe I would be a valuable addition to your team.<br/><br/>
+                    Thank you for considering my application. I look forward to hearing from you.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <p style={{ fontSize: '9px' }}>Sincerely,</p>
+                <p style={{ fontSize: '9px', marginTop: '15px', fontWeight: 'bold' }}>
+                  {userData.resumeData?.name || userData.name || 'Your Name'}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+              No data available. Please generate a resume first.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-  const coverPages = [coverPage];
-
-  async function downloadResumePdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "resume" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "resume.pdf";
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  async function downloadCoverPdf() {
-    let payload = null;
-    try { payload = JSON.parse(localStorage.getItem("resumeResult") || "null"); } catch {}
-    const res = await fetch("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: payload, doc: "cover" })
-    });
-    const blob = await res.blob(); const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "cover-letter.pdf";
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  async function downloadCvDocx(){
-    const res = await fetch('/api/export-docx-structured',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({data: result.resumeData, filename:'cv'})});
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'cv.docx'; a.click(); URL.revokeObjectURL(url);
-  }
-  async function downloadClDocx(){
-    const res = await fetch('/api/export-cover-letter-docx',{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({coverLetter: result.coverLetter, filename:'cover_letter'})});
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cover_letter.docx'; a.click(); URL.revokeObjectURL(url);
-  }
-
-  function ResumePreviewWrapper({ children }) {
-    return (
-      <div id="resume-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
-      </div>
-    );
-  }
-
-  function CoverPreviewWrapper({ children }) {
-    return (
-      <div id="cover-preview">
-        <div id="print-root">
-          <ResponsiveA4Preview>{children}</ResponsiveA4Preview>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
       <Head>
-        <title>Results – TailorCV</title>
-        <meta
-          name="description"
-          content="Accurately preview and export your tailored CV and cover letter with responsive A4 display, scrollable full-screen zoom, side navigation controls, seamless multi-page downloads, customizable templates, themes, density, and ATS-friendly mode."
-        />
+        <title>Results Preview & Download – TailorCV</title>
+        <meta name="description" content="Preview your resume and cover letter side-by-side with one-click PDF downloads."/>
       </Head>
-      <MainShell
-        left={
-          <ControlsPanel
-            template={template}
-            setTemplate={setTemplate}
-            accent={accent}
-            setAccent={setAccent}
-            density={density}
-            setDensity={setDensity}
-            atsMode={atsMode}
-            setAtsMode={setAtsMode}
-            onExportPdf={downloadResumePdf}
-            onExportDocx={downloadCvDocx}
-            onExportClPdf={downloadCoverPdf}
-            onExportClDocx={downloadClDocx}
-            page={page}
-            pageCount={resumePages.length || 1}
-            onPageChange={(p)=>{setPage(p); setRIndex(p);}}
-          />
-        }
-        right={
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <PageCarousel
-              title="Résumé"
-              pages={resumePages}
-              index={rIndex}
-              setIndex={(i)=>{setRIndex(i); setPage(i);}}
-              onOpenLightbox={()=>setLightbox({ type: 'resume' })}
-              Wrapper={ResumePreviewWrapper}
-            />
-            <PageCarousel
-              title="Cover Letter"
-              pages={coverPages}
-              index={cIndex}
-              setIndex={setCIndex}
-              onOpenLightbox={()=>setLightbox({ type: 'cover' })}
-              Wrapper={CoverPreviewWrapper}
-            />
+      
+      <div className="ResultsLayout">
+        {/* Left sidebar controls */}
+        <aside className="ResultsSidebar">
+          <h2 className="PanelTitle">Controls</h2>
+          
+          <div className="Group">
+            <label className="Label" htmlFor="templateSelect">Template</label>
+            <select 
+              id="templateSelect" 
+              className="Select" 
+              value={template} 
+              onChange={(e) => setTemplate(e.target.value)}
+            >
+              {TEMPLATES.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
-        }
-      />
-      <LightboxModal
-        open={!!lightbox}
-        onClose={()=>setLightbox(null)}
-        onPrev={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.max(0, i-1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.max(0, i-1));
-        }}
-        onNext={()=>{
-          if(!lightbox) return;
-          if(lightbox.type === 'resume') setRIndex(i=>{ const n = Math.min((resumePages?.length ?? 1) - 1, i+1); setPage(n); return n; });
-          if(lightbox.type === 'cover') setCIndex(i=>Math.min((coverPages?.length ?? 1) - 1, i+1));
-        }}
-        canPrev={lightbox?.type === 'resume' ? rIndex > 0 : cIndex > 0}
-        canNext={lightbox?.type === 'resume'
-          ? rIndex < (resumePages?.length ?? 1) - 1
-          : cIndex < (coverPages?.length ?? 1) - 1}
-        pageLabel={
-          lightbox
-            ? `${lightbox.type === 'resume' ? rIndex + 1 : cIndex + 1} / ${lightbox.type === 'resume' ? (resumePages?.length ?? 1) : (coverPages?.length ?? 1)}`
-            : ''
-        }
-      >
-        {lightbox?.type === 'resume' ? resumePages?.[rIndex] : coverPages?.[cIndex]}
-      </LightboxModal>
+
+          <div className="Group">
+            <h3>Theme Colour</h3>
+            <div className="Row">
+              {ACCENTS.map(c => (
+                <button
+                  key={c}
+                  className="RadioSwatch"
+                  style={{background:c, outlineColor: c===accent ? c : 'var(--border)'}}
+                  onClick={() => setAccent(c)}
+                  aria-label={`Accent ${c}`}
+
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="Group">
+            <button className="Button" onClick={downloadCV}>
+              Download CV PDF
+            </button>
+            <div style={{height:10}} />
+            <button className="Button secondary" onClick={downloadCoverLetter}>
+              Download Cover Letter PDF
+            </button>
+          </div>
+        </aside>
+
+        {/* Right side previews */}
+        <section className="PreviewsSection">
+          <h2 className="PanelTitle">Previews</h2>
+          <div className="Previews">
+            {renderCVPreview()}
+            {renderCoverLetterPreview()}
+          </div>
+        </section>
+      </div>
     </>
   );
 }

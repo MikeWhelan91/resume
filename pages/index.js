@@ -9,7 +9,7 @@ export default function Home(){
     <>
       <Head>
         <title>TailorCV – ATS-ready CV</title>
-        <meta name="description" content="Upload your CV, paste a job description, and get a tailored CV plus cover letter." />
+        <meta name="description" content="Upload your CV, paste a job description, and get a tailored CV plus cover letter with one-click PDF downloads." />
       </Head>
       <header className="max-w-5xl mx-auto flex justify-between items-center p-4">
         <div className="font-bold text-xl">TailorCV</div>

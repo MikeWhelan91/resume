@@ -13,6 +13,10 @@ Notes:
  - Cross-references job description skills with your resume so cover letters only mention verified abilities and highlight willingness to learn any missing skills.
 
 ## Export
-- PDF export uses @react-pdf/renderer for vector, selectable-text PDFs.
+- Server-side PDF rendering via Puppeteer for crisp A4 output.
+- Live side-by-side previews eliminate duplication and ensure clean page breaks.
 - DOCX export unchanged.
-- HTML preview rebuilt for reliability.
+
+## Windows
+- Clean & reinstall on Windows:
+  `npm run clean && npm install && npm dedupe && npm ls react react-dom`

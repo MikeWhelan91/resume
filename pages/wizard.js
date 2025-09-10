@@ -25,7 +25,7 @@ export default function WizardPage(){
     <>
       <Head>
         <title>Resume Wizard – TailorCV</title>
-        <meta name="description" content="Step-by-step CV builder with real-time template rendering." />
+        <meta name="description" content="Step-by-step CV builder with real-time template rendering and one-click PDF downloads." />
       </Head>
       <ResumeWizard initialData={initial} onComplete={handleComplete} autosaveKey="resumeWizardDraft" template={template} onTemplateChange={setTemplate} />
     </>

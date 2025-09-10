@@ -217,19 +217,41 @@ html,body{ background: var(--bg); color: var(--ink); }
 }
 /* Base A4 paper dimensions */
 .paper{
-  width:794px;
-  height:1123px;
+  width:210mm;
+  height:297mm;
+  box-sizing:border-box;
   background:#fff;
-  border:1px solid var(--border);
-  border-radius:8px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.08);
   overflow:hidden;
-  padding:16mm 14mm;
+  padding:1in;
   position:relative;
 }
 
+.print-mode .paper{
+  box-shadow:none;
+  border:0;
+  border-radius:0;
+}
+
+@media print {
+  .paper { page-break-after: always; }
+  .paper:last-child { page-break-after: auto; }
+}
+
+
+.avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+html.print-mode,
+body.print-mode {
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 .cover-letter{
-  padding:48px;
+  padding:1in;
 }
 
 /* Pager controls */
@@ -279,15 +301,7 @@ html,body{ background: var(--bg); color: var(--ink); }
 
 @page {
   size: A4;
-  margin: 20mm;
-}
-@media print {
-  body { -webkit-print-color-adjust: exact; color-adjust: exact; }
-  .no-print { display: none !important; }
-}
-@page {
-  size: A4;            /* real A4 */
-  margin: 0;           /* margins will be handled by the page content itself */
+  margin: 0;
 }
 
 /* When printing or when we build HTML for Puppeteer, kill preview scaling */
@@ -296,7 +310,12 @@ html,body{ background: var(--bg); color: var(--ink); }
   #print-root [style*="transform"] {
     transform: none !important;
   }
-  /* Ensure our A4 inner page still has its true size */
+  /* Ensure our A4 preview containers render at true size */
+  #print-root .a4-outer {
+    width: 794px !important;
+    height: 1123px !important;
+    overflow: visible !important;
+  }
   #print-root .a4-scope {
     width: 794px !important;
     height: 1123px !important;
@@ -313,27 +332,7 @@ html,body{ background: var(--bg); color: var(--ink); }
   }
 }
 
-@page { size: A4; margin: 0; }
 @media print {
-  #print-root [style*="transform"] { transform: none !important; }  /* kill preview scaling */
-  #print-root [style*="zoom"] { zoom: 1 !important; }               /* just in case */
-  #print-root .a4-scope {
-    width: 794px !important;    /* A4 @ ~96dpi */
-    height: 1123px !important;
-  }
-  #print-root .a4-scope img,
-  #print-root .a4-scope canvas,
-  #print-root .a4-scope svg,
-  #print-root .a4-scope iframe,
-  #print-root .a4-scope video {
-    max-width: none !important;
-    width: auto;
-    height: auto;
-  }
-}
-@page { size: A4; margin: 0; }
-@media print {
-  html.print-mode body { -webkit-print-color-adjust: exact; color-adjust: exact; }
   /* Hide app chrome/controls in print */
   [data-app-chrome], .no-print { display: none !important; }
 
