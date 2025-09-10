@@ -4,6 +4,7 @@ import PreviewFrame from '../components/PreviewFrame';
 import { listTemplates, getTemplate } from '../templates';
 import { renderHtml } from '../lib/renderHtmlTemplate';
 import { toTemplateModel } from '../lib/templateModel';
+import { renderCoverLetterPreview } from '../lib/renderCoverLetterPreview';
 
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 
@@ -53,8 +54,8 @@ export default function ResultsPage() {
     [tpl, model, accent, tplDensity]
   );
   const coverHtml = useMemo(
-    () => renderHtml({ html: tpl.html, css: tpl.css, model: coverModel, options: { mode:'preview', accent, density: tplDensity, ats:false } }),
-    [tpl, coverModel, accent, tplDensity]
+    () => renderCoverLetterPreview(appData, accent),
+    [appData, accent]
   );
 
   const isLoading = result == null;
