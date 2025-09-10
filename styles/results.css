@@ -78,7 +78,9 @@ html,body{ background:var(--bg); }
   padding:12px;
   overflow:hidden;
   min-width:0;
-  height:420px; /* Fixed height to contain scaled preview */
+  height:600px; /* Full height for A4 preview */
+  display:flex;
+  flex-direction:column;
 }
 
 .PreviewHeader{
@@ -87,13 +89,12 @@ html,body{ background:var(--bg); }
 }
 
 .A4Preview{
-  width:794px; height:1123px;  /* A4 @ ~96dpi */
+  width: 100%; 
+  aspect-ratio: 210 / 297; /* Proper A4 ratio */
   border:1px solid #e5e7eb; 
   background:#fff;
   border-radius:8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform-origin: top left;
-  transform: scale(0.35); /* Much smaller for side-by-side */
 }
 
 @media (max-width: 1200px){
