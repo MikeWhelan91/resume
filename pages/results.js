@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
-import { FileText, Download, ArrowLeft, Sparkles, Palette, Zap } from 'lucide-react';
+import { FileText, Download, ArrowLeft, Sparkles, Palette, Zap, FileDown } from 'lucide-react';
 
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 
@@ -20,7 +20,8 @@ export default function ResultsPage() {
   const [userData, setUserData] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [userGoal, setUserGoal] = useState('both'); // Track what the user wants to generate
+  const [userGoal, setUserGoal] = useState('both');
+
 
   // Download functions
   const triggerDownload = async (endpoint, filename, payload) => {
@@ -75,6 +76,41 @@ export default function ResultsPage() {
     } catch (error) {
       console.error('Download error:', error);
       // Silently handle download errors
+    }
+  };
+
+  const downloadResumeDocx = async () => {
+    if (!userData) {
+      alert('No data available. Please generate a resume first.');
+      return;
+    }
+
+    try {
+      await triggerDownload('/api/export-resume-docx', `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`, {
+        userData,
+        template,
+        accent
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download DOCX file. Please try again.');
+    }
+  };
+
+  const downloadCoverLetterDocx = async () => {
+    if (!userData) {
+      alert('No data available. Please generate a resume first.');
+      return;
+    }
+
+    try {
+      await triggerDownload('/api/export-cover-letter-docx', `${(userData.resumeData?.name || userData.name || 'cover_letter').replace(/\s+/g, '_')}_cover_letter.docx`, {
+        userData,
+        accent
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download cover letter DOCX file. Please try again.');
     }
   };
 
@@ -134,6 +170,7 @@ export default function ResultsPage() {
       console.error('Error loading user data:', e);
     }
   }, []);
+
 
 
     // CV Preview
@@ -343,22 +380,43 @@ export default function ResultsPage() {
                 
                 <div className="space-y-2">
                   {(userGoal === 'cv' || userGoal === 'both') && (
-                    <button 
-                      className="btn btn-primary w-full flex items-center gap-2 justify-center" 
-                      onClick={downloadCV}
-                    >
-                      <Download className="w-4 h-4" />
-                      Download Resume PDF
-                    </button>
+                    <>
+                      <button 
+                        className="btn btn-primary w-full flex items-center gap-2 justify-center" 
+                        onClick={downloadCV}
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Resume PDF
+                      </button>
+                      
+                      <button 
+                        className="btn btn-secondary w-full flex items-center gap-2 justify-center"
+                        onClick={downloadResumeDocx}
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Download Resume DOCX
+                      </button>
+                    </>
                   )}
+                  
                   {(userGoal === 'cover-letter' || userGoal === 'both') && (
-                    <button 
-                      className="btn btn-primary w-full flex items-center gap-2 justify-center" 
-                      onClick={downloadCoverLetter}
-                    >
-                      <Download className="w-4 h-4" />
-                      Download Cover Letter PDF
-                    </button>
+                    <>
+                      <button 
+                        className="btn btn-primary w-full flex items-center gap-2 justify-center"
+                        onClick={downloadCoverLetter}
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Cover Letter PDF
+                      </button>
+                      
+                      <button 
+                        className="btn btn-secondary w-full flex items-center gap-2 justify-center"
+                        onClick={downloadCoverLetterDocx}
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Download Cover Letter DOCX
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -381,6 +439,7 @@ export default function ResultsPage() {
           </section>
         </div>
       </div>
+
     </>
   );
 }

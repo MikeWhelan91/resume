@@ -10,7 +10,10 @@
       "Bash(dir:*)",
       "Bash(sed:*)",
       "Bash(taskkill:*)",
-      "Bash(/bashes)"
+      "Bash(/bashes)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

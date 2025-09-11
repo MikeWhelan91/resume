@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Sparkles, FileText, Home } from 'lucide-react';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-xl">

@@ -56,3 +56,5 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+/lib/generated/prisma
