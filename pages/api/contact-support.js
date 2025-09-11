@@ -66,7 +66,7 @@ Time: ${new Date().toISOString()}
       
       // Send email using Resend
       await resend.emails.send({
-        from: 'TailoredCV.app <onboarding@resend.dev>',
+        from: 'TailoredCV.app <support@tailoredcv.app>',
         to: ['support@tailoredcv.app'],
         subject: `[Support] ${subject}`,
         html: htmlContent,

@@ -15,7 +15,8 @@
       "Bash(npx prisma:*)",
       "Bash(npm run build:*)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(openssl rand:*)"
     ],
     "deny": [],
     "ask": []

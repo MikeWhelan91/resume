@@ -51,15 +51,47 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <Link 
-              href="/wizard" 
-              className="btn btn-primary btn-sm"
-            >
-              <Sparkles className="w-4 h-4" />
-              Get Started
-            </Link>
+          {/* Auth Section */}
+          <div className="hidden md:flex items-center space-x-3">
+            {status === 'loading' ? (
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+            ) : session ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-600">
+                  {session.user.email}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link
+                  href="/auth/signin"
+                  className="btn btn-ghost btn-sm"
+                >
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="btn btn-secondary btn-sm"
+                >
+                  Sign Up
+                </Link>
+                <Link 
+                  href="/wizard" 
+                  className="btn btn-primary btn-sm"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Get Started
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
