@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-export default function StepNav({ steps, current, onChange, allowNext=true }) {
+export default function StepNav({ steps, current, onChange, allowNext=true, onNext, onPrev, showButtons=false, isGenerating=false }) {
   useEffect(() => {
     function onKey(e){
       if(e.key==='ArrowRight' && current < steps.length-1 && allowNext) onChange(current+1);
@@ -12,19 +13,94 @@ export default function StepNav({ steps, current, onChange, allowNext=true }) {
 
   return (
     <nav className="mb-6">
-      <ol className="hidden md:flex items-center gap-4">
-        {steps.map((s,i)=>{
-          const state = i<current ? 'done' : i===current ? 'active' : 'todo';
-          return (
-            <li key={s} className="flex items-center cursor-pointer" onClick={()=>{ if(i<=current || allowNext) onChange(i); }}>
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 ${state==='done'?'bg-[var(--accent)] text-white':state==='active'?'border-2 border-[var(--accent)]':'border border-[var(--rule)]'}`}>{i+1}</span>
-              <span className="text-sm">{s}</span>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="md:hidden h-2 bg-[var(--rule)] rounded">
-        <div className="h-full bg-[var(--accent)] rounded" style={{width:`${(current)/(steps.length-1)*100}%`}} />
+      {/* Desktop: Progress steps with buttons */}
+      <div className="hidden md:flex items-center justify-between">
+        <ol className="flex items-center gap-4 flex-1">
+          {steps.map((s,i)=>{
+            const state = i<current ? 'done' : i===current ? 'active' : 'todo';
+            return (
+              <li key={s} className="flex items-center cursor-pointer" onClick={()=>{ if(i<=current || allowNext) onChange(i); }}>
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-blue-600 text-white':state==='active'?'border-2 border-blue-600 text-blue-600':'border border-gray-300 text-gray-400'}`}>{i+1}</span>
+                <span className={`text-sm transition-colors ${state==='active'?'text-gray-900 font-medium':'text-gray-500'}`}>{s}</span>
+              </li>
+            );
+          })}
+        </ol>
+        
+        {showButtons && (
+          <div className="flex items-center gap-3 ml-8">
+            <button 
+              type="button" 
+              onClick={onPrev} 
+              disabled={current === 0} 
+              className="btn btn-secondary flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <button 
+              type="button" 
+              onClick={onNext} 
+              disabled={!allowNext || isGenerating} 
+              className="btn btn-primary flex items-center gap-2"
+            >
+              {isGenerating && (
+                <div className="loading-spinner w-4 h-4"></div>
+              )}
+              {current === steps.length - 1 ? (
+                isGenerating ? 'Generating...' : 'Generate Documents'
+              ) : (
+                'Next'
+              )}
+              {!isGenerating && current < steps.length - 1 && (
+                <ArrowRight className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Mobile: Progress bar with buttons */}
+      <div className="md:hidden space-y-4">
+        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+          <span>Step {current + 1} of {steps.length}</span>
+          <span>{steps[current]}</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full">
+          <div className="h-full bg-blue-600 rounded-full transition-all duration-300" style={{width:`${(current)/(steps.length-1)*100}%`}} />
+        </div>
+        
+        {showButtons && (
+          <div className="flex items-center justify-between pt-2">
+            <button 
+              type="button" 
+              onClick={onPrev} 
+              disabled={current === 0} 
+              className="btn btn-secondary btn-sm flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <button 
+              type="button" 
+              onClick={onNext} 
+              disabled={!allowNext || isGenerating} 
+              className="btn btn-primary btn-sm flex items-center gap-2"
+            >
+              {isGenerating && (
+                <div className="loading-spinner w-3 h-3"></div>
+              )}
+              {current === steps.length - 1 ? (
+                isGenerating ? 'Generating...' : 'Generate'
+              ) : (
+                'Next'
+              )}
+              {!isGenerating && current < steps.length - 1 && (
+                <ArrowRight className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

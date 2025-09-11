@@ -273,17 +273,17 @@ export default function ResumeTemplate({ userData, template, accent, isPDF = fal
 export const resumeBaseStyles = `
   <style>
     @page {
-      margin: 0;
+      margin: 15mm;
       size: A4;
       padding: 0; /* Remove any default padding */
     }
     
     @page :first {
-      margin-top: 0; /* No margin on first page */
+      margin: 15mm; /* Consistent margins on first page */
     }
     
     @page :left, @page :right {
-      margin-top: 0; /* No margin on subsequent pages */
+      margin: 15mm; /* Consistent margins on subsequent pages */
     }
     
     body {
@@ -305,8 +305,6 @@ export const resumeBaseStyles = `
       width: 794px;
       min-height: 1123px; /* Allow multiple pages */
       background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
       box-sizing: border-box;
       overflow: visible; /* Allow content to flow to next page */
       margin: 0; /* No margin */

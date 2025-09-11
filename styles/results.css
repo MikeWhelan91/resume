@@ -12,8 +12,9 @@ html,body{ background:var(--bg); }
   display:grid;
   grid-template-columns: 340px 1fr;
   gap:24px;
-  padding:20px 24px 40px;
+  padding:20px 24px 20px;
   align-items:start;
+  min-height: calc(100vh - 120px); /* Account for navbar and footer */
 }
 
 .ResultsSidebar{
@@ -79,6 +80,13 @@ html,body{ background:var(--bg); }
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:24px;
+}
+
+.Previews.centered{
+  grid-template-columns: 1fr;
+  justify-items: center;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .PreviewCard{

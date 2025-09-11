@@ -15,6 +15,8 @@ async function extractTextFromFile(file){
   const p = f.filepath || f.path;
   const mime = (f.mimetype || f.type || "").toLowerCase();
   if (!p) return "";
+  
+  
   const buf = fs.readFileSync(p);
   let text = "";
   if (mime.includes("pdf") || p.toLowerCase().endsWith(".pdf")){
@@ -24,6 +26,7 @@ async function extractTextFromFile(file){
   } else {
     text = buf.toString("utf8");
   }
+  
   try{ fs.unlinkSync(p); }catch{}
   return text;
 }
@@ -49,16 +52,15 @@ export default async function handler(req,res){
     }
     if (!resumeText) return res.status(400).json({ error:"No readable file" });
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const system = `Output ONLY JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[]}}
-Experience items must include company, title, start, end, location?, bullets[].
-Education items must include school, degree, start, end, grade?.
-Use ONLY details present in RESUME_TEXT. Do not fabricate.`;
-    const user = `RESUME_TEXT:\n${resumeText}`;
+    const system = `Extract as JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[]}}
+Experience: company,title,start,end,location?,bullets[]. Education: school,degree,start,end,grade?.`;
+    const user = `${resumeText.slice(0, 15000)}`; // Limit input text for faster processing
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0,
       response_format: { type: "json_object" },
-      messages: [{ role:"system", content: system }, { role:"user", content: user }]
+      messages: [{ role:"system", content: system }, { role:"user", content: user }],
+      max_tokens: 2000
     });
     const json = safeJSON(resp.choices?.[0]?.message?.content || "");
     if (!json) return res.status(502).json({ error:"Bad model output" });

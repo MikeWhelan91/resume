@@ -59,7 +59,7 @@ export default function SkillsInput({ value = [], onChange }) {
       <div className="flex gap-2">
         <input
           ref={inputRef}
-          className="flex-1 h-11 rounded-xl border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+          className="form-input flex-1"
           value={input}
           onChange={e=>setInput(e.target.value)}
           onKeyDown={handleKey}
@@ -69,14 +69,14 @@ export default function SkillsInput({ value = [], onChange }) {
         <button
           type="button"
           onClick={handleAdd}
-          className="px-4 h-11 rounded-xl bg-teal-600 text-white disabled:opacity-50"
+          className="btn btn-primary"
           disabled={!input.trim()}
         >+ Add</button>
       </div>
       {!!suggestions.length && (
         <div className="flex gap-2 flex-wrap text-sm">
           {suggestions.map(s => (
-            <button key={s} type="button" onClick={()=>{commit(s); setInput('');}} className="px-2 py-1 rounded-md border border-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700" aria-label={`Add ${s}`}>
+            <button key={s} type="button" onClick={()=>{commit(s); setInput('');}} className="btn btn-ghost btn-sm" aria-label={`Add ${s}`}>
               {s}
             </button>
           ))}

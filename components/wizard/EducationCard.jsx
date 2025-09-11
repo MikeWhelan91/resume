@@ -28,7 +28,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
         <div className="space-y-1">
           <label className="text-xs font-medium text-zinc-600">School*</label>
           <input
-            className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+            className="form-input"
             value={value.school}
             onChange={e => updateField('school', e.target.value)}
             required
@@ -37,7 +37,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
         <div className="space-y-1">
           <label className="text-xs font-medium text-zinc-600">Degree</label>
           <input
-            className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+            className="form-input"
             value={value.degree || ''}
             onChange={e => updateField('degree', e.target.value)}
           />
@@ -45,7 +45,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
         <div className="space-y-1">
           <label className="text-xs font-medium text-zinc-600">Grade</label>
           <input
-            className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+            className="form-input"
             value={value.grade || ''}
             onChange={e => updateField('grade', e.target.value)}
           />
@@ -55,7 +55,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
             <label className="text-xs font-medium text-zinc-600">Start</label>
             <input
               type="month"
-              className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+              className="form-input"
               value={value.start}
               onChange={e => updateField('start', e.target.value)}
             />
@@ -65,7 +65,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
             <input
               type="month"
               disabled={value.present}
-              className="h-11 w-full rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent disabled:opacity-50"
+              className="form-input disabled:opacity-50"
               value={value.end || ''}
               onChange={e => updateField('end', e.target.value)}
             />
@@ -81,13 +81,13 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
         <div className="text-xs font-medium text-zinc-500">Highlights</div>
         <div className="flex gap-2">
           <input
-            className="flex-1 h-11 rounded-xl border border-zinc-300 px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-transparent"
+            className="form-input flex-1"
             value={bulletInput}
             onChange={e=>setBulletInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addBullet(); } }}
             aria-label="Add highlight"
           />
-          <button type="button" onClick={addBullet} className="px-3 h-11 rounded-xl bg-teal-600 text-white disabled:opacity-50" disabled={!bulletInput.trim()}>+ Add</button>
+          <button type="button" onClick={addBullet} className="btn btn-primary" disabled={!bulletInput.trim()}>+ Add</button>
         </div>
         <ul className="space-y-2">
           <AnimatePresence>
@@ -102,7 +102,7 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
       </div>
 
       <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-        {onDuplicate && <button type="button" onClick={onDuplicate} className="text-sm text-teal-600">Duplicate</button>}
+        {onDuplicate && <button type="button" onClick={onDuplicate} className="btn btn-ghost btn-sm">Duplicate</button>}
         {onRemove && <button type="button" onClick={onRemove} className="text-sm text-red-600">Remove</button>}
       </div>
     </motion.div>

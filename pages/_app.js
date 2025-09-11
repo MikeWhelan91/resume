@@ -1,7 +1,10 @@
 import "../styles/globals.css";
+import "../styles/modern.css";
 import "../styles/resume.css";
 import "../styles/results.css";
 import Head from "next/head";
+import Navbar from "../components/ui/Navbar";
+import Footer from "../components/ui/Footer";
 
 export default function MyApp({ Component, pageProps }) {
   return (
@@ -43,8 +46,13 @@ export default function MyApp({ Component, pageProps }) {
 
         <title>TailorCV</title>
       </Head>
-      <style jsx global>{`body { background: #f6f7f9; }`}</style>
-      <Component {...pageProps} />
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        <Navbar />
+        <main className="flex-1">
+          <Component {...pageProps} />
+        </main>
+        <Footer />
+      </div>
     </>
   );
 }

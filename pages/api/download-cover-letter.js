@@ -24,10 +24,10 @@ export default async function handler(req, res) {
       format: 'A4', 
       printBackground: true,
       margin: { 
-        top: '0px', 
-        bottom: '0px', 
-        left: '0px', 
-        right: '0px' 
+        top: '15mm', 
+        bottom: '15mm', 
+        left: '15mm', 
+        right: '15mm' 
       },
       preferCSSPageSize: true,
       displayHeaderFooter: false
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
 }
 
 function generateCoverLetterHTML(userData, accent) {
-  const scale = 1.75; // Use 1.75x scaling for PDF to match CV scaling
+  const scale = 1.75; // Use 1.75x scaling for PDF
   const today = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -59,7 +59,7 @@ function generateCoverLetterHTML(userData, accent) {
       }
       body { 
         margin: 0; 
-        padding: ${15 * scale}px; 
+        padding: ${25 * scale}px; 
         font-size: ${10 * scale}px; 
         line-height: 1.5; 
         font-family: Arial, sans-serif;

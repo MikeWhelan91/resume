@@ -8,7 +8,9 @@
       "Bash(npm run dev:*)",
       "Bash(dir templates)",
       "Bash(dir:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(taskkill:*)",
+      "Bash(/bashes)"
     ],
     "deny": [],
     "ask": []

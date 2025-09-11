@@ -25,10 +25,10 @@ export default async function handler(req, res) {
       format: 'A4', 
       printBackground: true,
       margin: { 
-        top: '0px', 
-        bottom: '0px', 
-        left: '0px', 
-        right: '0px' 
+        top: '15mm', 
+        bottom: '15mm', 
+        left: '15mm', 
+        right: '15mm' 
       },
       preferCSSPageSize: true,
       displayHeaderFooter: false
