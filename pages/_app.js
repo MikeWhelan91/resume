@@ -14,7 +14,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <meta
           name="description"
-          content="TailorCV generates ATS-friendly resumes and cover letters tailored to any job description, cross-referencing skills to avoid fabricated proficiency, with customizable templates, real-time rendering, and one-click PDF downloads."
+          content="TailoredCV.app generates ATS-friendly resumes and cover letters tailored to any job description, cross-referencing skills to avoid fabricated proficiency, with customizable templates, real-time rendering, and one-click PDF downloads."
         />
         <link
           rel="preload"
@@ -45,7 +45,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
           crossOrigin="anonymous"
         />
 
-        <title>TailorCV</title>
+        <title>TailoredCV.app</title>
       </Head>
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-blue-50">
         <Navbar />

@@ -20,7 +20,7 @@ export default function Navbar() {
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-200"></div>
               </div>
-              <span className="text-xl font-bold text-gradient">TailorCV</span>
+              <span className="text-xl font-bold text-gradient">TailoredCV.app</span>
             </Link>
           </div>
 

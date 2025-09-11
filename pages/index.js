@@ -5,7 +5,7 @@ export default function Home(){
   return (
     <>
       <Head>
-        <title>TailorCV – AI-Powered Resume Optimization</title>
+        <title>TailoredCV.app – AI-Powered Resume Optimization</title>
         <meta name="description" content="Create ATS-friendly resumes and cover letters with AI. Upload your existing resume or start from scratch - get hired faster with professionally tailored documents." />
       </Head>
       <HeroUpload />

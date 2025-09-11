@@ -10,7 +10,10 @@ const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 const TEMPLATES = [
   { id: 'professional', name: 'Professional' },
   { id: 'modern', name: 'Modern' },
-  { id: 'creative', name: 'Creative' }
+  { id: 'creative', name: 'Creative' },
+  { id: 'minimal', name: 'Minimal' },
+  { id: 'two-column', name: 'Two Column' },
+  { id: 'executive', name: 'Executive' }
 ];
 
 export default function ResultsPage() {
@@ -273,7 +276,7 @@ export default function ResultsPage() {
   return (
     <>
       <Head>
-        <title>{headerContent.title} – TailorCV</title>
+        <title>{headerContent.title} – TailoredCV.app</title>
         <meta name="description" content={headerContent.description}/>
       </Head>
       

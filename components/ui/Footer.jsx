@@ -1,4 +1,5 @@
 import { Sparkles, Heart } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -11,7 +12,7 @@ export default function Footer() {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-gradient">TailorCV</span>
+              <span className="text-lg font-bold text-gradient">TailoredCV.app</span>
             </div>
             <p className="text-sm text-gray-600 max-w-xs">
               AI-powered resume and cover letter optimization that gets you hired faster.
@@ -33,9 +34,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Support
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -61,7 +62,7 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-200/50">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-xs text-gray-500">
-              © {new Date().getFullYear()} TailorCV. All rights reserved.
+              © {new Date().getFullYear()} TailoredCV.app. All rights reserved.
             </p>
             <div className="flex items-center space-x-1 text-xs text-gray-500">
               <span>Made with</span>
