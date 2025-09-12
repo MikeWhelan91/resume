@@ -8,6 +8,7 @@ export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userPlan, setUserPlan] = useState('free');
   const [entitlement, setEntitlement] = useState(null);
 
@@ -31,10 +32,18 @@ export default function Navbar() {
     fetchUserData();
   }, [session]);
 
-  const getPlanDisplayName = (plan) => {
+  const getPlanDisplayName = (plan, entitlement) => {
     switch (plan) {
       case 'free': return 'Free Plan';
-      case 'day_pass': return 'Day Pass';
+      case 'day_pass': {
+        if (entitlement?.expiresAt) {
+          const expiresAt = new Date(entitlement.expiresAt);
+          const now = new Date();
+          const hoursLeft = Math.max(0, Math.ceil((expiresAt - now) / (1000 * 60 * 60)));
+          return `Day Pass (${hoursLeft}h left)`;
+        }
+        return 'Day Pass';
+      }
       case 'pro_monthly': return 'Pro Monthly';
       case 'pro_annual': return 'Pro Annual';
       default: return 'Free Plan';
@@ -157,7 +166,7 @@ export default function Navbar() {
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center space-x-2 mb-2">
                           {getPlanIcon(userPlan)}
-                          <span className="font-medium text-gray-900">{getPlanDisplayName(userPlan)}</span>
+                          <span className="font-medium text-gray-900">{getPlanDisplayName(userPlan, entitlement)}</span>
                           {userPlan !== 'free' && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               Active
@@ -242,16 +251,157 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="btn btn-ghost btn-sm"
               aria-controls="mobile-menu"
-              aria-expanded="false"
+              aria-expanded={isMobileMenuOpen}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
             </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-40 bg-black/20 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            
+            {/* Mobile menu panel */}
+            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-lg">
+              <div className="px-4 py-6 space-y-4">
+                {/* Navigation Links */}
+                <Link 
+                  href="/" 
+                  className={`mobile-nav-link ${router.pathname === '/' ? 'active' : ''}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Home className="w-4 h-4" />
+                  Home
+                </Link>
+                <Link 
+                  href="/wizard" 
+                  className={`mobile-nav-link ${router.pathname === '/wizard' ? 'active' : ''}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FileText className="w-4 h-4" />
+                  Create Resume
+                </Link>
+                {router.pathname === '/results' && (
+                  <Link 
+                    href="/results" 
+                    className="mobile-nav-link active"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Results
+                  </Link>
+                )}
+
+                {/* Auth Section */}
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  {status === 'loading' ? (
+                    <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                  ) : session ? (
+                    <div className="space-y-4">
+                      {/* User Info */}
+                      <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
+                        {getPlanIcon(userPlan)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{getPlanDisplayName(userPlan, entitlement)}</p>
+                          <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
+                          {userPlan === 'free' && entitlement && (
+                            <p className="text-xs text-gray-500">
+                              {entitlement.freeWeeklyCreditsRemaining || 0}/15 credits remaining
+                            </p>
+                          )}
+                        </div>
+                        {userPlan !== 'free' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleBillingClick();
+                          }}
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
+                        </button>
+                        
+                        {userPlan !== 'free' && (
+                          <button
+                            onClick={() => {
+                              setIsMobileMenuOpen(false);
+                              handleCancelSubscription();
+                            }}
+                            className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-orange-700 hover:bg-orange-50 rounded-lg border border-orange-200"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>Cancel Subscription</span>
+                          </button>
+                        )}
+                        
+                        <button
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            signOut();
+                          }}
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg border border-red-200"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Link
+                        href="/auth/signin"
+                        className="w-full btn btn-ghost btn-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/auth/signup"
+                        className="w-full btn btn-secondary btn-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                      <Link 
+                        href="/wizard" 
+                        className="w-full btn btn-primary btn-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Get Started
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </nav>
   );

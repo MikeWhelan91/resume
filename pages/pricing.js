@@ -47,7 +47,8 @@ export default function PricingPage() {
       monthlyPrice: 0,
       annualPrice: 0,
       features: [
-        '15 credits per week',
+        '15 credits per week (resets Monday)',
+        '1 credit per generation/download',
         'Professional template only',
         'PDF downloads only',
         'Basic customization',
@@ -62,12 +63,32 @@ export default function PricingPage() {
       popular: false
     },
     {
+      name: 'Day Pass',
+      description: 'Perfect for urgent job applications',
+      monthlyPrice: 2.99,
+      annualPrice: 2.99,
+      features: [
+        '24-hour unlimited access',
+        '50 generations & downloads',
+        'All premium templates',
+        'DOCX + PDF downloads',
+        'All color themes',
+        'Priority processing',
+        'Full customization access'
+      ],
+      buttonText: 'Buy Day Pass',
+      buttonVariant: 'primary',
+      popular: false,
+      planType: 'day_pass'
+    },
+    {
       name: 'Pro Monthly',
       description: 'Full access with monthly flexibility',
       monthlyPrice: 9.99,
       annualPrice: 9.99,
       features: [
-        'Unlimited generations',
+        'Unlimited generations & downloads',
+        'No credit limits or restrictions',
         'All premium templates',
         'DOCX + PDF downloads',
         'All color themes',
@@ -153,7 +174,7 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-4 gap-6">
             {plans.map((plan, index) => (
               <div
                 key={plan.name}
@@ -179,6 +200,13 @@ export default function PricingPage() {
                   <div className="mb-4">
                     {plan.monthlyPrice === 0 ? (
                       <div className="text-4xl font-bold text-gray-900">Free</div>
+                    ) : plan.name === 'Day Pass' ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-4xl font-bold text-gray-900">
+                          €{plan.monthlyPrice}
+                        </span>
+                        <span className="text-gray-600">/24h</span>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
                         <span className="text-4xl font-bold text-gray-900">
@@ -192,7 +220,7 @@ export default function PricingPage() {
                         )}
                       </div>
                     )}
-                    {isAnnual && plan.annualPrice > 0 && (
+                    {isAnnual && plan.annualPrice > 0 && plan.name !== 'Day Pass' && (
                       <div className="text-sm text-gray-500 mt-1">
                         Billed annually (€{plan.annualPrice}/year)
                       </div>
@@ -271,6 +299,13 @@ export default function PricingPage() {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">What's the difference between templates?</h3>
                 <p className="text-gray-600">
                   Free users get access to our Professional template. Pro users unlock all premium templates including Modern, Creative, Minimal, Two Column, and Executive designs.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">How does the Day Pass work?</h3>
+                <p className="text-gray-600">
+                  The Day Pass gives you 24 hours of full Pro access starting from the moment of purchase. You get 50 generations/downloads, all premium templates, and full customization features - perfect for urgent job applications.
                 </p>
               </div>
 

@@ -34,10 +34,17 @@ export default async function handler(req, res) {
     const { planType } = req.body || {}
 
     // Choose the correct live price server-side
-    const priceId =
-      planType === 'pro_annual'
-        ? process.env.STRIPE_PRICE_PRO_ANNUAL
-        : process.env.STRIPE_PRICE_PRO_MONTHLY
+    let priceId;
+    let mode = 'subscription';
+    
+    if (planType === 'pro_annual') {
+      priceId = process.env.STRIPE_PRICE_PRO_ANNUAL;
+    } else if (planType === 'pro_monthly') {
+      priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+    } else if (planType === 'day_pass') {
+      priceId = process.env.STRIPE_PRICE_DAY_PASS;
+      mode = 'payment'; // One-time payment for day pass
+    }
 
     if (!priceId) {
       return res.status(500).json({ error: 'Price not configured' })
@@ -62,10 +69,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Base URL not configured' })
     }
 
-    // Create the subscription checkout session
+    // Create the checkout session (subscription or one-time payment)
     const checkout = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
-      mode: 'subscription',
+      mode: mode,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/account?success=true`,
       cancel_url: `${baseUrl}/account?canceled=true`,

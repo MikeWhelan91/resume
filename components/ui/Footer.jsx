@@ -41,20 +41,16 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter/CTA */}
+          {/* Get Started */}
           <div className="col-span-1 md:col-span-1">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Stay Updated</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Get Started</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Get the latest features and career tips delivered to your inbox.
+              Create your professional resume in minutes with AI-powered optimization.
             </p>
-            <div className="flex space-x-2">
-              <input 
-                type="email" 
-                placeholder="Enter your email"
-                className="form-input text-sm flex-1"
-              />
-              <button className="btn btn-primary btn-sm">Subscribe</button>
-            </div>
+            <Link href="/wizard" className="btn btn-primary btn-sm inline-flex items-center space-x-2">
+              <Sparkles className="w-4 h-4" />
+              <span>Start Building</span>
+            </Link>
           </div>
         </div>
 

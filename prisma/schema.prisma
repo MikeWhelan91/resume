@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
@@ -21,15 +15,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -43,17 +36,17 @@ model Session {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
+  id               String       @id @default(cuid())
+  email            String       @unique
   emailVerified    DateTime?
+  stripeCustomerId String?      @unique
+  createdAt        DateTime     @default(now())
   password         String?
-  stripeCustomerId String?   @unique
-  createdAt        DateTime  @default(now())
-  
-  accounts    Account[]
-  sessions    Session[]
-  entitlement Entitlement?
-  apiUsage    ApiUsage[]
+  accounts         Account[]
+  apiUsage         ApiUsage[]
+  entitlement      Entitlement?
+  sessions         Session[]
+  savedResumes     SavedResume[]
 }
 
 model VerificationToken {
@@ -65,16 +58,15 @@ model VerificationToken {
 }
 
 model Entitlement {
-  userId                    String                 @id
-  plan                      Plan                   @default(free)
-  status                    EntitlementStatus      @default(active)
-  features                  Json                   @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
-  freeWeeklyCreditsRemaining Int                   @default(5)
-  lastWeeklyReset           DateTime?
-  expiresAt                 DateTime?              // For day-pass expiry
-  updatedAt                 DateTime               @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                     String            @id
+  plan                       Plan              @default(free)
+  status                     EntitlementStatus @default(active)
+  features                   Json              @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
+  updatedAt                  DateTime          @updatedAt
+  expiresAt                  DateTime?
+  freeWeeklyCreditsRemaining Int               @default(5)
+  lastWeeklyReset            DateTime?
+  user                       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ApiUsage {
@@ -82,13 +74,29 @@ model ApiUsage {
   userId    String
   route     String
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model WebhookEvent {
   eventId     String   @id
   processedAt DateTime @default(now())
+}
+
+model SavedResume {
+  id        String   @id @default(cuid())
+  userId    String
+  data      Json     // Resume form data
+  name      String?  // Optional name for the resume
+  template  String   @default("classic")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime? // When this resume expires and should be deleted
+  isLatest  Boolean  @default(true) // Mark the most recent one
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([userId, isLatest])
+  @@index([expiresAt]) // For cleanup queries
 }
 
 enum Plan {

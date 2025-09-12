@@ -72,48 +72,56 @@ export default async function handler(req, res) {
 
 async function handleCheckoutCompleted(session) {
   const userId = session.client_reference_id || session.metadata?.userId
+  const planType = session.metadata?.planType
   
   if (!userId) {
     console.error('No user ID found in checkout session')
     return
   }
 
-  // Determine plan based on price ID
   let plan = 'pro_monthly'
+  let expiresAt = null
+
   if (session.subscription) {
+    // Subscription-based plan
     const subscription = await stripe.subscriptions.retrieve(session.subscription)
     const priceId = subscription.items.data[0]?.price.id
     
     if (priceId === process.env.STRIPE_PRICE_PRO_ANNUAL) {
       plan = 'pro_annual'
     }
+  } else if (planType === 'day_pass') {
+    // Day pass - one-time payment
+    plan = 'day_pass'
+    expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
   }
 
   // Update entitlement
+  const entitlementData = {
+    plan,
+    status: 'active',
+    features: {
+      docx: true,
+      cover_letter: true,
+      max_req_per_min: 60
+    }
+  }
+
+  // Add expiration for day pass
+  if (expiresAt) {
+    entitlementData.expiresAt = expiresAt
+  }
+
   await prisma.entitlement.upsert({
     where: { userId },
-    update: {
-      plan,
-      status: 'active',
-      features: {
-        docx: true,
-        cover_letter: true,
-        max_req_per_min: 60
-      }
-    },
+    update: entitlementData,
     create: {
       userId,
-      plan,
-      status: 'active',
-      features: {
-        docx: true,
-        cover_letter: true,
-        max_req_per_min: 60
-      }
+      ...entitlementData
     }
   })
 
-  console.log(`Entitlement activated for user ${userId} with plan ${plan}`)
+  console.log(`Entitlement activated for user ${userId} with plan ${plan}${expiresAt ? ` (expires ${expiresAt})` : ''}`)
 }
 
 async function handleSubscriptionCreated(subscription) {
