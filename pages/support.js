@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { Mail, MessageCircle, Book, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function Support() {
@@ -241,18 +242,18 @@ export default function Support() {
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Help</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <Link href="/help/getting-started" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                     <Book className="w-5 h-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">Getting Started Guide</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  </Link>
+                  <Link href="/help/templates" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                     <FileText className="w-5 h-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">Template Guidelines</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  </Link>
+                  <Link href="/help/troubleshooting" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                     <AlertCircle className="w-5 h-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">Troubleshooting</span>
-                  </div>
+                  </Link>
                 </div>
               </div>
 

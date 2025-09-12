@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { normalizeResumeData } from '../../lib/normalizeResume';
 import { getServerSession } from 'next-auth/next';
-import NextAuth from './auth/[...nextauth]';
+import { authOptions } from './auth/[...nextauth]';
 import { checkCreditAvailability, consumeCredit, trackApiUsage, getUserEntitlementWithCredits } from '../../lib/credit-system';
 
 // ---- JSON helpers ----
@@ -68,7 +68,7 @@ async function expandSkills(client, skills){
 // ---- Post-process bullets with action verbs/metrics ----
 async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
-  const sys = "Output ONLY JSON: {\\\"bullets\\\": string[]} Rephrase BULLETS using strong action verbs, quantified outcomes, and relevant JOB_DESC keywords supported by RESUME_CONTEXT. Do not fabricate skills or experience. Keep each bullet under 25 words.";
+  const sys = "Output ONLY JSON: {\\\"bullets\\\": string[]} Rephrase BULLETS using strong action verbs and relevant JOB_DESC keywords supported by RESUME_CONTEXT. CRITICAL: Do not fabricate numbers, percentages, metrics, team sizes, or any quantified outcomes not in RESUME_CONTEXT. Do not fabricate skills or experience. Keep each bullet under 25 words.";
   const user = `JOB_DESC:\n${jobDesc}\nRESUME_CONTEXT:\n${resumeContext}\nBULLETS:${JSON.stringify(bullets)}`;
   const r = await client.chat.completions.create({
     model: "gpt-4o-mini",
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
   // Check user authentication and credits
   let userId = null;
   try {
-    const session = await getServerSession(req, res, NextAuth);
+    const session = await getServerSession(req, res, authOptions);
     if (session?.user?.id) {
       userId = session.user.id;
       
@@ -166,12 +166,20 @@ You output ONLY JSON with keys:
 STRICT RULES:
 - Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
-    - For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
+- For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs and align with job description keywords that are supported by the resume.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
 - The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
 - The coverLetterText must adopt a ${tone} tone.
 - The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
-- Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
+
+🚫 NEVER FABRICATE OR ASSUME:
+- Numbers, percentages, metrics, dollar amounts, team sizes, or timeframes
+- Revenue figures, budget sizes, cost savings, or financial impacts  
+- Performance improvements like "increased efficiency by X%" unless explicitly in original resume
+- Quantifiable results or achievements not in original resume
+- Employers, dates, credentials, company information, or project scales
+- RULE: If a metric isn't explicitly stated in the original resume, DO NOT create one
+- RULE: Focus on strong action verbs and qualitative impact instead of fake numbers
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
 `.trim();

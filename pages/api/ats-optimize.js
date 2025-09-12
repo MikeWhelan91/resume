@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { normalizeResumeData } from '../../lib/normalizeResume';
 import { getServerSession } from 'next-auth/next';
-import NextAuth from './auth/[...nextauth]';
+import { authOptions } from './auth/[...nextauth]';
 import { checkCreditAvailability, getUserEntitlementWithCredits, getEffectivePlan } from '../../lib/credit-system';
 
 // JSON helpers
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   let userPlan = 'free';
   
   try {
-    const session = await getServerSession(req, res, NextAuth);
+    const session = await getServerSession(req, res, authOptions);
     if (session?.user?.id) {
       userId = session.user.id;
       

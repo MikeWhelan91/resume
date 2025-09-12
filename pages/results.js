@@ -42,6 +42,7 @@ export default function ResultsPage() {
   const [entitlementLoading, setEntitlementLoading] = useState(true);
   const [usage, setUsage] = useState({ usage: {} });
   const [usageLoading, setUsageLoading] = useState(true);
+  const [dayPassUsage, setDayPassUsage] = useState(null);
   const [resumeFormat, setResumeFormat] = useState('pdf');
   const [coverLetterFormat, setCoverLetterFormat] = useState('pdf');
 
@@ -310,7 +311,17 @@ export default function ResultsPage() {
         if (parsed.userGoal) {
           setUserGoal(parsed.userGoal);
         }
+        // Load job description from localStorage if available
+        if (parsed.jobDescription) {
+          setJobDescription(parsed.jobDescription);
+        }
         console.log('Loaded user data:', parsed);
+      }
+      
+      // Also check for standalone job description in localStorage
+      const jobDesc = localStorage.getItem('jobDescription');
+      if (jobDesc && !jobDescription) {
+        setJobDescription(jobDesc);
       }
     } catch (e) {
       console.error('Error loading user data:', e);
@@ -322,10 +333,11 @@ export default function ResultsPage() {
     const fetchUserData = async () => {
       if (session?.user?.id) {
         try {
-          // Fetch both entitlement and usage in parallel
-          const [entitlementResponse, usageResponse] = await Promise.all([
+          // Fetch entitlement, usage, and day pass usage in parallel
+          const [entitlementResponse, usageResponse, dayPassResponse] = await Promise.all([
             fetch('/api/entitlements'),
-            fetch('/api/usage')
+            fetch('/api/usage'),
+            fetch('/api/day-pass-usage')
           ]);
           
           if (entitlementResponse.ok) {
@@ -337,6 +349,11 @@ export default function ResultsPage() {
           if (usageResponse.ok) {
             const usageData = await usageResponse.json();
             setUsage(usageData);
+          }
+          
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -580,12 +597,34 @@ export default function ResultsPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700" htmlFor="jobDescription">Job Description</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700" htmlFor="jobDescription">Job Description</label>
+                  {jobDescription.trim() && (
+                    <button
+                      onClick={() => {
+                        setJobDescription('');
+                        localStorage.removeItem('jobDescription');
+                      }}
+                      className="text-xs text-gray-500 hover:text-gray-700 underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <textarea 
                   id="jobDescription"
                   className="form-textarea h-32 resize-none"
                   value={jobDescription}
-                  onChange={(e) => setJobDescription(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setJobDescription(value);
+                    // Save to localStorage for persistence
+                    if (value.trim()) {
+                      localStorage.setItem('jobDescription', value);
+                    } else {
+                      localStorage.removeItem('jobDescription');
+                    }
+                  }}
                   placeholder="Paste the job description here to tailor your documents..."
                 />
                 <div className="grid grid-cols-2 gap-2">
@@ -614,19 +653,29 @@ export default function ResultsPage() {
                 </div>
 
                 {/* ATS Optimization Button - Pro Only */}
-                <button 
-                  className={`btn flex items-center gap-2 justify-center w-full ${
-                    userPlan !== 'free'
-                      ? 'btn-accent bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700'
-                      : 'btn-disabled cursor-not-allowed opacity-50'
-                  } ${isGenerating ? 'cursor-not-allowed opacity-50' : ''}`}
-                  onClick={optimizeForATS}
-                  disabled={isGenerating || userPlan === 'free'}
-                >
-                  <Target className="w-4 h-4" />
-                  ATS Optimize
-                  {userPlan === 'free' && <Lock className="w-4 h-4 ml-1" />}
-                </button>
+                <div className="relative">
+                  <button 
+                    className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 ${
+                      userPlan !== 'free'
+                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse'
+                        : 'btn-disabled cursor-not-allowed opacity-50'
+                    } ${isGenerating ? 'cursor-not-allowed opacity-50 animate-none' : ''}`}
+                    onClick={optimizeForATS}
+                    disabled={isGenerating || userPlan === 'free'}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : ''}`} />
+                      <span>🚀 ATS Optimize</span>
+                      {userPlan === 'free' && <Lock className="w-5 h-5 ml-1" />}
+                    </div>
+                  </button>
+                  
+                  {userPlan !== 'free' && !isGenerating && (
+                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                      HOT
+                    </div>
+                  )}
+                </div>
 
                 {userPlan === 'free' && (
                   <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
@@ -718,6 +767,20 @@ export default function ResultsPage() {
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Credits reset every Monday at midnight Dublin time
+                    </p>
+                  </div>
+                )}
+
+                {userPlan === 'day_pass' && dayPassUsage && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-200 rounded-lg px-3 py-2">
+                      <div className="w-2 h-2 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium bg-gradient-to-r from-orange-700 to-pink-700 bg-clip-text text-transparent">
+                        {dayPassUsage.generationsUsed}/{dayPassUsage.generationsLimit} generations used today
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Day pass expires in {Math.max(0, Math.ceil((new Date(dayPassUsage.expiresAt) - new Date()) / (1000 * 60 * 60)))} hours
                     </p>
                   </div>
                 )}

@@ -207,8 +207,8 @@ export default function Navbar() {
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
                         </button>
                         
-                        {/* Cancel Subscription - only show for paid plans */}
-                        {userPlan !== 'free' && (
+                        {/* Cancel Subscription - only show for recurring paid plans (not day pass) */}
+                        {userPlan !== 'free' && userPlan !== 'day_pass' && (
                           <button
                             onClick={() => {
                               setIsDropdownOpen(false);
@@ -371,7 +371,7 @@ export default function Navbar() {
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
                         </button>
                         
-                        {userPlan !== 'free' && (
+                        {userPlan !== 'free' && userPlan !== 'day_pass' && (
                           <button
                             onClick={() => {
                               setIsMobileMenuOpen(false);

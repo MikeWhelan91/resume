@@ -128,13 +128,15 @@ BEST PRACTICES:
 6. KEYWORDS: Naturally integrate relevant JOB_DESC terms when supported by RESUME_CONTEXT
 
 🚨 CRITICAL RULES - NO EXCEPTIONS:
-- NEVER invent numbers, percentages, or metrics not in RESUME_CONTEXT
-- NEVER add achievements, projects, or outcomes not mentioned in original resume
-- ONLY improve wording and structure of existing content
-- If no metrics exist, focus on scope, complexity, or methodology - DON'T CREATE THEM
-- When in doubt, use the original bullet point
-- Make every word count - eliminate filler
-- Use parallel structure across bullets`;
+- NEVER invent numbers, percentages, metrics, dollar amounts, team sizes, or timeframes
+- NEVER add achievements, projects, technologies, or outcomes not in the original resume
+- NEVER create quantifiable results like "increased by 25%" or "managed team of 8" unless explicitly stated in RESUME_CONTEXT
+- NEVER assume company revenue, budget sizes, or business metrics
+- If original bullet has no numbers, DO NOT add any - focus on action and impact without fabricated metrics
+- ONLY improve wording, structure, and action verbs of existing content
+- When in doubt, use weaker but truthful language over fabricated specifics
+- Use parallel structure across bullets
+- Better to have strong qualitative language than fake quantitative data`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
@@ -274,12 +276,13 @@ SKILLS SECTION:
 EXPERIENCE OPTIMIZATION:
 - Company, title, dates, location for each role
 - 3-5 achievement-focused bullets per role (not duties)
-- Formula: [Strong Action Verb] + [Specific Action] + [Quantifiable Result] + [Context]
-- Lead with most impressive metrics and outcomes
-- Use power verbs: Achieved, Led, Transformed, Delivered, Optimized, Increased, Reduced, etc.
-- Focus on business impact: revenue, efficiency, cost savings, process improvements
+- Formula: [Strong Action Verb] + [Specific Action] + [Impact/Result] + [Context if provided]
+- Use power verbs: Achieved, Led, Transformed, Delivered, Optimized, Streamlined, etc.
+- Focus on business impact using only information from original resume
+- ⚠️ METRICS RULE: Only include numbers/percentages if they exist in original resume
+- ⚠️ If no metrics available, emphasize scope, complexity, technologies, or methodology
 - Eliminate weak phrases: "Responsible for", "Duties included", "Worked on"
-- Keep bullets 15-25 words, prioritize concrete results over tasks
+- Keep bullets 15-25 words, strong qualitative impact over fabricated numbers
 
 EDUCATION SECTION:
 - Include degree, institution, graduation year, relevant GPA (3.5+)
@@ -308,11 +311,17 @@ KEYWORDS: Naturally integrate job-relevant terms from ALLOWED_SKILLS
 RESTRICTIONS: Don't claim experience with JOB_ONLY_SKILLS - instead express eagerness to learn
 ` : ''}
 
-🚫 NEVER FABRICATE:
-- Employment dates, company names, or job titles
-- Metrics, percentages, or quantifiable results
-- Skills not in ALLOWED_SKILLS
-- Educational credentials or grades
+🚫 NEVER FABRICATE OR ASSUME:
+- Employment dates, company names, job titles, or reporting structures
+- Numbers, percentages, metrics, dollar amounts, team sizes, or timeframes
+- Revenue figures, budget sizes, cost savings, or financial impacts
+- Performance improvements like "increased efficiency by X%" unless explicitly provided
+- Quantifiable results or achievements not in original resume
+- Skills, technologies, or tools not in ALLOWED_SKILLS
+- Educational credentials, grades, or certifications
+- Company information, client names, or project scales
+- RULE: If a metric isn't explicitly stated in the original resume, DO NOT create one
+- RULE: Focus on strong action verbs and qualitative impact instead of fake numbers
 
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
