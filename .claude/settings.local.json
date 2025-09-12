@@ -18,7 +18,10 @@
       "WebFetch(domain:github.com)",
       "Bash(openssl rand:*)",
       "Bash(curl:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(fuser:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import SkillsInput from './wizard/SkillsInput';
 import ExperienceCard from './wizard/ExperienceCard';
 import EducationCard from './wizard/EducationCard';
@@ -64,6 +64,7 @@ const schemas = {
 
 export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [step, setStep] = useState(0);
   const stepIds = ['goal', 'basics', 'skills', 'work', 'education', 'review'];
   const stepLabels = ['Goal', 'Basics','Skills','Experience','Education','Review'];
@@ -77,6 +78,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const [jd, setJd] = useState('');
   const [tone, setTone] = useState('professional');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [entitlement, setEntitlement] = useState(null);
+  const [userPlan, setUserPlan] = useState('free');
+  const [dayPassUsage, setDayPassUsage] = useState(null);
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
 
   useEffect(() => {
     const sub = watch(() => {
@@ -87,9 +92,26 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         return;
       }
       if(key === 'review'){
-        const ok = jd.trim().length > 0;
-        setIsValid(ok);
-        setMessage(ok ? '' : 'Job description required');
+        const jdValid = jd.trim().length > 0;
+        const canGen = canGenerate();
+        const ok = jdValid && canGen;
+        
+        if (!jdValid) {
+          setIsValid(false);
+          setMessage('Job description required');
+        } else if (!canGen) {
+          setIsValid(false);
+          if (!session?.user) {
+            setMessage('Sign in required to generate documents');
+          } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
+            setMessage('No credits remaining - upgrade to Pro');
+          } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
+            setMessage('Daily generation limit reached - upgrade to Pro');
+          }
+        } else {
+          setIsValid(true);
+          setMessage('');
+        }
         return;
       }
       const schema = schemas[key];
@@ -99,7 +121,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       setMessage(res.success ? '' : res.error.issues[0]?.message || 'Incomplete');
     });
     return () => sub.unsubscribe();
-  }, [watch, step, getValues, jd]);
+  }, [watch, step, getValues, jd, session, userPlan, entitlement, dayPassUsage]);
 
   // autosave
   useEffect(() => {
@@ -111,6 +133,60 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     });
     return () => sub.unsubscribe();
   }, [watch, autosaveKey]);
+
+  // Fetch user entitlement data
+  useEffect(() => {
+    const fetchEntitlement = async () => {
+      if (session?.user?.id) {
+        try {
+          const [entitlementResponse, dayPassResponse] = await Promise.all([
+            fetch('/api/entitlements'),
+            fetch('/api/day-pass-usage')
+          ]);
+          
+          if (entitlementResponse.ok) {
+            const data = await entitlementResponse.json();
+            setEntitlement(data);
+            setUserPlan(data.plan);
+          }
+          
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
+          }
+        } catch (error) {
+          console.error('Error fetching entitlement:', error);
+        }
+      }
+    };
+
+    fetchEntitlement();
+  }, [session]);
+
+  // Credit checking functions
+  const getCreditsRemaining = () => {
+    if (userPlan === 'free' && entitlement) {
+      return entitlement.freeWeeklyCreditsRemaining || 0;
+    }
+    if (userPlan === 'day_pass' && dayPassUsage) {
+      return dayPassUsage.generationsLimit - dayPassUsage.generationsUsed;
+    }
+    return null;
+  };
+
+  const canGenerate = () => {
+    if (!session?.user) {
+      return false; // Logged out users cannot generate
+    }
+    if (userPlan === 'free') {
+      return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+    }
+    if (userPlan === 'day_pass') {
+      if (!dayPassUsage) return false; // Still loading
+      return dayPassUsage.generationsUsed < dayPassUsage.generationsLimit;
+    }
+    return true; // Pro users can generate
+  };
 
   function next() { if (step < stepIds.length -1) setStep(s => s + 1); }
   function prev() { if (step > 0) setStep(s => s - 1); }
@@ -182,6 +258,21 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
 
   async function submit(data) {
     if(step !== stepIds.length -1) return;
+    
+    // Check if user can generate
+    if (!canGenerate()) {
+      if (!session?.user) {
+        setShowAccountPrompt(true);
+        return;
+      } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
+        alert(`You've used all your weekly credits (0/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        return;
+      } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
+        alert(`You've reached your daily generation limit (0/30). Upgrade to Pro for unlimited generations!`);
+        return;
+      }
+    }
+    
     setIsGenerating(true);
     try{
       const fd = new FormData();
@@ -189,10 +280,17 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       fd.append('jobDesc', jd);
       fd.append('tone', tone);
       fd.append('userGoal', userGoal);
+      
+      // Save job description to localStorage for results page
+      localStorage.setItem('jobDescription', jd);
+      
       const res = await fetch('/api/generate',{method:'POST', body:fd});
       const out = await res.json();
       if(res.ok){
-        onComplete && onComplete(out);
+        // Also save job description with the result data
+        const resultData = { ...out, jobDescription: jd };
+        localStorage.setItem('resumeResult', JSON.stringify(resultData));
+        onComplete && onComplete(resultData);
       } else {
         alert("Couldn't generate that. Try again in a moment.");
       }
@@ -215,6 +313,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           allowNext={isValid}
           showButtons={true}
           isGenerating={isGenerating}
+          disabledMessage={message}
           onNext={() => {
             if (step < stepIds.length - 1) {
               setStep(s => s + 1);
@@ -251,6 +350,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Resume Only</div>
                       <div className="text-sm text-gray-600">Optimize your resume for the job description</div>
+                      <div className="text-xs text-blue-600 font-medium">Uses 1 generation</div>
                     </div>
                   </div>
                 </label>
@@ -270,6 +370,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Cover Letter Only</div>
                       <div className="text-sm text-gray-600">Generate a tailored cover letter for the job</div>
+                      <div className="text-xs text-purple-600 font-medium">Uses 1 generation</div>
                     </div>
                   </div>
                 </label>
@@ -289,6 +390,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Both Resume and Cover Letter</div>
                       <div className="text-sm text-gray-600">Get a complete application package</div>
+                      <div className="text-xs text-green-600 font-medium">Uses 2 generations</div>
                     </div>
                   </div>
                 </label>
@@ -439,6 +541,51 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               <span></span>
               <span></span>
               <span></span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Creation Prompt Modal */}
+      {showAccountPrompt && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="card p-8 max-w-md w-full text-center space-y-6 animate-scale-in mx-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-xl font-semibold text-gray-900">Create Your Free Account</h3>
+              <p className="text-gray-600">
+                Sign up now and get <strong>10 free generations per week</strong> to create tailored resumes and cover letters for every job you apply to!
+              </p>
+              <div className="text-sm text-gray-500 space-y-1">
+                <div>✓ 10 free generations weekly</div>
+                <div>✓ 10 PDF downloads weekly</div>
+                <div>✓ Save your progress</div>
+                <div>✓ Access all templates</div>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-3">
+              <button 
+                onClick={() => signIn('google')}
+                className="btn btn-primary w-full"
+              >
+                Sign Up with Google
+              </button>
+              <button 
+                onClick={() => signIn('email')}
+                className="btn btn-secondary w-full"
+              >
+                Sign Up with Email
+              </button>
+              <button 
+                onClick={() => setShowAccountPrompt(false)}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Maybe later
+              </button>
             </div>
           </div>
         </div>

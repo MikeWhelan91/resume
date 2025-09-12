@@ -45,6 +45,7 @@ export default function ResultsPage() {
   const [dayPassUsage, setDayPassUsage] = useState(null);
   const [resumeFormat, setResumeFormat] = useState('pdf');
   const [coverLetterFormat, setCoverLetterFormat] = useState('pdf');
+  const [tone, setTone] = useState('professional');
 
   // Credit system helpers
   const getCreditsRemaining = () => {
@@ -237,6 +238,19 @@ export default function ResultsPage() {
       // Save updated data to localStorage
       localStorage.setItem('resumeResult', JSON.stringify(optimizedData));
       
+      // Refresh day pass usage data
+      if (userPlan === 'day_pass') {
+        try {
+          const dayPassResponse = await fetch('/api/day-pass-usage');
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
+          }
+        } catch (error) {
+          console.error('Error refreshing day pass usage:', error);
+        }
+      }
+      
       alert('Resume optimized for ATS systems! Your resume has been enhanced with ATS-friendly formatting and keywords.');
       
     } catch (error) {
@@ -274,6 +288,7 @@ export default function ResultsPage() {
         body: JSON.stringify({
           userData,
           jobDescription: jobDescription.trim(),
+          tone,
         }),
       });
 
@@ -554,46 +569,65 @@ export default function ResultsPage() {
                 </div>
               )}
 
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  Theme Color
-                  {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
-                </h3>
-                <div className="grid grid-cols-6 gap-2">
-                  {ACCENTS.map((c, index) => {
-                    const isFirstColor = index === 0;
-                    const isLocked = userPlan === 'free' && !isFirstColor;
-                    const isSelected = accent === c;
-                    
-                    return (
-                      <button
-                        key={c}
-                        className={`w-8 h-8 rounded-lg shadow-sm border-2 transition-all duration-200 relative ${
-                          !isLocked ? 'hover:scale-110' : 'cursor-not-allowed opacity-50'
-                        }`}
-                        style={{
-                          backgroundColor: c, 
-                          borderColor: isSelected ? c : 'rgb(229 231 235)',
-                          boxShadow: isSelected ? `0 0 0 2px ${c}40` : 'none'
-                        }}
-                        onClick={() => !isLocked && setAccent(c)}
-                        disabled={isLocked}
-                        aria-label={`Accent ${c}`}
-                      >
-                        {isLocked && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
-                            <Lock className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                {userPlan === 'free' && (
-                  <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                    <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all color themes.
+              {/* Theme Colors - Only for CV/Resume users */}
+              {(userGoal === 'cv' || userGoal === 'both') && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    Theme Color
+                    {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
+                  </h3>
+                  <div className="grid grid-cols-6 gap-2">
+                    {ACCENTS.map((c, index) => {
+                      const isFirstColor = index === 0;
+                      const isLocked = userPlan === 'free' && !isFirstColor;
+                      const isSelected = accent === c;
+                      
+                      return (
+                        <button
+                          key={c}
+                          className={`w-8 h-8 rounded-lg shadow-sm border-2 transition-all duration-200 relative ${
+                            !isLocked ? 'hover:scale-110' : 'cursor-not-allowed opacity-50'
+                          }`}
+                          style={{
+                            backgroundColor: c, 
+                            borderColor: isSelected ? c : 'rgb(229 231 235)',
+                            boxShadow: isSelected ? `0 0 0 2px ${c}40` : 'none'
+                          }}
+                          onClick={() => !isLocked && setAccent(c)}
+                          disabled={isLocked}
+                          aria-label={`Accent ${c}`}
+                        >
+                          {isLocked && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
+                              <Lock className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                  {userPlan === 'free' && (
+                    <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                      <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all color themes.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Tone</label>
+                <select 
+                  className="form-select w-full"
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                >
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="concise">Concise</option>
+                </select>
+                <p className="text-xs text-gray-500">
+                  Changing tone doesn't consume credits. Click "Generate" to apply the new tone to your content.
+                </p>
               </div>
 
               <div className="space-y-3">
@@ -652,41 +686,45 @@ export default function ResultsPage() {
                   </button>
                 </div>
 
-                {/* ATS Optimization Button - Pro Only */}
-                <div className="relative">
-                  <button 
-                    className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 ${
-                      userPlan !== 'free'
-                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse'
-                        : 'btn-disabled cursor-not-allowed opacity-50'
-                    } ${isGenerating ? 'cursor-not-allowed opacity-50 animate-none' : ''}`}
-                    onClick={optimizeForATS}
-                    disabled={isGenerating || userPlan === 'free'}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : ''}`} />
-                      <span>🚀 ATS Optimize</span>
-                      {userPlan === 'free' && <Lock className="w-5 h-5 ml-1" />}
+                {/* ATS Optimization Button - Pro Only - Only for CV/Resume users */}
+                {(userGoal === 'cv' || userGoal === 'both') && (
+                  <>
+                    <div className="relative">
+                      <button 
+                        className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 ${
+                          userPlan !== 'free'
+                            ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse'
+                            : 'btn-disabled cursor-not-allowed opacity-50'
+                        } ${isGenerating ? 'cursor-not-allowed opacity-50 animate-none' : ''}`}
+                        onClick={optimizeForATS}
+                        disabled={isGenerating || userPlan === 'free'}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : ''}`} />
+                          <span>🚀 ATS Optimize</span>
+                          {userPlan === 'free' && <Lock className="w-5 h-5 ml-1" />}
+                        </div>
+                      </button>
+                      
+                      {userPlan !== 'free' && !isGenerating && (
+                        <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                          HOT
+                        </div>
+                      )}
                     </div>
-                  </button>
-                  
-                  {userPlan !== 'free' && !isGenerating && (
-                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
-                      HOT
-                    </div>
-                  )}
-                </div>
 
-                {userPlan === 'free' && (
-                  <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
-                    <strong>Note:</strong> Generating tailored content consumes 1 credit.
-                  </div>
-                )}
+                    {userPlan === 'free' && (
+                      <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
+                        <strong>Note:</strong> Generating tailored content consumes 1 credit.
+                      </div>
+                    )}
 
-                {userPlan === 'free' && (
-                  <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2">
-                    <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> to unlock this feature.
-                  </div>
+                    {userPlan === 'free' && (
+                      <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2">
+                        <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> to unlock this feature.
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -762,7 +800,7 @@ export default function ResultsPage() {
                     <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-sm font-medium text-blue-700">
-                        {getCreditsRemaining() || 0}/15 credits remaining
+                        {getCreditsRemaining() || 0}/10 credits remaining
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">

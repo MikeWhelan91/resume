@@ -46,8 +46,8 @@ export default function PricingPage() {
       monthlyPrice: 0,
       annualPrice: 0,
       features: [
-        '15 credits per week (resets Monday)',
-        '1 credit per generation/download',
+        '10 credits per week (resets Monday)',
+        '10 PDF downloads per week',
         'Professional template only',
         'PDF downloads only',
         'Basic customization',
@@ -68,9 +68,10 @@ export default function PricingPage() {
       annualPrice: 2.99,
       features: [
         '24-hour unlimited access',
-        '50 generations & downloads',
+        '30 generations per day',
+        '100 PDF downloads per day',
+        '100 DOCX downloads per day',
         'All premium templates',
-        'DOCX + PDF downloads',
         'All color themes',
         'Priority processing',
         'Full customization access'
@@ -249,7 +250,7 @@ export default function PricingPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">What happens when I run out of credits?</h3>
                 <p className="text-gray-600">
-                  Free users get 15 credits per week that reset every Monday at midnight Dublin time. Each generation or download consumes 1 credit. Pro users have unlimited usage.
+                  Free users get 10 credits per week that reset every Monday at midnight Dublin time. Each generation or download consumes 1 credit. Pro users have unlimited usage.
                 </p>
               </div>
 

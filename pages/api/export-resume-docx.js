@@ -1,9 +1,9 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType } from "docx";
 import { limitExperience, limitEducation } from "../../lib/renderUtils.js";
 import { getServerSession } from 'next-auth/next';
-import NextAuth from './auth/[...nextauth]';
+import { authOptions } from './auth/[...nextauth]';
 import { getUserEntitlement } from '../../lib/entitlements';
-import { checkUsageLimit, trackUsage } from '../../lib/usage-tracking';
+import { getEffectivePlan, checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 // Helper function to safely get values
 function safeProp(obj, path, fallback = '') {
@@ -1839,11 +1839,11 @@ export default async function handler(req, res) {
     let userPlan = 'free';
     let userId = null;
     try {
-      const session = await getServerSession(req, res, NextAuth);
+      const session = await getServerSession(req, res, authOptions);
       if (session?.user?.id) {
         userId = session.user.id;
         const entitlement = await getUserEntitlement(userId);
-        userPlan = entitlement.plan;
+        userPlan = getEffectivePlan(entitlement); // Use effective plan to handle expired day passes
       }
     } catch (error) {
       console.error('Error fetching user entitlement:', error);
@@ -1857,15 +1857,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // Check usage limits for Pro users
+    // Check credit availability for downloads
     if (userId) {
-      const usageCheck = await checkUsageLimit(userId, 'docx-download', userPlan);
-      if (!usageCheck.allowed) {
+      const creditCheck = await checkCreditAvailability(userId, 'download');
+      if (!creditCheck.allowed) {
         return res.status(429).json({ 
-          error: 'Usage limit exceeded', 
-          message: usageCheck.message,
-          usage: usageCheck.usage,
-          limit: usageCheck.limit 
+          error: 'Limit exceeded', 
+          message: creditCheck.message,
+          credits: creditCheck.credits,
+          plan: creditCheck.plan
         });
       }
     }
@@ -1918,9 +1918,10 @@ export default async function handler(req, res) {
     
     const fileName = `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`;
     
-    // Track usage after successful generation
+    // Track usage and consume credit after successful generation
     if (userId) {
-      await trackUsage(userId, 'docx-download');
+      await consumeCredit(userId, 'download');
+      await trackApiUsage(userId, 'docx-download');
     }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');

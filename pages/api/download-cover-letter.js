@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 import { limitCoverLetter } from '../../lib/renderUtils';
 import { getServerSession } from 'next-auth/next';
-import NextAuth from './auth/[...nextauth]';
+import { authOptions } from './auth/[...nextauth]';
 import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 export default async function handler(req, res) {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   // Check user authentication and credits
   let userId = null;
   try {
-    const session = await getServerSession(req, res, NextAuth);
+    const session = await getServerSession(req, res, authOptions);
     if (session?.user?.id) {
       userId = session.user.id;
     }

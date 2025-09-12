@@ -6,6 +6,9 @@ import mammoth from "mammoth";
 import OpenAI from "openai";
 import { normalizeResumeData } from "../../lib/normalizeResume";
 import { withLimiter } from "../../lib/ratelimit";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
+import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 export const config = { api: { bodyParser: false } };
 
@@ -127,22 +130,28 @@ BEST PRACTICES:
 
 6. KEYWORDS: Naturally integrate relevant JOB_DESC terms when supported by RESUME_CONTEXT
 
-🚨 CRITICAL RULES - NO EXCEPTIONS:
-- NEVER invent numbers, percentages, metrics, dollar amounts, team sizes, or timeframes
-- NEVER add achievements, projects, technologies, or outcomes not in the original resume
-- NEVER create quantifiable results like "increased by 25%" or "managed team of 8" unless explicitly stated in RESUME_CONTEXT
-- NEVER assume company revenue, budget sizes, or business metrics
-- If original bullet has no numbers, DO NOT add any - focus on action and impact without fabricated metrics
-- ONLY improve wording, structure, and action verbs of existing content
-- When in doubt, use weaker but truthful language over fabricated specifics
-- Use parallel structure across bullets
-- Better to have strong qualitative language than fake quantitative data`;
+🚨 ENHANCED ANTI-FABRICATION PROTOCOLS - ZERO TOLERANCE:
+- NEVER invent numbers: No percentages, metrics, dollar amounts, team sizes, timeframes, or quantified results
+- NEVER add achievements: No projects, technologies, outcomes, or accomplishments not in original resume
+- NEVER create metrics: No "increased by 25%", "managed team of 8", "saved $50K" unless word-for-word in RESUME_CONTEXT
+- NEVER assume scale: No company revenue, budget sizes, departmental scope, or business metrics
+- NEVER escalate roles: Don't change "assisted with" to "led" or "participated in" to "managed"
+- NEVER add technical depth: No specific versions, advanced features, or implementation details not mentioned
+- NEVER create timeframes: No "delivered ahead of schedule", "rapid deployment", or duration claims
+- NEVER fabricate soft skills: No "excellent communication" or "strong leadership" without evidence
+- NEVER assume organizational structure: No reporting relationships, team hierarchies, or cross-functional roles
+- NEVER create business impact: No efficiency gains, process improvements, or strategic outcomes not stated
+- STRICT RULE: If original bullet has no numbers, DO NOT add any - focus on strong action verbs only
+- STRICT RULE: Only enhance clarity and power of existing truthful content
+- STRICT RULE: When uncertain, choose weaker truthful language over stronger fabricated claims
+- VERIFICATION: Each enhanced bullet must be completely defensible against original source
+- ACCOUNTABILITY: Every claim must trace back to explicit content in RESUME_CONTEXT`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
   const r = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    temperature: 0.3,
+    temperature: 0.1, // Reduced for more consistent, factual output
     response_format: { type: "json_object" },
     messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
@@ -195,7 +204,7 @@ TONE: Confident, specific, achievement-focused`;
   
   const r = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    temperature: 0.3,
+    temperature: 0.1, // Reduced for more consistent, less creative output
     response_format: { type: "json_object" },
     messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
@@ -220,6 +229,36 @@ async function coreHandler(req, res){
     const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
     const tone       = Array.isArray(fields?.tone) ? fields.tone[0] : (fields?.tone || "professional");
     const userGoal   = Array.isArray(fields?.userGoal) ? fields.userGoal[0] : (fields?.userGoal || "both");
+
+    // Check user authentication and credits
+    let userId = null;
+    let generationCount = 1; // Default to 1 for single item
+    
+    if (userGoal === 'both') {
+      generationCount = 2; // Both resume and cover letter = 2 generations
+    }
+    
+    try {
+      const session = await getServerSession(req, res, authOptions);
+      if (session?.user?.id) {
+        userId = session.user.id;
+        
+        // Check credit availability for the required generation count
+        for (let i = 0; i < generationCount; i++) {
+          const creditCheck = await checkCreditAvailability(userId, 'generation');
+          if (!creditCheck.allowed) {
+            return res.status(429).json({ 
+              error: 'Limit exceeded', 
+              message: creditCheck.message,
+              credits: creditCheck.credits,
+              plan: creditCheck.plan
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user session:', error);
+    }
 
     if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
     if (!jobDesc || jobDesc.trim().length < 30) return res.status(400).json({ error:"Job description too short", code:"E_BAD_INPUT" });
@@ -311,17 +350,21 @@ KEYWORDS: Naturally integrate job-relevant terms from ALLOWED_SKILLS
 RESTRICTIONS: Don't claim experience with JOB_ONLY_SKILLS - instead express eagerness to learn
 ` : ''}
 
-🚫 NEVER FABRICATE OR ASSUME:
-- Employment dates, company names, job titles, or reporting structures
-- Numbers, percentages, metrics, dollar amounts, team sizes, or timeframes
-- Revenue figures, budget sizes, cost savings, or financial impacts
-- Performance improvements like "increased efficiency by X%" unless explicitly provided
-- Quantifiable results or achievements not in original resume
-- Skills, technologies, or tools not in ALLOWED_SKILLS
-- Educational credentials, grades, or certifications
-- Company information, client names, or project scales
-- RULE: If a metric isn't explicitly stated in the original resume, DO NOT create one
-- RULE: Focus on strong action verbs and qualitative impact instead of fake numbers
+🚫 CRITICAL ANTI-FABRICATION RULES - ZERO TOLERANCE:
+- NEVER create numbers: No percentages, dollar amounts, team sizes, timeframes, or performance metrics
+- NEVER invent achievements: No cost savings, revenue generation, or efficiency improvements 
+- NEVER add skills not in ALLOWED_SKILLS: Only use skills explicitly from the original resume
+- NEVER fabricate job details: No employment dates, company names, reporting structures, or job titles beyond original
+- NEVER create educational info: No grades, certifications, or academic achievements not provided
+- NEVER assume project scope: No client names, project scales, or company information not stated
+- NEVER claim quantified impact: If original says "improved process", don't add "by 25%" or "saving $50K"
+- NEVER escalate job responsibilities: Don't change "contributed to" into "led" without evidence
+- NEVER add technical specifics: Don't add version numbers, frameworks, or tools not mentioned
+- NEVER create organizational context: Don't add "across 5 departments" or "managing 12 people" without proof
+- RULE: When in doubt, use qualitative language over fabricated quantitative data
+- RULE: Better to have modest truthful statements than impressive false claims
+- RULE: Each claim must be traceable to the original resume content
+- VERIFICATION REQUIRED: Every enhancement must be defensible against the original source material
 
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
@@ -345,7 +388,7 @@ JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
 
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.2,
+      temperature: 0.1, // Reduced temperature for more factual, less creative output
       response_format: { type: "json_object" },
       messages: [{ role:"system", content: system }, { role:"user", content: user }]
     });
@@ -380,10 +423,31 @@ JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
     
     if (coverLetterNeeded) {
       payload.coverLetter = String(json.coverLetterText || "");
+      
+      // For cover letter only, preserve essential user info for signing
+      if (!resumeNeeded && resumeData) {
+        payload.name = resumeData.name;
+        payload.email = resumeData.email;
+        payload.phone = resumeData.phone;
+      }
     }
     
     if (resumeNeeded) {
       payload.resumeData = rd;
+    }
+
+    // Track usage and consume credits after successful generation
+    if (userId) {
+      try {
+        // Consume the appropriate number of credits and track API usage
+        for (let i = 0; i < generationCount; i++) {
+          await consumeCredit(userId, 'generation');
+          await trackApiUsage(userId, 'generation');
+        }
+      } catch (error) {
+        console.error('Error tracking usage:', error);
+        // Don't block the response if tracking fails
+      }
     }
 
     return res.status(200).json(payload);

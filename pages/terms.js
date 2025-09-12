@@ -83,7 +83,7 @@ export default function TermsOfService() {
               
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Free Plan</h3>
               <p className="text-gray-700 mb-4">
-                Our free plan provides limited access with 15 credits per week. Credits reset every Monday at midnight Dublin time.
+                Our free plan provides limited access with 10 credits per week. Credits reset every Monday at midnight Dublin time.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Paid Plans</h3>

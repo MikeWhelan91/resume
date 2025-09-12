@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { normalizeResumeData } from '../../lib/normalizeResume';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { checkCreditAvailability, getUserEntitlementWithCredits, getEffectivePlan } from '../../lib/credit-system';
+import { checkCreditAvailability, getUserEntitlementWithCredits, getEffectivePlan, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 // JSON helpers
 function stripCodeFence(s = "") {
@@ -121,6 +121,11 @@ ${resumePayload}${jobDescContext}
       ...userData,
       resumeData: optimizedResumeData
     };
+
+    // Track usage after successful optimization
+    if (userId) {
+      await trackApiUsage(userId, 'generation');
+    }
 
     return res.status(200).json(optimizedUserData);
 

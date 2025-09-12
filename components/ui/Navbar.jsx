@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, XCircle } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, XCircle, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
@@ -11,15 +11,23 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userPlan, setUserPlan] = useState('free');
   const [entitlement, setEntitlement] = useState(null);
+  const [dayPassUsage, setDayPassUsage] = useState(null);
+  const [downloadUsage, setDownloadUsage] = useState(null);
 
   // Fetch user entitlement data
   useEffect(() => {
     const fetchUserData = async () => {
       if (session?.user?.id) {
         try {
-          const response = await fetch('/api/entitlements');
-          if (response.ok) {
-            const data = await response.json();
+          // Fetch entitlement, usage, and day pass data in parallel
+          const [entitlementResponse, dayPassResponse, downloadResponse] = await Promise.all([
+            fetch('/api/entitlements'),
+            fetch('/api/day-pass-usage'),
+            fetch('/api/download-usage')
+          ]);
+          
+          if (entitlementResponse.ok) {
+            const data = await entitlementResponse.json();
             setEntitlement(data);
             // For UI purposes, we need to determine the effective plan
             // Day pass users should be treated as 'day_pass' for display
@@ -29,6 +37,16 @@ export default function Navbar() {
               effectivePlan = isExpired ? 'free' : 'day_pass';
             }
             setUserPlan(effectivePlan);
+          }
+          
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
+          }
+          
+          if (downloadResponse.ok) {
+            const downloadData = await downloadResponse.json();
+            setDownloadUsage(downloadData);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -60,6 +78,47 @@ export default function Navbar() {
   const getPlanIcon = (plan) => {
     if (plan === 'free') return <User className="w-4 h-4" />;
     return <Crown className="w-4 h-4" />;
+  };
+
+  const getUsageStats = () => {
+    if (userPlan === 'free' && entitlement && downloadUsage) {
+      return {
+        generations: {
+          used: 10 - (entitlement.freeWeeklyCreditsRemaining || 0),
+          limit: 10,
+          period: 'week'
+        },
+        downloads: {
+          pdf: { used: downloadUsage.pdfDownloads || 0, limit: 10, period: 'week' },
+          docx: { used: downloadUsage.docxDownloads || 0, limit: 0, period: 'week' }
+        }
+      };
+    } else if (userPlan === 'day_pass' && dayPassUsage && downloadUsage) {
+      return {
+        generations: {
+          used: dayPassUsage.generationsUsed || 0,
+          limit: dayPassUsage.generationsLimit || 30,
+          period: 'day'
+        },
+        downloads: {
+          pdf: { used: downloadUsage.pdfDownloads || 0, limit: 100, period: 'day' },
+          docx: { used: downloadUsage.docxDownloads || 0, limit: 100, period: 'day' }
+        }
+      };
+    } else if (userPlan.startsWith('pro')) {
+      return {
+        generations: {
+          used: 'Unlimited',
+          limit: 'Unlimited',
+          period: null
+        },
+        downloads: {
+          pdf: { used: 'Unlimited', limit: 'Unlimited', period: null },
+          docx: { used: 'Unlimited', limit: 'Unlimited', period: null }
+        }
+      };
+    }
+    return null;
   };
 
   const handleBillingClick = async () => {
@@ -97,6 +156,41 @@ export default function Navbar() {
       } catch (error) {
         console.error('Error opening cancellation portal:', error);
         alert('Unable to process cancellation. Please contact support.');
+      }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'WARNING: This will permanently delete your account and all associated data (resumes, generations, billing history). This action cannot be undone.\n\nAre you absolutely sure you want to delete your account?'
+    );
+    
+    if (confirmed) {
+      const doubleConfirmed = window.confirm(
+        'FINAL WARNING: This will permanently delete everything. Type "DELETE" in the next prompt to confirm.'
+      );
+      
+      if (doubleConfirmed) {
+        const confirmation = window.prompt('Type "DELETE" to confirm account deletion:');
+        
+        if (confirmation === 'DELETE') {
+          try {
+            const response = await fetch('/api/user/delete-account', { method: 'POST' });
+            
+            if (response.ok) {
+              alert('Your account has been successfully deleted.');
+              signOut({ callbackUrl: '/' });
+            } else {
+              const error = await response.json();
+              alert(`Failed to delete account: ${error.error || 'Unknown error'}`);
+            }
+          } catch (error) {
+            console.error('Error deleting account:', error);
+            alert('Failed to delete account. Please try again or contact support.');
+          }
+        } else {
+          alert('Account deletion cancelled - confirmation text did not match.');
+        }
       }
     }
   };
@@ -190,11 +284,57 @@ export default function Navbar() {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
-                        {userPlan === 'free' && entitlement && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            <span className="font-medium">{entitlement.freeWeeklyCreditsRemaining || 0}/15</span> credits remaining
-                          </div>
-                        )}
+                        
+                        {/* Usage Stats */}
+                        {(() => {
+                          const stats = getUsageStats();
+                          if (!stats) return null;
+                          
+                          return (
+                            <div className="mt-3 space-y-2">
+                              <div className="text-xs font-medium text-gray-700 mb-1">Usage Overview</div>
+                              
+                              {/* Generations */}
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">Generations</span>
+                                <span className="font-medium">
+                                  {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number'
+                                    ? `${stats.generations.used}/${stats.generations.limit}`
+                                    : `${stats.generations.used}`}
+                                  {stats.generations.period && ` per ${stats.generations.period}`}
+                                </span>
+                              </div>
+                              
+                              {/* Progress bar for finite limits */}
+                              {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number' && (
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(100, (stats.generations.used / stats.generations.limit) * 100)}%` }}
+                                  />
+                                </div>
+                              )}
+                              
+                              {/* Downloads */}
+                              <div className="pt-1 space-y-1">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-600">PDF Downloads</span>
+                                  <span className="font-medium">
+                                    {stats.downloads.pdf.limit === 0 ? 'Not available' : 
+                                     `${stats.downloads.pdf.used}/${stats.downloads.pdf.limit}${stats.downloads.pdf.period ? ` per ${stats.downloads.pdf.period}` : ''}`}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-600">DOCX Downloads</span>
+                                  <span className="font-medium">
+                                    {stats.downloads.docx.limit === 0 ? 'Not available' : 
+                                     `${stats.downloads.docx.used}/${stats.downloads.docx.limit}${stats.downloads.docx.period ? ` per ${stats.downloads.docx.period}` : ''}`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Menu Items */}
@@ -222,6 +362,16 @@ export default function Navbar() {
                         )}
                         
                         <div className="border-t border-gray-100 my-1"></div>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            handleDeleteAccount();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete Account</span>
+                        </button>
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
@@ -383,6 +533,17 @@ export default function Navbar() {
                             <span>Cancel Subscription</span>
                           </button>
                         )}
+                        
+                        <button
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleDeleteAccount();
+                          }}
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg border border-red-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete Account</span>
+                        </button>
                         
                         <button
                           onClick={() => {

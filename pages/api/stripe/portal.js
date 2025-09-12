@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
 import { getServerSession } from 'next-auth/next'
-import NextAuth from '../auth/[...nextauth]'
+import { authOptions } from '../auth/[...nextauth]'
 import { prisma } from '../../../lib/prisma.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await getServerSession(req, res, NextAuth)
+    const session = await getServerSession(req, res, authOptions)
     
     if (!session?.user?.id) {
       return res.status(401).json({ error: 'Authentication required' })
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: `${process.env.APP_URL || process.env.NEXTAUTH_URL}/account`,
+      return_url: `${process.env.APP_URL || process.env.NEXTAUTH_URL}/`,
     })
 
     res.status(200).json({ url: portalSession.url })

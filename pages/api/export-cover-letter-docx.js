@@ -1,5 +1,9 @@
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 import { limitCoverLetter } from "../../lib/renderUtils.js";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
+import { getUserEntitlement } from '../../lib/entitlements';
+import { getEffectivePlan, checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -11,6 +15,41 @@ export default async function handler(req, res) {
 
     if (!userData) {
       return res.status(400).json({ error: "No user data provided" });
+    }
+
+    // Get user session and entitlement
+    let userPlan = 'free';
+    let userId = null;
+    try {
+      const session = await getServerSession(req, res, authOptions);
+      if (session?.user?.id) {
+        userId = session.user.id;
+        const entitlement = await getUserEntitlement(session.user.id);
+        userPlan = getEffectivePlan(entitlement);
+      }
+    } catch (error) {
+      console.error('Error fetching user entitlement:', error);
+    }
+
+    // DOCX is not available for free users
+    if (userPlan === 'free') {
+      return res.status(402).json({ 
+        error: 'Upgrade required',
+        message: 'DOCX downloads are only available for Pro users. Upgrade to access this feature.'
+      });
+    }
+
+    // Check credit availability for downloads
+    if (userId) {
+      const creditCheck = await checkCreditAvailability(userId, 'download');
+      if (!creditCheck.allowed) {
+        return res.status(429).json({ 
+          error: 'Limit exceeded', 
+          message: creditCheck.message,
+          credits: creditCheck.credits,
+          plan: creditCheck.plan
+        });
+      }
     }
 
     const scale = 1.4; // Use 1.4x scaling for optimal DOCX readability
@@ -140,6 +179,12 @@ export default async function handler(req, res) {
     });
 
     const buffer = await Packer.toBuffer(doc);
+    
+    // Track usage and consume credit after successful generation
+    if (userId) {
+      await consumeCredit(userId, 'download');
+      await trackApiUsage(userId, 'docx-download');
+    }
     
     const fileName = `${(userData.resumeData?.name || userData.name || 'cover_letter').replace(/\s+/g, '_')}_cover_letter.docx`;
     

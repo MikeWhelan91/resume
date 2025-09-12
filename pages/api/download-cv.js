@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import puppeteer from 'puppeteer';
 import ResumeTemplate, { resumeBaseStyles } from '../../components/ResumeTemplate';
 import { getServerSession } from 'next-auth/next';
-import NextAuth from './auth/[...nextauth]';
+import { authOptions } from './auth/[...nextauth]';
 import { getUserEntitlement } from '../../lib/entitlements';
 import { checkCreditAvailability, consumeCredit, trackApiUsage, getEffectivePlan } from '../../lib/credit-system';
 
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   let userId = null;
   let entitlement = null;
   try {
-    const session = await getServerSession(req, res, NextAuth);
+    const session = await getServerSession(req, res, authOptions);
     if (session?.user?.id) {
       userId = session.user.id;
       entitlement = await getUserEntitlement(userId);
@@ -46,10 +46,11 @@ export default async function handler(req, res) {
     }
   }
 
-  // Free users can only use default color
+  // Only free plan users are restricted to default color and professional template
   const effectiveAccent = userPlan === 'free' ? '#10b39f' : accent;
+  const effectiveTemplate = userPlan === 'free' ? 'professional' : template;
 
-  const html = generateCVHTML(data, template, effectiveAccent, userPlan);
+  const html = generateCVHTML(data, effectiveTemplate, effectiveAccent, userPlan);
 
   try {
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });

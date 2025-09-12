@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next'
-import NextAuth from './auth/[...nextauth]'
+import { authOptions } from './auth/[...nextauth]'
 import { getUserWeeklyUsage } from '../../lib/usage-tracking'
 
 export default async function handler(req, res) {
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await getServerSession(req, res, NextAuth)
+    const session = await getServerSession(req, res, authOptions)
     
     if (!session?.user?.id) {
       return res.status(401).json({ error: 'Authentication required' })
