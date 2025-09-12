@@ -24,12 +24,12 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Product</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <a href="/privacy" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <a href="/terms" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Terms of Service
                 </a>
               </li>

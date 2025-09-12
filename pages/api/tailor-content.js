@@ -1,5 +1,8 @@
 import OpenAI from 'openai';
 import { normalizeResumeData } from '../../lib/normalizeResume';
+import { getServerSession } from 'next-auth/next';
+import NextAuth from './auth/[...nextauth]';
+import { checkCreditAvailability, consumeCredit, trackApiUsage, getUserEntitlementWithCredits } from '../../lib/credit-system';
 
 // ---- JSON helpers ----
 function stripCodeFence(s=""){
@@ -105,6 +108,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'User data and job description are required' });
   }
 
+  // Check user authentication and credits
+  let userId = null;
+  try {
+    const session = await getServerSession(req, res, NextAuth);
+    if (session?.user?.id) {
+      userId = session.user.id;
+      
+      // Check if user has available credits
+      const creditCheck = await checkCreditAvailability(userId, 'generation');
+      if (!creditCheck.allowed) {
+        return res.status(429).json({ 
+          error: 'Credits exhausted', 
+          message: creditCheck.message,
+          credits: creditCheck.credits,
+          plan: creditCheck.plan
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking user credits:', error);
+    // Continue without credits for now (but we could make this required)
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return res.status(500).json({ error: 'OpenAI API key not configured' });
   }
@@ -195,6 +221,12 @@ ${userData.coverLetter || ''}
       resumeData: rd,
       coverLetter: String(json.coverLetterText || ""),
     };
+
+    // Consume credit and track usage after successful generation
+    if (userId) {
+      await consumeCredit(userId, 'generation');
+      await trackApiUsage(userId, 'generation');
+    }
 
     return res.status(200).json(payload);
 

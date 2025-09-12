@@ -1,5 +1,9 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType } from "docx";
 import { limitExperience, limitEducation } from "../../lib/renderUtils.js";
+import { getServerSession } from 'next-auth/next';
+import NextAuth from './auth/[...nextauth]';
+import { getUserEntitlement } from '../../lib/entitlements';
+import { checkUsageLimit, trackUsage } from '../../lib/usage-tracking';
 
 // Helper function to safely get values
 function safeProp(obj, path, fallback = '') {
@@ -253,7 +257,7 @@ function createModernTemplate(userData, accent) {
   const scale = 1.4; // Use 1.4x scaling for optimal DOCX readability
   const children = [];
 
-  // Name (large, centered)
+  // Header with colored background (simulating gradient effect)
   children.push(
     new Paragraph({
       children: [
@@ -266,11 +270,15 @@ function createModernTemplate(userData, accent) {
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(4 * scale * 20) }
+      spacing: { before: Math.round(8 * scale * 20), after: Math.round(4 * scale * 20) },
+      shading: {
+        fill: "F0F5FF"
+      },
+      indent: { left: Math.round(-200 * scale), right: Math.round(-200 * scale) }
     })
   );
 
-  // Contact info
+  // Contact info within the header background
   children.push(
     new Paragraph({
       children: [
@@ -282,7 +290,11 @@ function createModernTemplate(userData, accent) {
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(12 * scale * 20) }
+      spacing: { after: Math.round(12 * scale * 20) },
+      shading: {
+        fill: "F0F5FF"
+      },
+      indent: { left: Math.round(-200 * scale), right: Math.round(-200 * scale) }
     })
   );
 
@@ -312,11 +324,32 @@ function createModernTemplate(userData, accent) {
         ],
         spacing: { after: Math.round(12 * scale * 20) },
         indent: { left: Math.round(200 * scale), right: Math.round(200 * scale) },
+        shading: {
+          fill: "F8F9FA"
+        },
         border: {
           left: {
             color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
             space: 1,
             size: Math.round(4 * scale),
+            style: BorderStyle.SINGLE
+          },
+          top: {
+            color: "F0F0F0",
+            space: 1,
+            size: 6,
+            style: BorderStyle.SINGLE
+          },
+          bottom: {
+            color: "F0F0F0",
+            space: 1,
+            size: 6,
+            style: BorderStyle.SINGLE
+          },
+          right: {
+            color: "F0F0F0",
+            space: 1,
+            size: 6,
             style: BorderStyle.SINGLE
           }
         }
@@ -541,9 +574,11 @@ function createCreativeTemplate(userData, accent) {
         new TextRun({
           text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} • ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
           size: Math.round(9 * scale * 2),
-          color: "666666"
+          color: "666666",
+          italics: true
         })
       ],
+      alignment: AlignmentType.CENTER,
       spacing: { after: Math.round(12 * scale * 20) }
     })
   );
@@ -554,12 +589,15 @@ function createCreativeTemplate(userData, accent) {
       new Paragraph({
         children: [
           new TextRun({
-            text: "ABOUT",
+            text: "Profile",
             bold: true,
+            italics: true,
             size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Georgia"
           })
         ],
+        alignment: AlignmentType.CENTER,
         spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
       })
     );
@@ -572,7 +610,18 @@ function createCreativeTemplate(userData, accent) {
             size: Math.round(9 * scale * 2)
           })
         ],
-        spacing: { after: Math.round(12 * scale * 20) }
+        alignment: AlignmentType.CENTER,
+        spacing: { after: Math.round(12 * scale * 20) },
+        shading: {
+          fill: "FAFAFA"
+        },
+        border: {
+          top: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+          bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+          left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+          right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+        },
+        indent: { left: Math.round(200 * scale), right: Math.round(200 * scale) }
       })
     );
   }
@@ -589,7 +638,24 @@ function createCreativeTemplate(userData, accent) {
             color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
           })
         ],
+        alignment: AlignmentType.CENTER,
         spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
+      })
+    );
+
+    // Decorative line under Experience header
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "____",
+            size: Math.round(8 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Georgia"
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: Math.round(6 * scale * 20) }
       })
     );
 
@@ -600,13 +666,22 @@ function createCreativeTemplate(userData, accent) {
             new TextRun({
               text: safeProp(exp, 'title'),
               bold: true,
-              size: Math.round(10 * scale * 2),
+              size: Math.round(11 * scale * 2),
               color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
               font: "Georgia"
             })
           ],
-          spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) },
-          indent: { left: Math.round(180 * scale) }
+          alignment: AlignmentType.CENTER,
+          spacing: { before: Math.round(10 * scale * 20), after: Math.round(2 * scale * 20) },
+          shading: {
+            fill: "FAFAFA"
+          },
+          border: {
+            top: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+            bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+          }
         })
       );
 
@@ -621,8 +696,15 @@ function createCreativeTemplate(userData, accent) {
               font: "Georgia"
             })
           ],
+          alignment: AlignmentType.CENTER,
           spacing: { after: Math.round(2 * scale * 20) },
-          indent: { left: Math.round(180 * scale) }
+          shading: {
+            fill: "FAFAFA"
+          },
+          border: {
+            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+          }
         })
       );
 
@@ -636,13 +718,20 @@ function createCreativeTemplate(userData, accent) {
               font: "Georgia"
             })
           ],
+          alignment: AlignmentType.CENTER,
           spacing: { after: Math.round(4 * scale * 20) },
-          indent: { left: Math.round(180 * scale) }
+          shading: {
+            fill: "FAFAFA"
+          },
+          border: {
+            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+          }
         })
       );
 
       if (exp.bullets && exp.bullets.length > 0) {
-        exp.bullets.forEach(bullet => {
+        exp.bullets.forEach((bullet, index) => {
           children.push(
             new Paragraph({
               children: [
@@ -654,7 +743,17 @@ function createCreativeTemplate(userData, accent) {
                 })
               ],
               spacing: { after: Math.round(2 * scale * 20) },
-              indent: { left: Math.round(240 * scale) }
+              indent: { left: Math.round(360 * scale), right: Math.round(360 * scale) },
+              shading: {
+                fill: "FAFAFA"
+              },
+              border: {
+                left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+                right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
+                ...(index === exp.bullets.length - 1 && {
+                  bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+                })
+              }
             })
           );
         });
@@ -1532,13 +1631,19 @@ function createExecutiveTemplate(userData, accent) {
             })
           ],
           spacing: { before: Math.round(15 * scale * 20), after: Math.round(6 * scale * 20) },
+          shading: {
+            fill: "FAFAFA"
+          },
           border: {
+            top: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
             bottom: {
               color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
               space: 1,
               size: 3,
               style: BorderStyle.SINGLE
-            }
+            },
+            left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
+            right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
           }
         })
       );
@@ -1555,12 +1660,19 @@ function createExecutiveTemplate(userData, accent) {
               font: "Times"
             })
           ],
-          spacing: { after: Math.round(6 * scale * 20) }
+          spacing: { after: Math.round(6 * scale * 20) },
+          shading: {
+            fill: "FAFAFA"
+          },
+          border: {
+            left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
+            right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
+          }
         })
       );
 
       if (exp.bullets && exp.bullets.length > 0) {
-        exp.bullets.forEach(bullet => {
+        exp.bullets.forEach((bullet, index) => {
           children.push(
             new Paragraph({
               children: [
@@ -1573,7 +1685,17 @@ function createExecutiveTemplate(userData, accent) {
               ],
               spacing: { after: Math.round(3 * scale * 20) },
               indent: { left: Math.round(360 * scale) },
-              alignment: AlignmentType.JUSTIFIED
+              alignment: AlignmentType.JUSTIFIED,
+              shading: {
+                fill: "FAFAFA"
+              },
+              border: {
+                left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
+                right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
+                ...(index === exp.bullets.length - 1 && {
+                  bottom: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
+                })
+              }
             })
           );
         });
@@ -1713,27 +1835,66 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No user data provided" });
     }
 
+    // Get user session and entitlement
+    let userPlan = 'free';
+    let userId = null;
+    try {
+      const session = await getServerSession(req, res, NextAuth);
+      if (session?.user?.id) {
+        userId = session.user.id;
+        const entitlement = await getUserEntitlement(userId);
+        userPlan = entitlement.plan;
+      }
+    } catch (error) {
+      console.error('Error fetching user entitlement:', error);
+    }
+
+    // DOCX is not available for free users
+    if (userPlan === 'free') {
+      return res.status(402).json({ 
+        error: 'Upgrade required',
+        message: 'DOCX export is only available for Pro users. Please upgrade your plan.'
+      });
+    }
+
+    // Check usage limits for Pro users
+    if (userId) {
+      const usageCheck = await checkUsageLimit(userId, 'docx-download', userPlan);
+      if (!usageCheck.allowed) {
+        return res.status(429).json({ 
+          error: 'Usage limit exceeded', 
+          message: usageCheck.message,
+          usage: usageCheck.usage,
+          limit: usageCheck.limit 
+        });
+      }
+    }
+
+    // Free users can only use Professional template and default color
+    const effectiveTemplate = userPlan === 'free' ? 'professional' : template;
+    const effectiveAccent = userPlan === 'free' ? '#10b39f' : accent;
+
     let documentChildren;
     
-    switch (template) {
+    switch (effectiveTemplate) {
       case 'modern':
-        documentChildren = createModernTemplate(userData, accent);
+        documentChildren = createModernTemplate(userData, effectiveAccent);
         break;
       case 'creative':
-        documentChildren = createCreativeTemplate(userData, accent);
+        documentChildren = createCreativeTemplate(userData, effectiveAccent);
         break;
       case 'minimal':
-        documentChildren = createMinimalTemplate(userData, accent);
+        documentChildren = createMinimalTemplate(userData, effectiveAccent);
         break;
       case 'two-column':
-        documentChildren = createTwoColumnTemplate(userData, accent);
+        documentChildren = createTwoColumnTemplate(userData, effectiveAccent);
         break;
       case 'executive':
-        documentChildren = createExecutiveTemplate(userData, accent);
+        documentChildren = createExecutiveTemplate(userData, effectiveAccent);
         break;
       case 'professional':
       default:
-        documentChildren = createProfessionalTemplate(userData, accent);
+        documentChildren = createProfessionalTemplate(userData, effectiveAccent);
         break;
     }
 
@@ -1757,6 +1918,11 @@ export default async function handler(req, res) {
     
     const fileName = `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`;
     
+    // Track usage after successful generation
+    if (userId) {
+      await trackUsage(userId, 'docx-download');
+    }
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     

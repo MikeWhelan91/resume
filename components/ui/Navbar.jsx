@@ -1,11 +1,89 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userPlan, setUserPlan] = useState('free');
+  const [entitlement, setEntitlement] = useState(null);
+
+  // Fetch user entitlement data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (session?.user?.id) {
+        try {
+          const response = await fetch('/api/entitlements');
+          if (response.ok) {
+            const data = await response.json();
+            setEntitlement(data);
+            setUserPlan(data.plan || 'free');
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [session]);
+
+  const getPlanDisplayName = (plan) => {
+    switch (plan) {
+      case 'free': return 'Free Plan';
+      case 'day_pass': return 'Day Pass';
+      case 'pro_monthly': return 'Pro Monthly';
+      case 'pro_annual': return 'Pro Annual';
+      default: return 'Free Plan';
+    }
+  };
+
+  const getPlanIcon = (plan) => {
+    if (plan === 'free') return <User className="w-4 h-4" />;
+    return <Crown className="w-4 h-4" />;
+  };
+
+  const handleBillingClick = async () => {
+    if (userPlan === 'free') {
+      // Redirect to pricing page for upgrades
+      router.push('/pricing');
+    } else {
+      // Open Stripe customer portal
+      try {
+        const response = await fetch('/api/stripe/portal', { method: 'POST' });
+        if (response.ok) {
+          const { url } = await response.json();
+          window.open(url, '_blank');
+        }
+      } catch (error) {
+        console.error('Error opening billing portal:', error);
+      }
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to cancel your subscription? You will lose access to Pro features at the end of your current billing period.'
+    );
+    
+    if (confirmed) {
+      try {
+        // Open Stripe portal directly to the cancellation page
+        const response = await fetch('/api/stripe/portal', { method: 'POST' });
+        if (response.ok) {
+          const { url } = await response.json();
+          // Open the portal which will allow them to cancel
+          window.open(url, '_blank');
+        }
+      } catch (error) {
+        console.error('Error opening cancellation portal:', error);
+        alert('Unable to process cancellation. Please contact support.');
+      }
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-xl">
@@ -56,17 +134,83 @@ export default function Navbar() {
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
             ) : session ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">
-                  {session.user.email}
-                </span>
+              <div className="relative">
                 <button
-                  onClick={() => signOut()}
-                  className="btn btn-ghost btn-sm"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 bg-white/60 hover:bg-white/80 px-3 py-2 rounded-lg border border-gray-200/50 transition-all duration-200"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
+                  <div className="flex items-center space-x-2">
+                    {getPlanIcon(userPlan)}
+                    <span className="truncate max-w-[150px]">{session.user.email}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
                 </button>
+
+                {isDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {getPlanIcon(userPlan)}
+                          <span className="font-medium text-gray-900">{getPlanDisplayName(userPlan)}</span>
+                          {userPlan !== 'free' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
+                        {userPlan === 'free' && entitlement && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            <span className="font-medium">{entitlement.freeWeeklyCreditsRemaining || 0}/15</span> credits remaining
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-1">
+                        <button
+                          onClick={handleBillingClick}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
+                        </button>
+                        
+                        {/* Cancel Subscription - only show for paid plans */}
+                        {userPlan !== 'free' && (
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              handleCancelSubscription();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 flex items-center space-x-2"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>Cancel Subscription</span>
+                          </button>
+                        )}
+                        
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            signOut();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2">

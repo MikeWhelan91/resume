@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
-import { FileText, Download, ArrowLeft, Sparkles, Palette, Zap, FileDown } from 'lucide-react';
+import { 
+  FileText, 
+  Download, 
+  ArrowLeft, 
+  Sparkles, 
+  Palette, 
+  Zap, 
+  FileDown, 
+  Lock,
+  ChevronDown,
+  Target
+} from 'lucide-react';
 
 const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
 
@@ -18,13 +30,53 @@ const TEMPLATES = [
 
 export default function ResultsPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [accent, setAccent] = useState(ACCENTS[0]);
   const [template, setTemplate] = useState(TEMPLATES[0].id);
   const [userData, setUserData] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [userGoal, setUserGoal] = useState('both');
+  const [userPlan, setUserPlan] = useState('free');
+  const [entitlement, setEntitlement] = useState(null);
+  const [entitlementLoading, setEntitlementLoading] = useState(true);
+  const [usage, setUsage] = useState({ usage: {} });
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [resumeFormat, setResumeFormat] = useState('pdf');
+  const [coverLetterFormat, setCoverLetterFormat] = useState('pdf');
 
+  // Credit system helpers
+  const getCreditsRemaining = () => {
+    if (userPlan === 'free' && entitlement) {
+      return entitlement.freeWeeklyCreditsRemaining || 0;
+    }
+    return null; // Pro users have unlimited/different limits
+  };
+
+  const canDownload = () => {
+    if (userPlan === 'free') {
+      return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+    }
+    return true; // Pro users can download (subject to their own limits)
+  };
+
+  const canUseDocx = () => {
+    return userPlan !== 'free';
+  };
+
+  const canDownloadResumeFormat = () => {
+    if (resumeFormat === 'docx' && !canUseDocx()) {
+      return false;
+    }
+    return canDownload();
+  };
+
+  const canDownloadCoverLetterFormat = () => {
+    if (coverLetterFormat === 'docx' && !canUseDocx()) {
+      return false;
+    }
+    return canDownload();
+  };
 
   // Download functions
   const triggerDownload = async (endpoint, filename, payload) => {
@@ -53,15 +105,33 @@ export default function ResultsPage() {
       return;
     }
 
+    if (!canDownload()) {
+      const credits = getCreditsRemaining();
+      alert(`You've used all your weekly credits (${credits}/20). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+      return;
+    }
+
     try {
       await triggerDownload('/api/download-cv', 'cv.pdf', {
         template,
         accent,
         data: userData,
       });
+      
+      // Refresh entitlement data after successful download
+      const entitlementResponse = await fetch('/api/entitlements');
+      if (entitlementResponse.ok) {
+        const entitlementData = await entitlementResponse.json();
+        setEntitlement(entitlementData);
+        setUserPlan(entitlementData.plan);
+      }
     } catch (error) {
       console.error('Download error:', error);
-      // Silently handle download errors
+      if (error.message && error.message.includes('429')) {
+        alert('You have reached your limit. Please upgrade to Pro for unlimited downloads.');
+      } else {
+        alert('Failed to download PDF file. Please try again.');
+      }
     }
   };
 
@@ -117,6 +187,65 @@ export default function ResultsPage() {
     }
   };
 
+  // Consolidated download functions
+  const downloadResume = async () => {
+    if (resumeFormat === 'pdf') {
+      await downloadCV();
+    } else {
+      await downloadResumeDocx();
+    }
+  };
+
+  const downloadCoverLetterConsolidated = async () => {
+    if (coverLetterFormat === 'pdf') {
+      await downloadCoverLetter();
+    } else {
+      await downloadCoverLetterDocx();
+    }
+  };
+
+  const optimizeForATS = async () => {
+    if (!userData) {
+      alert('No data available. Please generate a resume first.');
+      return;
+    }
+
+    if (userPlan === 'free') {
+      alert('ATS optimization is a Pro feature. Please upgrade to access this functionality.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/ats-optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userData: userData,
+          jobDescription: jobDescription
+        }),
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const optimizedData = await response.json();
+      setUserData(optimizedData);
+      
+      // Save updated data to localStorage
+      localStorage.setItem('resumeResult', JSON.stringify(optimizedData));
+      
+      alert('Resume optimized for ATS systems! Your resume has been enhanced with ATS-friendly formatting and keywords.');
+      
+    } catch (error) {
+      console.error('ATS optimization error:', error);
+      alert('Failed to optimize resume. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const generateTailoredContent = async () => {
     if (!userData) {
       alert('No data available. Please generate a resume first.');
@@ -125,6 +254,12 @@ export default function ResultsPage() {
 
     if (!jobDescription.trim()) {
       alert('Please enter a job description.');
+      return;
+    }
+
+    if (!canDownload()) {
+      const credits = getCreditsRemaining();
+      alert(`You've used all your weekly credits (${credits}/20). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
       return;
     }
 
@@ -148,6 +283,14 @@ export default function ResultsPage() {
       
       // Save updated data to localStorage
       localStorage.setItem('resumeResult', JSON.stringify(tailoredData));
+      
+      // Refresh entitlement data after successful generation (credit consumed)
+      const entitlementResponse = await fetch('/api/entitlements');
+      if (entitlementResponse.ok) {
+        const entitlementData = await entitlementResponse.json();
+        setEntitlement(entitlementData);
+        setUserPlan(entitlementData.plan);
+      }
     } catch (error) {
       console.error('Generate error:', error);
       // Silently handle errors - user can try again if needed
@@ -174,6 +317,40 @@ export default function ResultsPage() {
     }
   }, []);
 
+  // Fetch user entitlement and usage
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (session?.user?.id) {
+        try {
+          // Fetch both entitlement and usage in parallel
+          const [entitlementResponse, usageResponse] = await Promise.all([
+            fetch('/api/entitlements'),
+            fetch('/api/usage')
+          ]);
+          
+          if (entitlementResponse.ok) {
+            const entitlementData = await entitlementResponse.json();
+            setEntitlement(entitlementData);
+            setUserPlan(entitlementData.plan);
+          }
+          
+          if (usageResponse.ok) {
+            const usageData = await usageResponse.json();
+            setUsage(usageData);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+      setEntitlementLoading(false);
+      setUsageLoading(false);
+    };
+
+    if (status !== 'loading') {
+      fetchUserData();
+    }
+  }, [session, status]);
+
 
 
     // CV Preview
@@ -187,7 +364,7 @@ export default function ResultsPage() {
           </div>
         </div>
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
-          <ResumeTemplate userData={userData} accent={accent} template={template} />
+          <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
         </div>
       </div>
     );
@@ -316,37 +493,90 @@ export default function ResultsPage() {
           
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700" htmlFor="templateSelect">Template Style</label>
-                  <select 
-                    id="templateSelect" 
-                    className="form-select" 
-                    value={template} 
-                    onChange={(e) => setTemplate(e.target.value)}
-                  >
-                    {TEMPLATES.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-medium text-gray-700">Template Style</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TEMPLATES.map(t => {
+                      const isProTemplate = t.id !== 'professional';
+                      const isLocked = isProTemplate && userPlan === 'free';
+                      const isSelected = template === t.id;
+                      
+                      return (
+                        <button
+                          key={t.id}
+                          className={`relative p-3 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
+                            isSelected 
+                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                              : isLocked 
+                              ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                          onClick={() => !isLocked && setTemplate(t.id)}
+                          disabled={isLocked}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{t.name}</span>
+                            {isLocked && <Lock className="w-4 h-4" />}
+                          </div>
+                          {isProTemplate && userPlan === 'free' && (
+                            <div className="text-xs text-gray-400 mt-1">Pro only</div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {userPlan === 'free' && (
+                    <>
+                      <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                        <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all templates.
+                      </div>
+                      <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                        <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0}/15 remaining. Credits reset every Monday at midnight Dublin time.
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700">Theme Color</h3>
+                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  Theme Color
+                  {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
+                </h3>
                 <div className="grid grid-cols-6 gap-2">
-                  {ACCENTS.map(c => (
-                    <button
-                      key={c}
-                      className="w-8 h-8 rounded-lg shadow-sm border-2 transition-all duration-200 hover:scale-110"
-                      style={{
-                        backgroundColor: c, 
-                        borderColor: c === accent ? c : 'rgb(229 231 235)',
-                        boxShadow: c === accent ? `0 0 0 2px ${c}40` : 'none'
-                      }}
-                      onClick={() => setAccent(c)}
-                      aria-label={`Accent ${c}`}
-                    />
-                  ))}
+                  {ACCENTS.map((c, index) => {
+                    const isFirstColor = index === 0;
+                    const isLocked = userPlan === 'free' && !isFirstColor;
+                    const isSelected = accent === c;
+                    
+                    return (
+                      <button
+                        key={c}
+                        className={`w-8 h-8 rounded-lg shadow-sm border-2 transition-all duration-200 relative ${
+                          !isLocked ? 'hover:scale-110' : 'cursor-not-allowed opacity-50'
+                        }`}
+                        style={{
+                          backgroundColor: c, 
+                          borderColor: isSelected ? c : 'rgb(229 231 235)',
+                          boxShadow: isSelected ? `0 0 0 2px ${c}40` : 'none'
+                        }}
+                        onClick={() => !isLocked && setAccent(c)}
+                        disabled={isLocked}
+                        aria-label={`Accent ${c}`}
+                      >
+                        {isLocked && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
+                            <Lock className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+                {userPlan === 'free' && (
+                  <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                    <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all color themes.
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3">
@@ -358,70 +588,139 @@ export default function ResultsPage() {
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the job description here to tailor your documents..."
                 />
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    className={`btn btn-primary flex items-center gap-2 justify-center ${
+                      (isGenerating || !jobDescription.trim() || !canDownload()) 
+                        ? 'cursor-not-allowed opacity-50' 
+                        : ''
+                    }`}
+                    onClick={generateTailoredContent}
+                    disabled={isGenerating || !jobDescription.trim() || !canDownload()}
+                  >
+                    {isGenerating ? (
+                      <div className="loading-spinner w-4 h-4"></div>
+                    ) : (
+                      <Zap className="w-4 h-4" />
+                    )}
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </button>
+                  <button 
+                    className="btn btn-secondary flex items-center justify-center" 
+                    onClick={() => router.push('/?step=1')}
+                  >
+                    Back to Wizard
+                  </button>
+                </div>
+
+                {/* ATS Optimization Button - Pro Only */}
                 <button 
-                  className="btn btn-primary w-full flex items-center gap-2 justify-center" 
-                  onClick={generateTailoredContent}
-                  disabled={isGenerating || !jobDescription.trim()}
+                  className={`btn flex items-center gap-2 justify-center w-full ${
+                    userPlan !== 'free'
+                      ? 'btn-accent bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700'
+                      : 'btn-disabled cursor-not-allowed opacity-50'
+                  } ${isGenerating ? 'cursor-not-allowed opacity-50' : ''}`}
+                  onClick={optimizeForATS}
+                  disabled={isGenerating || userPlan === 'free'}
                 >
-                  {isGenerating ? (
-                    <div className="loading-spinner w-4 h-4"></div>
-                  ) : (
-                    <Zap className="w-4 h-4" />
-                  )}
-                  {isGenerating ? 'Generating...' : 'Generate Tailored Content'}
+                  <Target className="w-4 h-4" />
+                  ATS Optimize
+                  {userPlan === 'free' && <Lock className="w-4 h-4 ml-1" />}
                 </button>
+
+                {userPlan === 'free' && (
+                  <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
+                    <strong>Note:</strong> Generating tailored content consumes 1 credit.
+                  </div>
+                )}
+
+                {userPlan === 'free' && (
+                  <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2">
+                    <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> to unlock this feature.
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3">
-                <button 
-                  className="btn btn-secondary w-full flex items-center gap-2 justify-center" 
-                  onClick={() => router.push('/')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Wizard
-                </button>
-                
-                <div className="space-y-2">
+                <div className={`grid gap-4 ${userGoal === 'both' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   {(userGoal === 'cv' || userGoal === 'both') && (
-                    <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-gray-700">Resume Format</label>
+                      <div className="relative">
+                        <select
+                          value={resumeFormat}
+                          onChange={(e) => setResumeFormat(e.target.value)}
+                          className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="pdf">PDF</option>
+                          <option value="docx" disabled={!canUseDocx()}>
+                            DOCX {!canUseDocx() && '(Pro only)'}
+                          </option>
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
                       <button 
-                        className="btn btn-primary w-full flex items-center gap-2 justify-center" 
-                        onClick={downloadCV}
+                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
+                          !canDownloadResumeFormat() 
+                            ? 'cursor-not-allowed opacity-50' 
+                            : ''
+                        }`}
+                        onClick={downloadResume}
+                        disabled={!canDownloadResumeFormat()}
                       >
                         <Download className="w-4 h-4" />
-                        Download Resume PDF
+                        Download ({resumeFormat.toUpperCase()})
+                        {resumeFormat === 'docx' && !canUseDocx() && <Lock className="w-4 h-4 ml-1" />}
                       </button>
-                      
-                      <button 
-                        className="btn btn-secondary w-full flex items-center gap-2 justify-center"
-                        onClick={downloadResumeDocx}
-                      >
-                        <FileDown className="w-4 h-4" />
-                        Download Resume DOCX
-                      </button>
-                    </>
+                    </div>
                   )}
                   
                   {(userGoal === 'cover-letter' || userGoal === 'both') && (
-                    <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-gray-700">Cover Letter Format</label>
+                      <div className="relative">
+                        <select
+                          value={coverLetterFormat}
+                          onChange={(e) => setCoverLetterFormat(e.target.value)}
+                          className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="pdf">PDF</option>
+                          <option value="docx" disabled={!canUseDocx()}>
+                            DOCX {!canUseDocx() && '(Pro only)'}
+                          </option>
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
                       <button 
-                        className="btn btn-primary w-full flex items-center gap-2 justify-center"
-                        onClick={downloadCoverLetter}
+                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
+                          !canDownloadCoverLetterFormat() 
+                            ? 'cursor-not-allowed opacity-50' 
+                            : ''
+                        }`}
+                        onClick={downloadCoverLetterConsolidated}
+                        disabled={!canDownloadCoverLetterFormat()}
                       >
                         <Download className="w-4 h-4" />
-                        Download Cover Letter PDF
+                        Download ({coverLetterFormat.toUpperCase()})
+                        {coverLetterFormat === 'docx' && !canUseDocx() && <Lock className="w-4 h-4 ml-1" />}
                       </button>
-                      
-                      <button 
-                        className="btn btn-secondary w-full flex items-center gap-2 justify-center"
-                        onClick={downloadCoverLetterDocx}
-                      >
-                        <FileDown className="w-4 h-4" />
-                        Download Cover Letter DOCX
-                      </button>
-                    </>
+                    </div>
                   )}
                 </div>
+                
+                {userPlan === 'free' && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-blue-700">
+                        {getCreditsRemaining() || 0}/15 credits remaining
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Credits reset every Monday at midnight Dublin time
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </aside>

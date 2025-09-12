@@ -20,6 +20,20 @@ export default async function handler(req, res) {
     }
 
     const userId = session.user.id
+    const { planType, isAnnual } = req.body
+
+    // Determine which Stripe price to use
+    let priceId
+    switch (planType) {
+      case 'pro_monthly':
+        priceId = process.env.STRIPE_PRICE_PRO_MONTHLY
+        break
+      case 'pro_annual':
+        priceId = process.env.STRIPE_PRICE_PRO_ANNUAL
+        break
+      default:
+        priceId = process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_PRO_MONTHLY
+    }
 
     // Find or create user in database
     let user = await prisma.user.findUnique({
@@ -58,7 +72,7 @@ export default async function handler(req, res) {
       mode: 'subscription',
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_PRO,
+          price: priceId,
           quantity: 1,
         },
       ],

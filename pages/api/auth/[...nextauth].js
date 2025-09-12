@@ -90,4 +90,8 @@ export default NextAuth({
     verifyRequest: '/auth/verify-request',
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Allow NextAuth to automatically detect URL in production
+  ...(process.env.NODE_ENV === 'production' && {
+    url: process.env.NEXTAUTH_URL || 'https://tailoredcv.onrender.com'
+  }),
 })

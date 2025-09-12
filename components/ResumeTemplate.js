@@ -180,7 +180,7 @@ const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: `${12 * scale}px`, textAlign: 'center' }}>
+          <div style={{ marginBottom: `${12 * scale}px`, textAlign: 'center', padding: `${8 * scale}px`, backgroundColor: '#fafafa', borderRadius: `${8 * scale}px`, border: `1px solid ${accent}20` }}>
             <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', fontStyle: 'italic' }}>Profile</h2>
             <p style={{ fontSize: `${9 * scale}px`, fontStyle: 'italic', maxWidth: '80%', margin: '0 auto' }}>{userData.resumeData.summary}</p>
           </div>
@@ -193,15 +193,17 @@ const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
               <div style={{ height: `${1 * scale}px`, width: `${30 * scale}px`, backgroundColor: accent, margin: `${2 * scale}px auto` }}></div>
             </div>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px`, position: 'relative', paddingLeft: `${12 * scale}px` }}>
-                <div style={{ position: 'absolute', left: '0', top: `${2 * scale}px`, width: `${4 * scale}px`, height: `${4 * scale}px`, backgroundColor: accent, borderRadius: '50%' }}></div>
-                <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent }}>{safeProp(exp, 'title')}</div>
-                <div style={{ fontSize: `${9 * scale}px`, color: '#666', fontStyle: 'italic' }}>{safeProp(exp, 'company')}</div>
-                <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
+              <div key={i} className="experience-item" style={{ marginBottom: `${15 * scale}px`, textAlign: 'center', padding: `${8 * scale}px`, border: `1px solid ${accent}20`, borderRadius: `${8 * scale}px`, backgroundColor: '#fafafa' }}>
+                <div style={{ fontSize: `${11 * scale}px`, fontWeight: 'bold', color: accent, marginBottom: `${2 * scale}px` }}>{safeProp(exp, 'title')}</div>
+                <div style={{ fontSize: `${9 * scale}px`, color: '#666', fontStyle: 'italic', marginBottom: `${2 * scale}px` }}>{safeProp(exp, 'company')}</div>
+                <div style={{ fontSize: `${8 * scale}px`, color: '#666', marginBottom: `${4 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 {exp.bullets && exp.bullets.length > 0 && (
-                  <div className="bullet-list">
+                  <div className="bullet-list" style={{ textAlign: 'left', maxWidth: '80%', margin: '0 auto' }}>
                     {exp.bullets.map((bullet, j) => (
-                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px`, color: '#555' }}>• {bullet}</div>
+                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px`, color: '#555', paddingLeft: `${15 * scale}px`, position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '0', color: accent, fontWeight: 'bold' }}>•</span>
+                        {bullet}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -505,23 +507,28 @@ const ExecutiveTemplate = ({ userData, accent, scale = 1 }) => (
   </div>
 );
 
-export default function ResumeTemplate({ userData, template, accent, isPDF = false }) {
+export default function ResumeTemplate({ userData, template, accent, isPDF = false, userPlan = 'free' }) {
   const scale = isPDF ? 1.75 : 1; // Scale up for PDF
   
-  switch (template) {
+  // Free users can only use Professional template and default color
+  const isProUser = userPlan && userPlan !== 'free';
+  const effectiveTemplate = isProUser ? template : 'professional';
+  const effectiveAccent = isProUser ? accent : '#10b39f'; // Default to first color for free users
+  
+  switch (effectiveTemplate) {
     case 'modern':
-      return <ModernTemplate userData={userData} accent={accent} scale={scale} />;
+      return <ModernTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
     case 'creative':
-      return <CreativeTemplate userData={userData} accent={accent} scale={scale} />;
+      return <CreativeTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
     case 'minimal':
-      return <MinimalTemplate userData={userData} accent={accent} scale={scale} />;
+      return <MinimalTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
     case 'two-column':
-      return <TwoColumnTemplate userData={userData} accent={accent} scale={scale} />;
+      return <TwoColumnTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
     case 'executive':
-      return <ExecutiveTemplate userData={userData} accent={accent} scale={scale} />;
+      return <ExecutiveTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
     case 'professional':
     default:
-      return <ProfessionalTemplate userData={userData} accent={accent} scale={scale} />;
+      return <ProfessionalTemplate userData={userData} accent={effectiveAccent} scale={scale} />;
   }
 }
 

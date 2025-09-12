@@ -16,7 +16,9 @@
       "Bash(npm run build:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(openssl rand:*)"
+      "Bash(openssl rand:*)",
+      "Bash(curl:*)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []

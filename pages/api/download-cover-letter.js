@@ -1,5 +1,8 @@
 import puppeteer from 'puppeteer';
 import { limitCoverLetter } from '../../lib/renderUtils';
+import { getServerSession } from 'next-auth/next';
+import NextAuth from './auth/[...nextauth]';
+import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 export default async function handler(req, res) {
   const { accent, data } = req.body;
@@ -10,6 +13,30 @@ export default async function handler(req, res) {
 
   if (!data) {
     return res.status(400).json({ error: 'No data provided' });
+  }
+
+  // Check user authentication and credits
+  let userId = null;
+  try {
+    const session = await getServerSession(req, res, NextAuth);
+    if (session?.user?.id) {
+      userId = session.user.id;
+    }
+  } catch (error) {
+    console.error('Error checking user session:', error);
+  }
+
+  // Check credit availability
+  if (userId) {
+    const creditCheck = await checkCreditAvailability(userId, 'download');
+    if (!creditCheck.allowed) {
+      return res.status(429).json({ 
+        error: 'Limit exceeded', 
+        message: creditCheck.message,
+        credits: creditCheck.credits,
+        plan: creditCheck.plan
+      });
+    }
   }
 
   // Generate HTML that matches the cover letter preview exactly
@@ -33,6 +60,12 @@ export default async function handler(req, res) {
       displayHeaderFooter: false
     });
     await browser.close();
+
+    // Track usage and consume credit after successful generation
+    if (userId) {
+      await consumeCredit(userId, 'download');
+      await trackApiUsage(userId, 'pdf-download');
+    }
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="cover-letter.pdf"');

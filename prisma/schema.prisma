@@ -65,11 +65,14 @@ model VerificationToken {
 }
 
 model Entitlement {
-  userId    String                 @id
-  plan      Plan                   @default(free)
-  status    EntitlementStatus      @default(inactive)
-  features  Json                   @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
-  updatedAt DateTime               @updatedAt
+  userId                    String                 @id
+  plan                      Plan                   @default(free)
+  status                    EntitlementStatus      @default(active)
+  features                  Json                   @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
+  freeWeeklyCreditsRemaining Int                   @default(5)
+  lastWeeklyReset           DateTime?
+  expiresAt                 DateTime?              // For day-pass expiry
+  updatedAt                 DateTime               @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -90,6 +93,7 @@ model WebhookEvent {
 
 enum Plan {
   free
+  day_pass
   pro_monthly
   pro_annual
 }
