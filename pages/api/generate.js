@@ -103,34 +103,7 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   
   const sys = `Output ONLY JSON: {"bullets": string[]} 
 
-Transform BULLETS into recruiter-optimized achievement statements using modern resume best practices:
-
-FORMULA: [Action Verb] + [What You Did] + [Quantifiable Result/Impact] + [Context if needed]
-
-BEST PRACTICES:
-1. START WITH POWER VERBS: Achieved, Led, Transformed, Optimized, Delivered, Increased, Reduced, Implemented, Streamlined, Spearheaded, Generated, Exceeded, Improved, Architected, Collaborated
-
-2. QUANTIFY EVERYTHING POSSIBLE:
-   - Numbers: "Managed team of 8", "Processed 500+ applications daily"
-   - Percentages: "Increased efficiency by 25%", "Reduced costs by 15%"
-   - Time: "Delivered projects 2 weeks ahead of schedule"
-   - Scale: "Across 15 departments", "Serving 10K+ users"
-
-3. FOCUS ON BUSINESS IMPACT:
-   - Revenue generation/cost savings
-   - Process improvements 
-   - Problem-solving outcomes
-   - Team/project leadership results
-
-4. AVOID WEAK LANGUAGE:
-   - Remove: "Responsible for", "Duties included", "Worked on"
-   - Replace with specific actions and outcomes
-
-5. STRUCTURE: 15-25 words max, prioritize most impressive metrics first
-
-6. KEYWORDS: Naturally integrate relevant JOB_DESC terms when supported by RESUME_CONTEXT
-
-🚨 ENHANCED ANTI-FABRICATION PROTOCOLS - ZERO TOLERANCE:
+🚨 CRITICAL ANTI-FABRICATION RULES - ZERO TOLERANCE:
 - NEVER invent numbers: No percentages, metrics, dollar amounts, team sizes, timeframes, or quantified results
 - NEVER add achievements: No projects, technologies, outcomes, or accomplishments not in original resume
 - NEVER create metrics: No "increased by 25%", "managed team of 8", "saved $50K" unless word-for-word in RESUME_CONTEXT
@@ -145,7 +118,34 @@ BEST PRACTICES:
 - STRICT RULE: Only enhance clarity and power of existing truthful content
 - STRICT RULE: When uncertain, choose weaker truthful language over stronger fabricated claims
 - VERIFICATION: Each enhanced bullet must be completely defensible against original source
-- ACCOUNTABILITY: Every claim must trace back to explicit content in RESUME_CONTEXT`;
+- ACCOUNTABILITY: Every claim must trace back to explicit content in RESUME_CONTEXT
+
+Transform BULLETS using only information from RESUME_CONTEXT:
+
+FORMULA: [Action Verb] + [What You Did] + [Context/Technology/Scope if mentioned]
+
+ENHANCEMENT APPROACH:
+1. START WITH POWER VERBS: Achieved, Led, Transformed, Optimized, Delivered, Implemented, Streamlined, Spearheaded, Developed, Built, Maintained, Collaborated, Supported, Analyzed
+
+2. PRESERVE ORIGINAL FACTS:
+   - Only use numbers/metrics if explicitly stated in RESUME_CONTEXT
+   - Only mention technologies/tools if listed in RESUME_CONTEXT  
+   - Only reference scope/scale if mentioned in RESUME_CONTEXT
+   - Only claim leadership if indicated in RESUME_CONTEXT
+
+3. FOCUS ON TRUTHFUL IMPACT:
+   - Highlight the nature of work done (development, analysis, support, etc.)
+   - Emphasize technologies used (only if mentioned)
+   - Note collaboration and teamwork (only if indicated)
+   - Describe processes and methodologies (only if mentioned)
+
+4. AVOID WEAK LANGUAGE:
+   - Remove: "Responsible for", "Duties included", "Worked on"
+   - Replace with specific action verbs that reflect the actual work
+
+5. STRUCTURE: 15-25 words max, clear and concise
+
+6. KEYWORDS: Naturally integrate relevant JOB_DESC terms ONLY when supported by RESUME_CONTEXT`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
@@ -181,24 +181,26 @@ async function verifyBullets(client, resumeContext, original, rewritten){
 async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
   const sys = `Output ONLY JSON: {"summary": "string"} 
 
-Create a compelling professional summary using modern resume best practices:
+🚨 CRITICAL: Only use information explicitly stated in RESUME_CONTEXT. Never fabricate experience years, metrics, or achievements.
+
+Create a professional summary using information from RESUME_CONTEXT only:
 
 STRUCTURE (2-3 sentences, 50-80 words):
-1. Professional title + years of experience + core specialization
-2. Key achievements with quantifiable results (if available in resume)
-3. Value proposition aligned with target role
+1. Professional title + experience level (only if clearly stated in resume)
+2. Key technologies/skills mentioned in resume
+3. Value proposition based on actual experience shown in resume
 
-BEST PRACTICES:
-- Start with strongest professional identity (e.g., "Senior Software Engineer with 5+ years...")
-- Use power words (achieved, led, transformed, optimized, delivered)
-- Include specific metrics when available in resume (revenue, percentages, scale)
-- Mention 2-3 most relevant technical skills or competencies
-- Focus on business impact and value delivered
+STRICT RULES:
+- Start with professional identity from resume (e.g., "Software Engineer", "Developer", etc.)
+- Use power words (achieved, led, transformed, optimized, delivered) only if supported by resume
+- Include specific metrics ONLY when explicitly stated in RESUME_CONTEXT
+- Mention 2-3 most relevant technical skills from resume
+- Focus on demonstrated capabilities from resume experience
 - Avoid generic phrases like "results-driven" or "team player"
 - Write in third person, no "I" statements
-- End with forward-looking value proposition
+- NEVER add experience years, company scales, or achievements not in resume
 
-TONE: Confident, specific, achievement-focused`;
+TONE: Professional, factual, based on actual resume content`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nCURRENT_SUMMARY:\n${currentSummary || "No existing summary"}`;
   
@@ -313,15 +315,16 @@ SKILLS SECTION:
 - Use full names for clarity (e.g., "JavaScript" not "JS")
 
 EXPERIENCE OPTIMIZATION:
-- Company, title, dates, location for each role
+- Company, title, dates, location for each role (from original resume only)
 - 3-5 achievement-focused bullets per role (not duties)
-- Formula: [Strong Action Verb] + [Specific Action] + [Impact/Result] + [Context if provided]
+- Formula: [Strong Action Verb] + [Specific Action] + [Context/Technology if mentioned]
 - Use power verbs: Achieved, Led, Transformed, Delivered, Optimized, Streamlined, etc.
-- Focus on business impact using only information from original resume
-- ⚠️ METRICS RULE: Only include numbers/percentages if they exist in original resume
-- ⚠️ If no metrics available, emphasize scope, complexity, technologies, or methodology
+- Focus on work scope and technologies using only information from original resume
+- ⚠️ METRICS RULE: Only include numbers/percentages if they exist word-for-word in original resume
+- ⚠️ NEVER ADD METRICS: No fabricated percentages, team sizes, timeframes, or performance improvements
+- ⚠️ If no metrics available, emphasize technologies, methodologies, and scope of work only
 - Eliminate weak phrases: "Responsible for", "Duties included", "Worked on"
-- Keep bullets 15-25 words, strong qualitative impact over fabricated numbers
+- Keep bullets 15-25 words, truthful content over impressive fabrications
 
 EDUCATION SECTION:
 - Include degree, institution, graduation year, relevant GPA (3.5+)
@@ -338,16 +341,24 @@ ATS OPTIMIZATION:
 ${coverLetterNeeded ? `
 📝 COVER LETTER OPTIMIZATION:
 
-STRUCTURE (3-4 paragraphs, 250-400 words):
-1. Hook: Strong opening that shows knowledge of company/role
-2. Value: Specific achievements that align with job requirements  
-3. Fit: Why you're perfect for this role and company
-4. Close: Confident call-to-action
+🚨 COVER LETTER ANTI-FABRICATION RULES:
+- NEVER claim achievements not in original resume
+- NEVER invent experience with technologies/tools not in ALLOWED_SKILLS  
+- NEVER fabricate metrics, project outcomes, or quantified results
+- NEVER overstate your qualifications or experience level
+- NEVER claim direct experience with JOB_ONLY_SKILLS
+- ONLY mention accomplishments explicitly stated in your resume
 
-TONE: ${tone}, confident, specific, enthusiastic
-STYLE: Focus on what you can deliver, not what you want
-KEYWORDS: Naturally integrate job-relevant terms from ALLOWED_SKILLS
-RESTRICTIONS: Don't claim experience with JOB_ONLY_SKILLS - instead express eagerness to learn
+STRUCTURE (3-4 paragraphs, 250-400 words):
+1. Hook: Professional opening showing interest in the role (no fabricated company research)
+2. Value: Relevant experience and skills from your actual resume that match the job
+3. Fit: How your demonstrated experience (from resume) aligns with role requirements
+4. Close: Professional expression of interest
+
+TONE: ${tone}, professional, truthful, enthusiastic
+STYLE: Focus on actual capabilities from resume, not invented qualifications
+KEYWORDS: Only use job-relevant terms from ALLOWED_SKILLS that you actually possess
+RESTRICTIONS: For JOB_ONLY_SKILLS, express willingness to learn using phrasing like "While I haven't used [skill] directly, my experience with [related skill from resume] provides a strong foundation for learning it."
 ` : ''}
 
 🚫 CRITICAL ANTI-FABRICATION RULES - ZERO TOLERANCE:

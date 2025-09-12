@@ -168,8 +168,14 @@ STRICT RULES:
 - Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
 - For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs and align with job description keywords that are supported by the resume.
 - For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
-- The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
-- The coverLetterText must adopt a ${tone} tone.
+🚨 COVER LETTER CRITICAL RULES:
+- The coverLetterText MUST NOT claim direct experience with JOB_ONLY_SKILLS or any skills not in ALLOWED_SKILLS
+- NEVER fabricate achievements, metrics, or accomplishments not explicitly stated in original resume
+- NEVER invent project outcomes, team leadership, or quantified results 
+- NEVER overstate experience level or claim expertise beyond what's demonstrated in resume
+- When mentioning JOB_ONLY_SKILLS, express willingness to learn using phrasing like "While I haven't used X directly, my experience with Y provides a strong foundation for learning it"
+- ONLY reference accomplishments, projects, and experience explicitly mentioned in the original resume
+- The coverLetterText must adopt a ${tone} tone while remaining truthful.
 - The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
 
 🚫 NEVER FABRICATE OR ASSUME:
