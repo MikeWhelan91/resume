@@ -127,6 +127,15 @@ export default function Navbar() {
               <FileText className="w-4 h-4" />
               Create Resume
             </Link>
+            {session && (
+              <Link 
+                href="/my-resumes" 
+                className={`nav-link ${router.pathname === '/my-resumes' ? 'active' : ''}`}
+              >
+                <FileText className="w-4 h-4" />
+                My Resumes
+              </Link>
+            )}
             {router.pathname === '/results' && (
               <Link 
                 href="/results" 
@@ -296,6 +305,16 @@ export default function Navbar() {
                   <FileText className="w-4 h-4" />
                   Create Resume
                 </Link>
+                {session && (
+                  <Link 
+                    href="/my-resumes" 
+                    className={`mobile-nav-link ${router.pathname === '/my-resumes' ? 'active' : ''}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <FileText className="w-4 h-4" />
+                    My Resumes
+                  </Link>
+                )}
                 {router.pathname === '/results' && (
                   <Link 
                     href="/results" 

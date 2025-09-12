@@ -94,17 +94,57 @@ async function expandSkills(client, skills){
   return Array.from(expanded);
 }
 
-// ---- NEW: post-process bullets with action verbs/metrics ----
+// ---- NEW: post-process bullets with modern resume best practices ----
 async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
-  const sys = "Output ONLY JSON: {\\\"bullets\\\": string[]} Rephrase BULLETS using strong action verbs, quantified outcomes, and relevant JOB_DESC keywords supported by RESUME_CONTEXT. Do not fabricate skills or experience. Keep each bullet under 25 words.";
-  const user = `JOB_DESC:\n${jobDesc}\nRESUME_CONTEXT:\n${resumeContext}\nBULLETS:${JSON.stringify(bullets)}`;
+  
+  const sys = `Output ONLY JSON: {"bullets": string[]} 
+
+Transform BULLETS into recruiter-optimized achievement statements using modern resume best practices:
+
+FORMULA: [Action Verb] + [What You Did] + [Quantifiable Result/Impact] + [Context if needed]
+
+BEST PRACTICES:
+1. START WITH POWER VERBS: Achieved, Led, Transformed, Optimized, Delivered, Increased, Reduced, Implemented, Streamlined, Spearheaded, Generated, Exceeded, Improved, Architected, Collaborated
+
+2. QUANTIFY EVERYTHING POSSIBLE:
+   - Numbers: "Managed team of 8", "Processed 500+ applications daily"
+   - Percentages: "Increased efficiency by 25%", "Reduced costs by 15%"
+   - Time: "Delivered projects 2 weeks ahead of schedule"
+   - Scale: "Across 15 departments", "Serving 10K+ users"
+
+3. FOCUS ON BUSINESS IMPACT:
+   - Revenue generation/cost savings
+   - Process improvements 
+   - Problem-solving outcomes
+   - Team/project leadership results
+
+4. AVOID WEAK LANGUAGE:
+   - Remove: "Responsible for", "Duties included", "Worked on"
+   - Replace with specific actions and outcomes
+
+5. STRUCTURE: 15-25 words max, prioritize most impressive metrics first
+
+6. KEYWORDS: Naturally integrate relevant JOB_DESC terms when supported by RESUME_CONTEXT
+
+🚨 CRITICAL RULES - NO EXCEPTIONS:
+- NEVER invent numbers, percentages, or metrics not in RESUME_CONTEXT
+- NEVER add achievements, projects, or outcomes not mentioned in original resume
+- ONLY improve wording and structure of existing content
+- If no metrics exist, focus on scope, complexity, or methodology - DON'T CREATE THEM
+- When in doubt, use the original bullet point
+- Make every word count - eliminate filler
+- Use parallel structure across bullets`;
+
+  const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
+  
   const r = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    temperature: 0.2,
+    temperature: 0.3,
     response_format: { type: "json_object" },
     messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
+  
   const out = safeJSON(r.choices?.[0]?.message?.content || "");
   const arr = Array.isArray(out?.bullets) ? out.bullets.map(b=>String(b).trim()).filter(Boolean) : null;
   return arr && arr.length === bullets.length ? arr : bullets;
@@ -124,6 +164,42 @@ async function verifyBullets(client, resumeContext, original, rewritten){
   const out = safeJSON(r.choices?.[0]?.message?.content || "");
   const flags = Array.isArray(out?.valid) ? out.valid : [];
   return rewritten.map((b,i)=> flags[i] ? b : original[i]);
+}
+
+// ---- NEW: optimize professional summary ----
+async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
+  const sys = `Output ONLY JSON: {"summary": "string"} 
+
+Create a compelling professional summary using modern resume best practices:
+
+STRUCTURE (2-3 sentences, 50-80 words):
+1. Professional title + years of experience + core specialization
+2. Key achievements with quantifiable results (if available in resume)
+3. Value proposition aligned with target role
+
+BEST PRACTICES:
+- Start with strongest professional identity (e.g., "Senior Software Engineer with 5+ years...")
+- Use power words (achieved, led, transformed, optimized, delivered)
+- Include specific metrics when available in resume (revenue, percentages, scale)
+- Mention 2-3 most relevant technical skills or competencies
+- Focus on business impact and value delivered
+- Avoid generic phrases like "results-driven" or "team player"
+- Write in third person, no "I" statements
+- End with forward-looking value proposition
+
+TONE: Confident, specific, achievement-focused`;
+
+  const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nCURRENT_SUMMARY:\n${currentSummary || "No existing summary"}`;
+  
+  const r = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.3,
+    response_format: { type: "json_object" },
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+  });
+  
+  const out = safeJSON(r.choices?.[0]?.message?.content || "");
+  return out?.summary || currentSummary;
 }
 
 async function coreHandler(req, res){
@@ -170,18 +246,74 @@ async function coreHandler(req, res){
     if (resumeNeeded) outputKeys.push('- resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])');
     
     const system = `
-You output ONLY JSON with keys:
+You are a professional resume writer and career consultant. Output ONLY JSON with keys:
 ${outputKeys.join('\n')}
 
-STRICT RULES:
-${resumeNeeded ? `- Treat ALLOWED_SKILLS as an allow-list. resumeData.skills MUST be a subset of ALLOWED_SKILLS.
-- Do NOT add tools/tech/frameworks in skills or experience if they are not in ALLOWED_SKILLS.
-    - For resumeData.experience[], each item must include company, title, start, end, location?, bullets[]. Start/end dates must come from the candidate's resume and must not be fabricated. Bullets must begin with strong action verbs, include quantifiable outcomes when possible, and align with job description keywords that are supported by the resume.
-- For resumeData.education[], each item must include school, degree, start, end, grade? Dates and grade must come from the candidate's resume and must not be fabricated.
-- The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.` : ''}
-${coverLetterNeeded ? `- The coverLetterText MUST NOT claim direct experience with non-allowed skills. When mentioning JOB_ONLY_SKILLS, express willingness to learn or highlight transferable experience using phrasing like "While I haven't used X directly, I have Y which maps to X by Z."
-- The coverLetterText must adopt a ${tone} tone.` : ''}
-- Never fabricate employers, dates, credentials, or numbers. If unknown, omit. No prose outside JSON. No markdown fences.
+🎯 PRIMARY GOAL: Transform this resume using modern best practices to maximize recruiter appeal and ATS compatibility.
+
+${resumeNeeded ? `
+📋 RESUME OPTIMIZATION RULES:
+
+STRUCTURE & FORMATTING:
+- Clean, ATS-friendly layout with clear section headers
+- Consistent formatting and parallel structure throughout
+- Strategic use of industry keywords naturally integrated
+
+PROFESSIONAL SUMMARY:
+- 2-3 compelling sentences (50-80 words) that immediately showcase value
+- Lead with professional title + years of experience + core expertise
+- Include quantifiable achievements when available
+- End with forward-looking value proposition
+
+SKILLS SECTION:
+- Prioritize most relevant and in-demand skills first
+- Only include skills from ALLOWED_SKILLS list
+- Group related technologies logically
+- Use full names for clarity (e.g., "JavaScript" not "JS")
+
+EXPERIENCE OPTIMIZATION:
+- Company, title, dates, location for each role
+- 3-5 achievement-focused bullets per role (not duties)
+- Formula: [Strong Action Verb] + [Specific Action] + [Quantifiable Result] + [Context]
+- Lead with most impressive metrics and outcomes
+- Use power verbs: Achieved, Led, Transformed, Delivered, Optimized, Increased, Reduced, etc.
+- Focus on business impact: revenue, efficiency, cost savings, process improvements
+- Eliminate weak phrases: "Responsible for", "Duties included", "Worked on"
+- Keep bullets 15-25 words, prioritize concrete results over tasks
+
+EDUCATION SECTION:
+- Include degree, institution, graduation year, relevant GPA (3.5+)
+- Add relevant coursework, projects, or honors if recent graduate
+- Only verified information from original resume
+
+ATS OPTIMIZATION:
+- Use standard section headers (Experience, Education, Skills)
+- Include relevant keywords from job description naturally
+- Avoid graphics, tables, or unusual formatting
+- Use common fonts and clear hierarchy
+` : ''}
+
+${coverLetterNeeded ? `
+📝 COVER LETTER OPTIMIZATION:
+
+STRUCTURE (3-4 paragraphs, 250-400 words):
+1. Hook: Strong opening that shows knowledge of company/role
+2. Value: Specific achievements that align with job requirements  
+3. Fit: Why you're perfect for this role and company
+4. Close: Confident call-to-action
+
+TONE: ${tone}, confident, specific, enthusiastic
+STYLE: Focus on what you can deliver, not what you want
+KEYWORDS: Naturally integrate job-relevant terms from ALLOWED_SKILLS
+RESTRICTIONS: Don't claim experience with JOB_ONLY_SKILLS - instead express eagerness to learn
+` : ''}
+
+🚫 NEVER FABRICATE:
+- Employment dates, company names, or job titles
+- Metrics, percentages, or quantifiable results
+- Skills not in ALLOWED_SKILLS
+- Educational credentials or grades
+
 ALLOWED_SKILLS: ${allowedSkillsCSV}
 JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
 `.trim();
@@ -213,7 +345,7 @@ JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
     const json = safeJSON(raw);
     if (!json) return res.status(502).json({ error:"Bad model output", code:"E_BAD_MODEL_OUTPUT", raw });
 
-    // Normalize + enforce subset in code
+    // Normalize + optimize with best practices
     let rd = null;
     if (resumeNeeded) {
       const allowed = new Set(allowedSkills);
@@ -221,6 +353,11 @@ JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
       rd.skills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
 
       const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
+      
+      // Optimize professional summary
+      rd.summary = await optimizeSummary(client, resumeContext, jobDesc, rd.summary);
+      
+      // Optimize experience bullets with modern best practices
       for (const exp of rd.experience || []) {
         const originalBullets = exp.bullets || [];
         const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);

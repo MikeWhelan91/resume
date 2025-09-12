@@ -1,12 +1,54 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Upload, Sparkles, ArrowRight, Zap, Shield, Star } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Upload, Sparkles, ArrowRight, Zap, Shield, Star, Clock } from 'lucide-react';
 
 export default function HeroUpload() {
   const router = useRouter();
+  const { data: session } = useSession();
   const fileRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [hasLatestResume, setHasLatestResume] = useState(false);
+  const [checkingResume, setCheckingResume] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      checkForLatestResume();
+    }
+  }, [session]);
+
+  const checkForLatestResume = async () => {
+    try {
+      const response = await fetch('/api/resumes/latest');
+      setHasLatestResume(response.ok);
+    } catch (error) {
+      console.error('Error checking for latest resume:', error);
+      setHasLatestResume(false);
+    }
+  };
+
+  const loadLatestResume = async () => {
+    setCheckingResume(true);
+    setLoadingMessage('Loading your most recent CV...');
+    try {
+      const response = await fetch('/api/resumes/latest');
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('resumeWizardDraft', JSON.stringify(data.data));
+        setLoadingMessage('Perfect! Taking you to the wizard...');
+        setTimeout(() => router.push('/wizard'), 500);
+      } else {
+        alert('Failed to load your most recent CV. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error loading latest resume:', error);
+      alert('Failed to load your most recent CV. Please try again.');
+    } finally {
+      setCheckingResume(false);
+      setLoadingMessage('');
+    }
+  };
 
   async function handleFile(e){
     const f = e.target.files?.[0];
@@ -74,20 +116,33 @@ export default function HeroUpload() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-slide-up" style={{animationDelay: '0.2s'}}>
               <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFile} className="hidden" />
               
+              {/* Show "Use Most Recent CV" button for logged-in users with saved resumes */}
+              {session?.user && hasLatestResume && (
+                <button 
+                  className="btn btn-primary btn-lg group" 
+                  onClick={loadLatestResume}
+                  disabled={loading || checkingResume}
+                >
+                  <Clock className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  Use Most Recent CV
+                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
+              
               <button 
-                className="btn btn-primary btn-lg group" 
+                className={`btn ${session?.user && hasLatestResume ? 'btn-secondary' : 'btn-primary'} btn-lg group`}
                 onClick={()=>fileRef.current?.click()} 
-                disabled={loading}
+                disabled={loading || checkingResume}
               >
                 <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 Upload Your Resume
-                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                {!(session?.user && hasLatestResume) && <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />}
               </button>
               
               <button 
                 className="btn btn-secondary btn-lg group" 
                 onClick={handleCreateNew} 
-                disabled={loading}
+                disabled={loading || checkingResume}
               >
                 <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                 Start From Scratch
@@ -206,12 +261,14 @@ export default function HeroUpload() {
       </div>
 
       {/* Modern Loading Screen */}
-      {loading && (
+      {(loading || checkingResume) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="card p-8 max-w-sm w-full text-center space-y-6 animate-scale-in">
             <div className="loading-spinner w-12 h-12 mx-auto"></div>
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold text-gray-900">Processing Your Resume</h3>
+              <h3 className="text-xl font-semibold text-gray-900">
+                {checkingResume ? 'Loading Your Resume' : 'Processing Your Resume'}
+              </h3>
               <p className="text-gray-600">{loadingMessage}</p>
             </div>
             <div className="loading-dots">
