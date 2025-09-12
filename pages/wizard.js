@@ -56,7 +56,7 @@ export default function WizardPage(){
       }
     } catch (error) {
       console.error('Error loading latest resume:', error);
-      alert('Failed to load your most recent CV. Please try again.');
+      alert('Failed to load your most recent resume. Please try again.');
     } finally {
       setLoadingLatest(false);
     }
@@ -92,10 +92,10 @@ export default function WizardPage(){
     <>
       <Head>
         <title>Resume Wizard – TailoredCV.app</title>
-        <meta name="description" content="Step-by-step CV builder with real-time template rendering and one-click PDF downloads." />
+        <meta name="description" content="Step-by-step resume builder with real-time template rendering and one-click PDF downloads." />
       </Head>
       
-      {/* Use Most Recent CV Section */}
+      {/* Use Most Recent Resume Section */}
       {session?.user && hasLatestResume && showRecentCVSection && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -103,13 +103,13 @@ export default function WizardPage(){
               <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-blue-900">
-                  Continue with your most recent CV
+                  Continue with your most recent resume
                 </h3>
                 <p className="text-sm text-blue-700 mt-1">
                   We found a previously saved resume. You can continue editing it or start fresh.
                 </p>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center space-x-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 space-y-3 sm:space-y-0">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       onClick={loadLatestResume}
                       disabled={loadingLatest}
@@ -123,7 +123,7 @@ export default function WizardPage(){
                       ) : (
                         <>
                           <Clock className="w-4 h-4 mr-2" />
-                          Use Most Recent CV
+                          Use Most Recent Resume
                         </>
                       )}
                     </button>
@@ -134,7 +134,7 @@ export default function WizardPage(){
                       Start Fresh
                     </button>
                   </div>
-                  <div className="text-xs text-blue-600">
+                  <div className="text-xs text-blue-600 text-center sm:text-right">
                     Auto-saved resumes expire based on your plan
                   </div>
                 </div>

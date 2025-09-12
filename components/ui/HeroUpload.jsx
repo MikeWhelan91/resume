@@ -30,7 +30,7 @@ export default function HeroUpload() {
 
   const loadLatestResume = async () => {
     setCheckingResume(true);
-    setLoadingMessage('Loading your most recent CV...');
+    setLoadingMessage('Loading your most recent resume...');
     try {
       const response = await fetch('/api/resumes/latest');
       if (response.ok) {
@@ -39,11 +39,11 @@ export default function HeroUpload() {
         setLoadingMessage('Perfect! Taking you to the wizard...');
         setTimeout(() => router.push('/wizard'), 500);
       } else {
-        alert('Failed to load your most recent CV. Please try again.');
+        alert('Failed to load your most recent resume. Please try again.');
       }
     } catch (error) {
       console.error('Error loading latest resume:', error);
-      alert('Failed to load your most recent CV. Please try again.');
+      alert('Failed to load your most recent resume. Please try again.');
     } finally {
       setCheckingResume(false);
       setLoadingMessage('');
@@ -116,7 +116,7 @@ export default function HeroUpload() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-slide-up" style={{animationDelay: '0.2s'}}>
               <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFile} className="hidden" />
               
-              {/* Show "Use Most Recent CV" button for logged-in users with saved resumes */}
+              {/* Show "Use Most Recent Resume" button for logged-in users with saved resumes */}
               {session?.user && hasLatestResume && (
                 <button 
                   className="btn btn-primary btn-lg group" 
@@ -124,7 +124,7 @@ export default function HeroUpload() {
                   disabled={loading || checkingResume}
                 >
                   <Clock className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Use Most Recent CV
+                  Use Most Recent Resume
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </button>
               )}

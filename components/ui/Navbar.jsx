@@ -21,7 +21,14 @@ export default function Navbar() {
           if (response.ok) {
             const data = await response.json();
             setEntitlement(data);
-            setUserPlan(data.plan || 'free');
+            // For UI purposes, we need to determine the effective plan
+            // Day pass users should be treated as 'day_pass' for display
+            let effectivePlan = data.plan || 'free';
+            if (data.plan === 'day_pass' && data.expiresAt) {
+              const isExpired = new Date() > new Date(data.expiresAt);
+              effectivePlan = isExpired ? 'free' : 'day_pass';
+            }
+            setUserPlan(effectivePlan);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -286,7 +293,7 @@ export default function Navbar() {
             />
             
             {/* Mobile menu panel */}
-            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-lg">
+            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-xl border-l border-r border-b rounded-b-lg">
               <div className="px-4 py-6 space-y-4">
                 {/* Navigation Links */}
                 <Link 

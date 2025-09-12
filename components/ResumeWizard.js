@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import SkillsInput from './wizard/SkillsInput';
 import ExperienceCard from './wizard/ExperienceCard';
 import EducationCard from './wizard/EducationCard';
@@ -248,7 +249,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'cv' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">CV/Resume Only</div>
+                      <div className="font-semibold text-gray-900">Resume Only</div>
                       <div className="text-sm text-gray-600">Optimize your resume for the job description</div>
                     </div>
                   </div>
@@ -286,7 +287,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'both' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">Both CV and Cover Letter</div>
+                      <div className="font-semibold text-gray-900">Both Resume and Cover Letter</div>
                       <div className="text-sm text-gray-600">Get a complete application package</div>
                     </div>
                   </div>
@@ -395,21 +396,21 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               <p className="text-gray-600">Tailor your documents to the job description.</p>
             </header>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Job Description*</label>
-              <textarea 
-                className="form-textarea h-48 resize-vertical" 
-                value={jd} 
-                onChange={e=>setJd(e.target.value)} 
-                placeholder="Paste the job description here..."
-              />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Tone</label>
-              <select className="form-select" value={tone} onChange={e=>setTone(e.target.value)}>
+              <select className="form-select w-full" value={tone} onChange={e=>setTone(e.target.value)}>
                 <option value="professional">Professional</option>
                 <option value="friendly">Friendly</option>
                 <option value="concise">Concise</option>
               </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Job Description*</label>
+              <textarea 
+                className="form-textarea h-48 resize-vertical w-full" 
+                value={jd} 
+                onChange={e=>setJd(e.target.value)} 
+                placeholder="Paste the job description here..."
+              />
             </div>
           </section>
         )}

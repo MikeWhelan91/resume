@@ -36,8 +36,8 @@ export default function ControlsPanel({
       <div>
         <h3 className="font-semibold mb-2">Export</h3>
         <div className="space-y-2">
-          <button className="tc-btn-primary w-full" onClick={onExportPdf}>Download CV (PDF)</button>
-          <button className="tc-btn-quiet w-full" onClick={onExportDocx}>Download CV (DOCX)</button>
+          <button className="tc-btn-primary w-full" onClick={onExportPdf}>Download Resume (PDF)</button>
+          <button className="tc-btn-quiet w-full" onClick={onExportDocx}>Download Resume (DOCX)</button>
           <button className="tc-btn-quiet w-full" onClick={onExportClPdf}>Download Cover Letter (PDF)</button>
           <button className="tc-btn-quiet w-full" onClick={onExportClDocx}>Download Cover Letter (DOCX)</button>
         </div>

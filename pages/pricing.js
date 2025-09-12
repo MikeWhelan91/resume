@@ -6,7 +6,6 @@ import { Check, Crown, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
 export default function PricingPage() {
   const { data: session } = useSession();
-  const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState('');
 
  const handleUpgrade = async (planType) => {
@@ -144,30 +143,6 @@ export default function PricingPage() {
                 Choose the perfect plan to create professional, ATS-friendly resumes and cover letters
               </p>
               
-              {/* Annual/Monthly Toggle */}
-              <div className="flex items-center justify-center space-x-4 mb-12">
-                <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
-                  Monthly
-                </span>
-                <button
-                  onClick={() => setIsAnnual(!isAnnual)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    isAnnual ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isAnnual ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-                <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
-                  Annual
-                  <span className="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Save 40%
-                  </span>
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -210,19 +185,9 @@ export default function PricingPage() {
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
                         <span className="text-4xl font-bold text-gray-900">
-                          €{isAnnual ? plan.monthlyPrice : plan.monthlyPrice}
+                          €{plan.monthlyPrice}
                         </span>
                         <span className="text-gray-600">/month</span>
-                        {isAnnual && plan.yearlyDiscount && (
-                          <span className="text-sm text-green-600 font-medium">
-                            {plan.yearlyDiscount}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {isAnnual && plan.annualPrice > 0 && plan.name !== 'Day Pass' && (
-                      <div className="text-sm text-gray-500 mt-1">
-                        Billed annually (€{plan.annualPrice}/year)
                       </div>
                     )}
                   </div>

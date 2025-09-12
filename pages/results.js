@@ -112,7 +112,7 @@ export default function ResultsPage() {
     }
 
     try {
-      await triggerDownload('/api/download-cv', 'cv.pdf', {
+      await triggerDownload('/api/download-cv', 'resume.pdf', {
         template,
         accent,
         data: userData,
@@ -353,7 +353,7 @@ export default function ResultsPage() {
 
 
 
-    // CV Preview
+    // Resume Preview
     const renderCVPreview = () => (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">

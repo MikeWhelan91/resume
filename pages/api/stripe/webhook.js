@@ -107,9 +107,10 @@ async function handleCheckoutCompleted(session) {
     }
   }
 
-  // Add expiration for day pass
+  // Add expiration for day pass and clear free credits (they have unlimited access)
   if (expiresAt) {
     entitlementData.expiresAt = expiresAt
+    entitlementData.freeWeeklyCreditsRemaining = 0
   }
 
   await prisma.entitlement.upsert({

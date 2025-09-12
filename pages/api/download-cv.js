@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="cv.pdf"');
+    res.setHeader('Content-Disposition', 'attachment; filename="resume.pdf"');
     return res.status(200).send(pdfBuffer);
   } catch (error) {
     console.error('PDF generation error:', error);
