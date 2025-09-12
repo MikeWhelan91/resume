@@ -1,6 +1,7 @@
+// pages/api/stripe/checkout.js
 import Stripe from 'stripe'
 import { getServerSession } from 'next-auth/next'
-import NextAuth from '../auth/[...nextauth]'
+import { authOptions } from '../auth/[...nextauth]'
 import { prisma } from '../../../lib/prisma.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -13,79 +14,68 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await getServerSession(req, res, NextAuth)
-    
-    if (!session?.user?.id) {
+    // ✅ Use authOptions, not the NextAuth handler
+    const session = await getServerSession(req, res, authOptions)
+    if (!session?.user) {
       return res.status(401).json({ error: 'Authentication required' })
     }
 
-    const userId = session.user.id
-    const { planType, isAnnual } = req.body
-
-    // Determine which Stripe price to use
-    let priceId
-    switch (planType) {
-      case 'pro_monthly':
-        priceId = process.env.STRIPE_PRICE_PRO_MONTHLY
-        break
-      case 'pro_annual':
-        priceId = process.env.STRIPE_PRICE_PRO_ANNUAL
-        break
-      default:
-        priceId = process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_PRO_MONTHLY
+    // Resolve the user from the DB (prefer id, fall back to email)
+    let user = null
+    if (session.user.id) {
+      user = await prisma.user.findUnique({ where: { id: session.user.id } })
+    } else if (session.user.email) {
+      user = await prisma.user.findUnique({ where: { email: session.user.email } })
     }
-
-    // Find or create user in database
-    let user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
-
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    // Create or retrieve Stripe customer
-    let stripeCustomerId = user.stripeCustomerId
+    const { planType } = req.body || {}
 
+    // Choose the correct live price server-side
+    const priceId =
+      planType === 'pro_annual'
+        ? process.env.STRIPE_PRICE_PRO_ANNUAL
+        : process.env.STRIPE_PRICE_PRO_MONTHLY
+
+    if (!priceId) {
+      return res.status(500).json({ error: 'Price not configured' })
+    }
+
+    // Ensure a live Stripe customer exists and is saved on the user
+    let { stripeCustomerId } = user
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: user.email,
-        metadata: {
-          userId: userId,
-        },
+        metadata: { userId: user.id },
       })
-      
       stripeCustomerId = customer.id
-      
-      // Update user with Stripe customer ID
       await prisma.user.update({
-        where: { id: userId },
+        where: { id: user.id },
         data: { stripeCustomerId },
       })
     }
 
-    // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL
+    if (!baseUrl) {
+      return res.status(500).json({ error: 'Base URL not configured' })
+    }
+
+    // Create the subscription checkout session
+    const checkout = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
-      client_reference_id: userId,
-      payment_method_types: ['card'],
       mode: 'subscription',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.APP_URL || process.env.NEXTAUTH_URL}/account?success=true`,
-      cancel_url: `${process.env.APP_URL || process.env.NEXTAUTH_URL}/account?canceled=true`,
-      metadata: {
-        userId: userId,
-      },
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/account?success=true`,
+      cancel_url: `${baseUrl}/account?canceled=true`,
+      client_reference_id: user.id,
+      metadata: { userId: user.id, planType },
     })
 
-    res.status(200).json({ url: checkoutSession.url })
-  } catch (error) {
-    console.error('Checkout error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    return res.status(200).json({ url: checkout.url })
+  } catch (err) {
+    console.error('Checkout error:', err)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }

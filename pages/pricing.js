@@ -9,36 +9,36 @@ export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState('');
 
-  const handleUpgrade = async (planType) => {
-    if (!session) {
-      // Redirect to sign in if not authenticated
-      window.location.href = '/auth/signin?callbackUrl=' + encodeURIComponent('/pricing');
-      return;
+ const handleUpgrade = async (planType) => {
+  if (!session) {
+    window.location.href = '/auth/signin?callbackUrl=' + encodeURIComponent('/pricing');
+    return;
+  }
+
+  setLoading(planType);
+  try {
+    const res = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      credentials: 'same-origin',             // <- send NextAuth cookie
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planType })      // server picks price from planType
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg || 'Failed to create checkout session');
     }
 
-    setLoading(planType);
-    try {
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ planType, isAnnual }),
-      });
+    const { url } = await res.json();
+    window.location.href = url;
+  } catch (err) {
+    console.error('Checkout error:', err);
+    alert('Unable to process upgrade. Please try again.');
+  } finally {
+    setLoading('');
+  }
+};
 
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
-      } else {
-        throw new Error('Failed to create checkout session');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Unable to process upgrade. Please try again.');
-    } finally {
-      setLoading('');
-    }
-  };
 
   const plans = [
     {
