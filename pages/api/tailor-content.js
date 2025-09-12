@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userData, jobDescription } = req.body;
+  const { userData, jobDescription, tone } = req.body;
 
   if (!userData || !jobDescription) {
     return res.status(400).json({ error: 'User data and job description are required' });
@@ -142,7 +142,7 @@ export default async function handler(req, res) {
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const resumeData = userData.resumeData;
-    const tone = 'professional';
+    const finalTone = tone || 'professional';
 
     // Pass 1: résumé-only allow-list
     const allowedSkillsBase = resumeData
@@ -175,7 +175,11 @@ STRICT RULES:
 - NEVER overstate experience level or claim expertise beyond what's demonstrated in resume
 - When mentioning JOB_ONLY_SKILLS, express willingness to learn using phrasing like "While I haven't used X directly, my experience with Y provides a strong foundation for learning it"
 - ONLY reference accomplishments, projects, and experience explicitly mentioned in the original resume
-- The coverLetterText must adopt a ${tone} tone while remaining truthful.
+COVER LETTER TONE GUIDELINES:
+- If "${finalTone}" is "professional": Use formal, business-appropriate language, confident but not overly familiar
+- If "${finalTone}" is "friendly": Use warm, personable language while remaining professional, slightly conversational
+- If "${finalTone}" is "concise": Be direct and brief, focus on key points without excessive elaboration
+- Always maintain truthfulness and accuracy regardless of tone selected
 - The resume must be ATS-optimized: use plain formatting, concise bullet points beginning with strong action verbs, and integrate relevant keywords from the job description where applicable. Avoid tables or images.
 
 🚫 NEVER FABRICATE OR ASSUME:

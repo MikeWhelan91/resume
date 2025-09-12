@@ -12,6 +12,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Debug: Check if prisma client is properly imported and working
+  if (!prisma) {
+    console.error('Prisma client is undefined - import failed');
+    return res.status(500).json({ error: 'Database connection error' });
+  }
+  
+  try {
+    // Test database connection
+    await prisma.$connect();
+    console.log('Prisma client connected successfully');
+  } catch (connectionError) {
+    console.error('Prisma connection failed:', connectionError);
+    return res.status(500).json({ 
+      error: 'Database connection failed',
+      details: process.env.NODE_ENV === 'development' ? connectionError.message : undefined
+    });
+  }
+
   try {
     const session = await getServerSession(req, res, authOptions);
     
@@ -55,37 +73,71 @@ export default async function handler(req, res) {
       }
     }
 
-    // Delete user data from database in the correct order (due to foreign key constraints)
+    // Delete user data from database
+    console.log(`Starting account deletion for user ${userId}`);
     
-    // 1. Delete API usage records
-    await prisma.apiUsage.deleteMany({
-      where: { userId }
-    });
+    try {
+      // Since all foreign keys in the schema have onDelete: Cascade,
+      // we can delete the user directly and let the database handle cascading deletes
+      // But first, let's check what data exists for debugging
+      
+      const existingData = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          accounts: true,
+          sessions: true,
+          apiUsage: true,
+          entitlement: true,
+          savedResumes: true
+        }
+      });
+      
+      if (!existingData) {
+        console.log(`User ${userId} not found - may already be deleted`);
+        return res.status(404).json({ 
+          error: 'User account not found or already deleted.' 
+        });
+      }
+      
+      console.log(`User ${userId} has:`, {
+        accounts: existingData.accounts.length,
+        sessions: existingData.sessions.length,
+        apiUsage: existingData.apiUsage.length,
+        hasEntitlement: !!existingData.entitlement,
+        savedResumes: existingData.savedResumes.length
+      });
 
-    // 2. Delete user entitlements
-    await prisma.userEntitlement.deleteMany({
-      where: { userId }
-    });
-
-    // 3. Delete user's resumes/documents
-    await prisma.resume.deleteMany({
-      where: { userId }
-    });
-
-    // 4. Delete accounts (OAuth connections)
-    await prisma.account.deleteMany({
-      where: { userId }
-    });
-
-    // 5. Delete sessions
-    await prisma.session.deleteMany({
-      where: { userId }
-    });
-
-    // 6. Finally delete the user record
-    await prisma.user.delete({
-      where: { id: userId }
-    });
+      // Try direct user deletion first (with CASCADE)
+      await prisma.user.delete({
+        where: { id: userId }
+      });
+      
+      console.log(`Successfully deleted user ${userId} with cascading deletes`);
+      
+    } catch (dbError) {
+      console.error('Direct deletion failed, trying manual cleanup:', dbError);
+      
+      // Fallback to manual deletion if cascade fails
+      try {
+        console.log('Attempting manual cleanup...');
+        
+        // Delete in reverse dependency order
+        await prisma.apiUsage.deleteMany({ where: { userId } });
+        await prisma.savedResume.deleteMany({ where: { userId } });
+        await prisma.entitlement.deleteMany({ where: { userId } });
+        await prisma.account.deleteMany({ where: { userId } });
+        await prisma.session.deleteMany({ where: { userId } });
+        
+        // Finally delete user
+        await prisma.user.delete({ where: { id: userId } });
+        
+        console.log(`Successfully deleted user ${userId} with manual cleanup`);
+        
+      } catch (manualError) {
+        console.error('Manual cleanup also failed:', manualError);
+        throw manualError; // Re-throw to be caught by outer try-catch
+      }
+    }
 
     console.log(`Successfully deleted user account: ${userId} (${user.email})`);
 
@@ -97,15 +149,45 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Account deletion error:', error);
     
-    // Provide more specific error messages
+    // Provide more specific error messages based on error type
     if (error.code === 'P2003') {
+      console.error('Foreign key constraint violation during account deletion');
       return res.status(500).json({ 
-        error: 'Unable to delete account due to data constraints. Please contact support.' 
+        error: 'Unable to delete account due to foreign key constraints. Please contact support.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
     
+    if (error.code === 'P2025') {
+      console.error('Record not found during account deletion');
+      return res.status(404).json({ 
+        error: 'User account not found or already deleted.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    if (error.code === 'P2002') {
+      console.error('Unique constraint violation during account deletion');
+      return res.status(500).json({ 
+        error: 'Database constraint error. Please contact support.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    // Generic database errors
+    if (error.code?.startsWith('P')) {
+      console.error('Prisma database error:', error.code, error.message);
+      return res.status(500).json({ 
+        error: `Database error (${error.code}). Please contact support.`,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    // Network or other errors
+    console.error('Unexpected error during account deletion:', error.message || error);
     return res.status(500).json({ 
-      error: 'Failed to delete account. Please try again or contact support.' 
+      error: 'An unexpected error occurred. Please try again or contact support.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }

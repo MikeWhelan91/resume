@@ -104,17 +104,21 @@ export default function PricingPage() {
     {
       name: 'Pro Annual',
       description: 'Best value with 12 months commitment',
-      monthlyPrice: 5.99,
+      monthlyPrice: 5.75,
       annualPrice: 69,
-      yearlyDiscount: '40% off',
+      yearlyDiscount: '42% off',
       features: [
-        'Everything in Pro Monthly',
-        'Significant savings',
-        '12 months of full access',
+        'Unlimited generations & downloads',
+        'No credit limits or restrictions',
+        'All premium templates',
+        'DOCX + PDF downloads',
+        'All color themes',
         'Priority support',
-        'Early access to new features'
+        'Advanced customization',
+        'ATS optimization',
+        '42% savings vs monthly'
       ],
-      buttonText: 'Start Pro Annual',
+      buttonText: 'Start Pro Annual - €69/year',
       buttonVariant: 'primary',
       popular: true,
       planType: 'pro_annual'
@@ -183,6 +187,18 @@ export default function PricingPage() {
                         </span>
                         <span className="text-gray-600">/24h</span>
                       </div>
+                    ) : plan.name === 'Pro Annual' ? (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-4xl font-bold text-gray-900">
+                            €{plan.annualPrice}
+                          </span>
+                          <span className="text-gray-600">/year</span>
+                        </div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          €{plan.monthlyPrice}/month equivalent
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
                         <span className="text-4xl font-bold text-gray-900">
@@ -250,7 +266,7 @@ export default function PricingPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">What happens when I run out of credits?</h3>
                 <p className="text-gray-600">
-                  Free users get 10 credits per week that reset every Monday at midnight Dublin time. Each generation or download consumes 1 credit. Pro users have unlimited usage.
+                  Free users get 10 credits per week that reset every Monday at midnight Dublin time. Each generation consumes 1 credit. Pro users have unlimited usage.
                 </p>
               </div>
 
@@ -271,7 +287,7 @@ export default function PricingPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">How does the Day Pass work?</h3>
                 <p className="text-gray-600">
-                  The Day Pass gives you 24 hours of full Pro access starting from the moment of purchase. You get 50 generations/downloads, all premium templates, and full customization features - perfect for urgent job applications.
+                  The Day Pass gives you 24 hours of full Pro access starting from the moment of purchase. You get 30 generations, 100 PDF & DOCX downloads, all premium templates, and full customization features - perfect for urgent job applications.
                 </p>
               </div>
 

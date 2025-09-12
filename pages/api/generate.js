@@ -355,7 +355,11 @@ STRUCTURE (3-4 paragraphs, 250-400 words):
 3. Fit: How your demonstrated experience (from resume) aligns with role requirements
 4. Close: Professional expression of interest
 
-TONE: ${tone}, professional, truthful, enthusiastic
+TONE GUIDELINES:
+- If ${tone} is "professional": Formal, business-appropriate language, confident but not overly familiar
+- If ${tone} is "friendly": Warm, personable, but still professional, slightly conversational 
+- If ${tone} is "concise": Direct, brief, focus on key points without excessive elaboration
+Always maintain truthfulness regardless of tone selected.
 STYLE: Focus on actual capabilities from resume, not invented qualifications
 KEYWORDS: Only use job-relevant terms from ALLOWED_SKILLS that you actually possess
 RESTRICTIONS: For JOB_ONLY_SKILLS, express willingness to learn using phrasing like "While I haven't used [skill] directly, my experience with [related skill from resume] provides a strong foundation for learning it."

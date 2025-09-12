@@ -109,7 +109,7 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       const credits = getCreditsRemaining();
-      alert(`You've used all your weekly credits (${credits}/20). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+      alert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
       return;
     }
 
@@ -274,7 +274,7 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       const credits = getCreditsRemaining();
-      alert(`You've used all your weekly credits (${credits}/20). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+      alert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
       return;
     }
 
@@ -562,7 +562,7 @@ export default function ResultsPage() {
                         <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all templates.
                       </div>
                       <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                        <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0}/15 remaining. Credits reset every Monday at midnight Dublin time.
+                        <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0}/10 remaining. Credits reset every Monday at midnight Dublin time.
                       </div>
                     </>
                   )}
@@ -626,7 +626,7 @@ export default function ResultsPage() {
                   <option value="concise">Concise</option>
                 </select>
                 <p className="text-xs text-gray-500">
-                  Changing tone doesn't consume credits. Click "Generate" to apply the new tone to your content.
+                  Select your preferred tone. Click "Generate" to apply changes (consumes 1 credit).
                 </p>
               </div>
 

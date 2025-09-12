@@ -57,4 +57,4 @@ Desktop.ini
 *.swp
 *.swo
 
-/lib/generated/prisma
+# Prisma client is now generated to default location: node_modules/@prisma/client

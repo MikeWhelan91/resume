@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -64,7 +63,7 @@ model Entitlement {
   features                   Json              @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
   updatedAt                  DateTime          @updatedAt
   expiresAt                  DateTime?
-  freeWeeklyCreditsRemaining Int               @default(5)
+  freeWeeklyCreditsRemaining Int               @default(10)
   lastWeeklyReset            DateTime?
   user                       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

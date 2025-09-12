@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, XCircle, Trash2 } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
@@ -132,68 +132,23 @@ export default function Navbar() {
         if (response.ok) {
           const { url } = await response.json();
           window.open(url, '_blank');
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          
+          if (errorData.code === 'PORTAL_NOT_CONFIGURED') {
+            alert(`${errorData.message}\n\nFor billing assistance, please contact: ${errorData.supportEmail || 'support@tailoredcv.app'}`);
+          } else {
+            alert(errorData.message || 'Unable to open billing portal. Please try again or contact support.');
+          }
         }
       } catch (error) {
         console.error('Error opening billing portal:', error);
+        alert('Unable to open billing portal. Please try again or contact support.');
       }
     }
   };
 
-  const handleCancelSubscription = async () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to cancel your subscription? You will lose access to Pro features at the end of your current billing period.'
-    );
-    
-    if (confirmed) {
-      try {
-        // Open Stripe portal directly to the cancellation page
-        const response = await fetch('/api/stripe/portal', { method: 'POST' });
-        if (response.ok) {
-          const { url } = await response.json();
-          // Open the portal which will allow them to cancel
-          window.open(url, '_blank');
-        }
-      } catch (error) {
-        console.error('Error opening cancellation portal:', error);
-        alert('Unable to process cancellation. Please contact support.');
-      }
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      'WARNING: This will permanently delete your account and all associated data (resumes, generations, billing history). This action cannot be undone.\n\nAre you absolutely sure you want to delete your account?'
-    );
-    
-    if (confirmed) {
-      const doubleConfirmed = window.confirm(
-        'FINAL WARNING: This will permanently delete everything. Type "DELETE" in the next prompt to confirm.'
-      );
-      
-      if (doubleConfirmed) {
-        const confirmation = window.prompt('Type "DELETE" to confirm account deletion:');
-        
-        if (confirmation === 'DELETE') {
-          try {
-            const response = await fetch('/api/user/delete-account', { method: 'POST' });
-            
-            if (response.ok) {
-              alert('Your account has been successfully deleted.');
-              signOut({ callbackUrl: '/' });
-            } else {
-              const error = await response.json();
-              alert(`Failed to delete account: ${error.error || 'Unknown error'}`);
-            }
-          } catch (error) {
-            console.error('Error deleting account:', error);
-            alert('Failed to delete account. Please try again or contact support.');
-          }
-        } else {
-          alert('Account deletion cancelled - confirmation text did not match.');
-        }
-      }
-    }
-  };
+  // Removed popup-based functions - now using dedicated pages
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-xl">
@@ -347,35 +302,21 @@ export default function Navbar() {
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
                         </button>
                         
-                        {/* Cancel Subscription - only show for recurring paid plans (not day pass) */}
-                        {userPlan !== 'free' && userPlan !== 'day_pass' && (
-                          <button
-                            onClick={() => {
-                              setIsDropdownOpen(false);
-                              handleCancelSubscription();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 flex items-center space-x-2"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            <span>Cancel Subscription</span>
-                          </button>
-                        )}
+                        {/* Account Settings */}
+                        <Link
+                          href="/account"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>Account Settings</span>
+                        </Link>
                         
                         <div className="border-t border-gray-100 my-1"></div>
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
-                            handleDeleteAccount();
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span>Delete Account</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            signOut();
+                            signOut({ callbackUrl: '/', redirect: true });
                           }}
                           className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
                         >
@@ -497,7 +438,7 @@ export default function Navbar() {
                           <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
                           {userPlan === 'free' && entitlement && (
                             <p className="text-xs text-gray-500">
-                              {entitlement.freeWeeklyCreditsRemaining || 0}/15 credits remaining
+                              {entitlement.freeWeeklyCreditsRemaining || 0}/10 credits remaining
                             </p>
                           )}
                         </div>
@@ -521,34 +462,19 @@ export default function Navbar() {
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
                         </button>
                         
-                        {userPlan !== 'free' && userPlan !== 'day_pass' && (
-                          <button
-                            onClick={() => {
-                              setIsMobileMenuOpen(false);
-                              handleCancelSubscription();
-                            }}
-                            className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-orange-700 hover:bg-orange-50 rounded-lg border border-orange-200"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            <span>Cancel Subscription</span>
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={() => {
-                            setIsMobileMenuOpen(false);
-                            handleDeleteAccount();
-                          }}
-                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg border border-red-200"
+                        <Link
+                          href="/account"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          <span>Delete Account</span>
-                        </button>
+                          <Settings className="w-4 h-4" />
+                          <span>Account Settings</span>
+                        </Link>
                         
                         <button
                           onClick={() => {
                             setIsMobileMenuOpen(false);
-                            signOut();
+                            signOut({ callbackUrl: '/', redirect: true });
                           }}
                           className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg border border-red-200"
                         >

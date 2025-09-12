@@ -1,6 +1,7 @@
 // pages/api/auth/[...nextauth].js
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from '../../../lib/prisma.js'
 import bcrypt from 'bcryptjs'
@@ -8,6 +9,10 @@ import bcrypt from 'bcryptjs'
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -26,13 +31,31 @@ export const authOptions = {
   ],
   session: { strategy: 'jwt' },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.userId = user.id            // put DB id in the JWT
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.userId = user.id
+        // For OAuth providers, get the DB user ID
+        if (account?.provider === 'google') {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email }
+          });
+          if (dbUser) {
+            token.userId = dbUser.id;
+          }
+        }
+      }
       return token
     },
     async session({ session, token }) {
-      if (token?.userId) session.user.id = token.userId // expose id on session
+      if (token?.userId) session.user.id = token.userId
       return session
+    },
+    async signIn({ user, account, profile }) {
+      // For OAuth providers, ensure user gets created with proper data
+      if (account?.provider === 'google') {
+        return true; // PrismaAdapter will handle user creation
+      }
+      return true;
     }
   },
   pages: {
