@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
 import { Clock, FileText, Calendar, Trash2, Edit, Crown } from 'lucide-react';
+import SeoHead from '../components/SeoHead';
 
 export default function MyResumes() {
   const { data: session, status } = useSession();
@@ -121,10 +121,12 @@ export default function MyResumes() {
 
   return (
     <>
-      <Head>
-        <title>My Saved Resumes – TailoredCV.app</title>
-        <meta name="description" content="View and manage your saved resumes" />
-      </Head>
+      <SeoHead
+        title="My Saved Resumes – TailoredCV.app"
+        description="View and manage your saved resumes"
+        canonical="https://tailoredcv.app/my-resumes"
+        robots="noindex,nofollow"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

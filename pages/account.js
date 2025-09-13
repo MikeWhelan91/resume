@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
 import { Settings, CreditCard, User, Shield, AlertTriangle, ExternalLink, Clock } from 'lucide-react';
+import SeoHead from '../components/SeoHead';
 
 export default function Account() {
   const { data: session, status } = useSession();
@@ -86,10 +86,12 @@ export default function Account() {
 
   return (
     <>
-      <Head>
-        <title>Account Settings - TailoredCV.app</title>
-        <meta name="description" content="Manage your account settings, billing, and subscription." />
-      </Head>
+      <SeoHead
+        title="Account Settings - TailoredCV.app"
+        description="Manage your account settings, billing, and subscription."
+        canonical="https://tailoredcv.app/account"
+        robots="noindex,nofollow"
+      />
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

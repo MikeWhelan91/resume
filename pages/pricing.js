@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
+import SeoHead from '../components/SeoHead';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Check, Crown, Sparkles, ArrowRight, Zap } from 'lucide-react';
@@ -127,10 +127,11 @@ export default function PricingPage() {
 
   return (
     <>
-      <Head>
-        <title>Pricing - TailoredCV.app</title>
-        <meta name="description" content="Choose the perfect plan for your resume and cover letter needs. Start free or unlock premium features with Pro." />
-      </Head>
+      <SeoHead
+        title="Pricing - TailoredCV.app"
+        description="Choose the perfect plan for your resume and cover letter needs. Start free or unlock premium features with Pro."
+        canonical="https://tailoredcv.app/pricing"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}

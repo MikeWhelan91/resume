@@ -1,15 +1,16 @@
 import React from 'react';
-import Head from 'next/head';
 import { ArrowLeft, Play, Download, Edit, Zap, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import SeoHead from '../../components/SeoHead';
 
 export default function GettingStarted() {
   return (
     <>
-      <Head>
-        <title>Getting Started Guide – TailoredCV.app</title>
-        <meta name="description" content="Learn how to create your first resume with TailoredCV.app. Step-by-step guide to get you started quickly." />
-      </Head>
+      <SeoHead
+        title="Getting Started Guide – TailoredCV.app"
+        description="Learn how to create your first resume with TailoredCV.app. Step-by-step guide to get you started quickly."
+        canonical="https://tailoredcv.app/help/getting-started"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Clock, AlertCircle } from 'lucide-react';
 import ResumeWizard from '../components/ResumeWizard';
+import SeoHead from '../components/SeoHead';
 
 export default function WizardPage(){
   const router = useRouter();
@@ -90,10 +90,12 @@ export default function WizardPage(){
 
   return (
     <>
-      <Head>
-        <title>Resume Wizard – TailoredCV.app</title>
-        <meta name="description" content="Step-by-step resume builder with real-time template rendering and one-click PDF downloads." />
-      </Head>
+      <SeoHead
+        title="Resume Wizard – TailoredCV.app"
+        description="Step-by-step resume builder with real-time template rendering and one-click PDF downloads."
+        canonical="https://tailoredcv.app/wizard"
+        robots="noindex,nofollow"
+      />
       
       {/* Use Most Recent Resume Section */}
       {session?.user && hasLatestResume && showRecentCVSection && (

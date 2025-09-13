@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, ExternalLink, CreditCard, CheckCircle } from 'lucide-react';
+import SeoHead from '../../components/SeoHead';
 
 export default function CancelSubscription() {
   const { data: session, status } = useSession();
@@ -85,10 +85,12 @@ export default function CancelSubscription() {
 
   return (
     <>
-      <Head>
-        <title>Cancel Subscription - TailoredCV.app</title>
-        <meta name="description" content="Cancel your TailoredCV.app subscription" />
-      </Head>
+      <SeoHead
+        title="Cancel Subscription - TailoredCV.app"
+        description="Cancel your TailoredCV.app subscription"
+        canonical="https://tailoredcv.app/account/cancel-subscription"
+        robots="noindex,nofollow"
+      />
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">

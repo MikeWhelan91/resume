@@ -1,16 +1,16 @@
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { Shield, User, Lock, Eye } from 'lucide-react';
+import SeoHead from '../components/SeoHead';
 
 export default function PrivacyPolicy() {
   return (
     <>
-      <Head>
-        <title>Privacy Policy - TailoredCV.app</title>
-        <meta name="description" content="Learn how TailoredCV.app collects, uses, and protects your personal information and resume data." />
-        <meta name="robots" content="index, follow" />
-      </Head>
+      <SeoHead
+        title="Privacy Policy - TailoredCV.app"
+        description="Learn how TailoredCV.app collects, uses, and protects your personal information and resume data."
+        canonical="https://tailoredcv.app/privacy"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}

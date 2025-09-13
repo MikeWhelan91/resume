@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
 import { ArrowLeft, Search, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Download, FileText, Zap } from 'lucide-react';
 import Link from 'next/link';
+import SeoHead from '../../components/SeoHead';
 
 export default function Troubleshooting() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,10 +169,11 @@ export default function Troubleshooting() {
 
   return (
     <>
-      <Head>
-        <title>Troubleshooting Guide – TailoredCV.app</title>
-        <meta name="description" content="Find solutions to common issues with TailoredCV.app. Troubleshooting guide for download problems, formatting issues, and technical support." />
-      </Head>
+      <SeoHead
+        title="Troubleshooting Guide – TailoredCV.app"
+        description="Find solutions to common issues with TailoredCV.app. Troubleshooting guide for download problems, formatting issues, and technical support."
+        canonical="https://tailoredcv.app/help/troubleshooting"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}
