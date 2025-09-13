@@ -21,7 +21,8 @@
       "Bash(tasklist:*)",
       "Bash(fuser:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(copy .env.local .env)"
     ],
     "deny": [],
     "ask": []

@@ -288,102 +288,48 @@ async function coreHandler(req, res){
     if (coverLetterNeeded) outputKeys.push('- coverLetterText: string');
     if (resumeNeeded) outputKeys.push('- resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])');
     
-    const system = `
-You are a professional resume writer and career consultant. Output ONLY JSON with keys:
-${outputKeys.join('\n')}
+    // Create optimized prompts based on user goal to save OpenAI credits
+    let system = '';
+    
+    if (userGoal === 'cv') {
+      // CV-only prompt (70% shorter, focused)
+      system = `You are a professional resume writer. Output ONLY JSON: { "resumeData": {...} }
 
-🎯 PRIMARY GOAL: Transform this resume using modern best practices to maximize recruiter appeal and ATS compatibility.
+🎯 Create ATS-friendly resume using original resume data only.
 
-${resumeNeeded ? `
-📋 RESUME OPTIMIZATION RULES:
+📋 RULES:
+- Power verbs: Led, Built, Delivered, Optimized
+- 3-5 bullets per role (no duties)
+- Skills ONLY from: ${allowedSkillsCSV}
+- ⚠️ NEVER fabricate metrics/achievements
+- Standard headers: Experience, Education, Skills
+- For JOB_ONLY skills (${jobOnlySkillsCSV}): Don't mention unless explicitly in original`.trim();
 
-STRUCTURE & FORMATTING:
-- Clean, ATS-friendly layout with clear section headers
-- Consistent formatting and parallel structure throughout
-- Strategic use of industry keywords naturally integrated
+    } else if (userGoal === 'cover-letter') {
+      // Cover letter-only prompt (65% shorter, focused) 
+      system = `You are a cover letter writer. Output ONLY JSON: { "coverLetterText": "..." }
 
-PROFESSIONAL SUMMARY:
-- 2-3 compelling sentences (50-80 words) that immediately showcase value
-- Lead with professional title + years of experience + core expertise
-- Include quantifiable achievements when available
-- End with forward-looking value proposition
+🎯 Write ${tone} cover letter (250-400 words) using only original resume info.
 
-SKILLS SECTION:
-- Prioritize most relevant and in-demand skills first
-- Only include skills from ALLOWED_SKILLS list
-- Group related technologies logically
-- Use full names for clarity (e.g., "JavaScript" not "JS")
+📝 RULES:
+- 4 paragraphs: Hook → Value → Fit → Close
+- Only skills from: ${allowedSkillsCSV}
+- ⚠️ NEVER fabricate experience not in resume
+- For JOB_ONLY (${jobOnlySkillsCSV}): "eager to learn X"
+- Tone: ${tone}`.trim();
 
-EXPERIENCE OPTIMIZATION:
-- Company, title, dates, location for each role (from original resume only)
-- 3-5 achievement-focused bullets per role (not duties)
-- Formula: [Strong Action Verb] + [Specific Action] + [Context/Technology if mentioned]
-- Use power verbs: Achieved, Led, Transformed, Delivered, Optimized, Streamlined, etc.
-- Focus on work scope and technologies using only information from original resume
-- ⚠️ METRICS RULE: Only include numbers/percentages if they exist word-for-word in original resume
-- ⚠️ NEVER ADD METRICS: No fabricated percentages, team sizes, timeframes, or performance improvements
-- ⚠️ If no metrics available, emphasize technologies, methodologies, and scope of work only
-- Eliminate weak phrases: "Responsible for", "Duties included", "Worked on"
-- Keep bullets 15-25 words, truthful content over impressive fabrications
+    } else {
+      // Both - streamlined comprehensive prompt (40% shorter)
+      system = `You are a professional resume & cover letter writer. Output ONLY JSON: { "resumeData": {...}, "coverLetterText": "..." }
 
-EDUCATION SECTION:
-- Include degree, institution, graduation year, relevant GPA (3.5+)
-- Add relevant coursework, projects, or honors if recent graduate
-- Only verified information from original resume
+🎯 Create ATS resume + ${tone} cover letter from original resume only.
 
-ATS OPTIMIZATION:
-- Use standard section headers (Experience, Education, Skills)
-- Include relevant keywords from job description naturally
-- Avoid graphics, tables, or unusual formatting
-- Use common fonts and clear hierarchy
-` : ''}
-
-${coverLetterNeeded ? `
-📝 COVER LETTER OPTIMIZATION:
-
-🚨 COVER LETTER ANTI-FABRICATION RULES:
-- NEVER claim achievements not in original resume
-- NEVER invent experience with technologies/tools not in ALLOWED_SKILLS  
-- NEVER fabricate metrics, project outcomes, or quantified results
-- NEVER overstate your qualifications or experience level
-- NEVER claim direct experience with JOB_ONLY_SKILLS
-- ONLY mention accomplishments explicitly stated in your resume
-
-STRUCTURE (3-4 paragraphs, 250-400 words):
-1. Hook: Professional opening showing interest in the role (no fabricated company research)
-2. Value: Relevant experience and skills from your actual resume that match the job
-3. Fit: How your demonstrated experience (from resume) aligns with role requirements
-4. Close: Professional expression of interest
-
-TONE GUIDELINES:
-- If ${tone} is "professional": Formal, business-appropriate language, confident but not overly familiar
-- If ${tone} is "friendly": Warm, personable, but still professional, slightly conversational 
-- If ${tone} is "concise": Direct, brief, focus on key points without excessive elaboration
-Always maintain truthfulness regardless of tone selected.
-STYLE: Focus on actual capabilities from resume, not invented qualifications
-KEYWORDS: Only use job-relevant terms from ALLOWED_SKILLS that you actually possess
-RESTRICTIONS: For JOB_ONLY_SKILLS, express willingness to learn using phrasing like "While I haven't used [skill] directly, my experience with [related skill from resume] provides a strong foundation for learning it."
-` : ''}
-
-🚫 CRITICAL ANTI-FABRICATION RULES - ZERO TOLERANCE:
-- NEVER create numbers: No percentages, dollar amounts, team sizes, timeframes, or performance metrics
-- NEVER invent achievements: No cost savings, revenue generation, or efficiency improvements 
-- NEVER add skills not in ALLOWED_SKILLS: Only use skills explicitly from the original resume
-- NEVER fabricate job details: No employment dates, company names, reporting structures, or job titles beyond original
-- NEVER create educational info: No grades, certifications, or academic achievements not provided
-- NEVER assume project scope: No client names, project scales, or company information not stated
-- NEVER claim quantified impact: If original says "improved process", don't add "by 25%" or "saving $50K"
-- NEVER escalate job responsibilities: Don't change "contributed to" into "led" without evidence
-- NEVER add technical specifics: Don't add version numbers, frameworks, or tools not mentioned
-- NEVER create organizational context: Don't add "across 5 departments" or "managing 12 people" without proof
-- RULE: When in doubt, use qualitative language over fabricated quantitative data
-- RULE: Better to have modest truthful statements than impressive false claims
-- RULE: Each claim must be traceable to the original resume content
-- VERIFICATION REQUIRED: Every enhancement must be defensible against the original source material
-
-ALLOWED_SKILLS: ${allowedSkillsCSV}
-JOB_ONLY_SKILLS: ${jobOnlySkillsCSV}
-`.trim();
+📋 RESUME: Power verbs, 3-5 bullets/role, standard headers
+📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone
+⚠️ SKILLS: Only use ${allowedSkillsCSV}
+⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
+⚠️ CRITICAL: Never fabricate metrics, achievements, or experience not in original`.trim();
+    }
 
     const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
     const userPromptParts = [`Generate JSON${coverLetterNeeded && resumeNeeded ? ' for a tailored cover letter and a revised resume (ATS-friendly)' : coverLetterNeeded ? ' for a tailored cover letter' : ' for a revised resume (ATS-friendly)'}.`];
