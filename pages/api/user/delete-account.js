@@ -65,6 +65,10 @@ export default async function handler(req, res) {
         for (const subscription of subscriptions.data) {
           await stripe.subscriptions.cancel(subscription.id);
         }
+        
+        // Wait a moment for webhook processing to complete
+        // This helps avoid race conditions where webhook tries to update deleted user
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         console.log(`Cancelled ${subscriptions.data.length} subscriptions for user ${userId}`);
       } catch (stripeError) {

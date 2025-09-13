@@ -51,8 +51,30 @@ export const authOptions = {
       return session
     },
     async signIn({ user, account, profile }) {
-      // For OAuth providers, ensure user gets created with proper data
+      // For OAuth providers, ensure user gets created with proper entitlement
       if (account?.provider === 'google') {
+        try {
+          // Check if user already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { entitlement: true }
+          });
+          
+          // If user exists but has no entitlement, create one
+          if (existingUser && !existingUser.entitlement) {
+            await prisma.entitlement.create({
+              data: {
+                userId: existingUser.id,
+                plan: 'free',
+                status: 'active',
+                freeWeeklyCreditsRemaining: 10
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error ensuring entitlement for OAuth user:', error);
+          // Continue with sign in even if entitlement creation fails
+        }
         return true; // PrismaAdapter will handle user creation
       }
       return true;
