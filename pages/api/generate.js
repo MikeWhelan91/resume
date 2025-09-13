@@ -231,6 +231,7 @@ async function coreHandler(req, res){
     const jobDesc    = Array.isArray(fields?.jobDesc) ? fields.jobDesc[0] : (fields?.jobDesc || "");
     const tone       = Array.isArray(fields?.tone) ? fields.tone[0] : (fields?.tone || "professional");
     const userGoal   = Array.isArray(fields?.userGoal) ? fields.userGoal[0] : (fields?.userGoal || "both");
+    const language   = Array.isArray(fields?.language) ? fields.language[0] : (fields?.language || "en-US");
 
     // Check user authentication and credits
     let userId = null;
@@ -288,47 +289,70 @@ async function coreHandler(req, res){
     if (coverLetterNeeded) outputKeys.push('- coverLetterText: string');
     if (resumeNeeded) outputKeys.push('- resumeData: object (name, title?, email?, phone?, location?, summary?, links[], skills[], experience[], education[])');
     
+    // Language-specific terms and instructions
+    const getLanguageTerms = (lang) => {
+      if (lang === 'en-UK') {
+        return {
+          resume: 'CV',
+          spelling: 'British English spelling and terminology (colour, analyse, organised, specialise)',
+          tone: 'formal British tone',
+          verbs: 'Led, Built, Delivered, Optimised, Organised, Specialised'
+        };
+      }
+      return {
+        resume: 'resume',
+        spelling: 'American English spelling and terminology (color, analyze, organized, specialize)',
+        tone: 'professional American tone',
+        verbs: 'Led, Built, Delivered, Optimized, Organized, Specialized'
+      };
+    };
+    
+    const langTerms = getLanguageTerms(language);
+
     // Create optimized prompts based on user goal to save OpenAI credits
     let system = '';
     
     if (userGoal === 'cv') {
       // CV-only prompt (70% shorter, focused)
-      system = `You are a professional resume writer. Output ONLY JSON: { "resumeData": {...} }
+      system = `You are a professional ${langTerms.resume} writer. Output ONLY JSON: { "resumeData": {...} }
 
-🎯 Create ATS-friendly resume using original resume data only.
+🎯 Create ATS-friendly ${langTerms.resume} using original ${langTerms.resume} data only.
 
 📋 RULES:
-- Power verbs: Led, Built, Delivered, Optimized
+- Power verbs: ${langTerms.verbs}
 - 3-5 bullets per role (no duties)
 - Skills ONLY from: ${allowedSkillsCSV}
 - ⚠️ NEVER fabricate metrics/achievements
 - Standard headers: Experience, Education, Skills
-- For JOB_ONLY skills (${jobOnlySkillsCSV}): Don't mention unless explicitly in original`.trim();
+- For JOB_ONLY skills (${jobOnlySkillsCSV}): Don't mention unless explicitly in original
+- LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
 
     } else if (userGoal === 'cover-letter') {
       // Cover letter-only prompt (65% shorter, focused) 
       system = `You are a cover letter writer. Output ONLY JSON: { "coverLetterText": "..." }
 
-🎯 Write ${tone} cover letter (250-400 words) using only original resume info.
+🎯 Write ${tone} cover letter (250-400 words) using only original ${langTerms.resume} info.
 
 📝 RULES:
 - 4 paragraphs: Hook → Value → Fit → Close
 - Only skills from: ${allowedSkillsCSV}
-- ⚠️ NEVER fabricate experience not in resume
+- ⚠️ NEVER fabricate experience not in ${langTerms.resume}
 - For JOB_ONLY (${jobOnlySkillsCSV}): "eager to learn X"
-- Tone: ${tone}`.trim();
+- Tone: ${tone}
+- LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
 
     } else {
       // Both - streamlined comprehensive prompt (40% shorter)
-      system = `You are a professional resume & cover letter writer. Output ONLY JSON: { "resumeData": {...}, "coverLetterText": "..." }
+      system = `You are a professional ${langTerms.resume} & cover letter writer. Output ONLY JSON: { "resumeData": {...}, "coverLetterText": "..." }
 
-🎯 Create ATS resume + ${tone} cover letter from original resume only.
+🎯 Create ATS ${langTerms.resume} + ${tone} cover letter from original ${langTerms.resume} only.
 
-📋 RESUME: Power verbs, 3-5 bullets/role, standard headers
+📋 ${langTerms.resume.toUpperCase()}: Power verbs (${langTerms.verbs}), 3-5 bullets/role, standard headers
 📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone
 ⚠️ SKILLS: Only use ${allowedSkillsCSV}
 ⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
-⚠️ CRITICAL: Never fabricate metrics, achievements, or experience not in original`.trim();
+⚠️ CRITICAL: Never fabricate metrics, achievements, or experience not in original
+⚠️ LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
     }
 
     const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;

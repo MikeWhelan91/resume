@@ -3,12 +3,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import { Settings, CreditCard, User, Shield, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Settings, CreditCard, User, Shield, AlertTriangle, ExternalLink, Clock } from 'lucide-react';
 
 export default function Account() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [entitlement, setEntitlement] = useState(null);
+  const [deletionStatus, setDeletionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,13 +25,22 @@ export default function Account() {
 
   const fetchEntitlements = async () => {
     try {
-      const response = await fetch('/api/entitlements');
-      if (response.ok) {
-        const data = await response.json();
+      const [entitlementResponse, deletionResponse] = await Promise.all([
+        fetch('/api/entitlements'),
+        fetch('/api/user/deletion-status')
+      ]);
+      
+      if (entitlementResponse.ok) {
+        const data = await entitlementResponse.json();
         setEntitlement(data);
       }
+      
+      if (deletionResponse.ok) {
+        const data = await deletionResponse.json();
+        setDeletionStatus(data);
+      }
     } catch (error) {
-      console.error('Error fetching entitlements:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -92,6 +102,33 @@ export default function Account() {
             </h1>
             <p className="text-gray-600 mt-2">Manage your account, billing, and preferences</p>
           </div>
+
+          {/* Deletion Warning Banner */}
+          {deletionStatus?.hasPendingDeletion && (
+            <div className="mb-8 bg-orange-50 border border-orange-200 rounded-lg p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <Clock className="w-6 h-6 text-orange-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-orange-800 mb-2">Account Deletion Scheduled</h3>
+                  <p className="text-orange-700 mb-4">
+                    Your account is scheduled for deletion in <strong>{deletionStatus.hoursRemaining || 0} hours</strong>.
+                    You can cancel this at any time during the 48-hour waiting period.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link 
+                      href="/account/delete-account" 
+                      className="btn btn-warning btn-sm inline-flex items-center"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      View Details & Cancel
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             

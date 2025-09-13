@@ -1,18 +1,21 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { getTerminology, toggleLanguage, getLanguageDisplay } = useLanguage();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userPlan, setUserPlan] = useState('free');
   const [entitlement, setEntitlement] = useState(null);
   const [dayPassUsage, setDayPassUsage] = useState(null);
   const [downloadUsage, setDownloadUsage] = useState(null);
+  const terms = getTerminology();
 
   // Fetch user entitlement data
   useEffect(() => {
@@ -181,7 +184,7 @@ export default function Navbar() {
               className={`nav-link ${router.pathname === '/wizard' ? 'active' : ''}`}
             >
               <FileText className="w-4 h-4" />
-              Create Resume
+              Create {terms.Resume}
             </Link>
             {session && (
               <Link 
@@ -189,7 +192,7 @@ export default function Navbar() {
                 className={`nav-link ${router.pathname === '/my-resumes' ? 'active' : ''}`}
               >
                 <FileText className="w-4 h-4" />
-                My Resumes
+                My {terms.ResumePlural}
               </Link>
             )}
             {router.pathname === '/results' && (
@@ -201,6 +204,16 @@ export default function Navbar() {
                 Results
               </Link>
             )}
+            
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="nav-link group relative"
+              title={`Switch to ${getLanguageDisplay() === 'US English' ? 'UK English' : 'US English'}`}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="text-xs">{getLanguageDisplay() === 'US English' ? 'US' : 'UK'}</span>
+            </button>
           </div>
 
           {/* Auth Section */}
@@ -401,7 +414,7 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <FileText className="w-4 h-4" />
-                  Create Resume
+                  Create {terms.Resume}
                 </Link>
                 {session && (
                   <Link 
@@ -410,9 +423,21 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <FileText className="w-4 h-4" />
-                    My Resumes
+                    My {terms.ResumePlural}
                   </Link>
                 )}
+                
+                {/* Language Toggle for Mobile */}
+                <button
+                  onClick={() => {
+                    toggleLanguage();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="mobile-nav-link"
+                >
+                  <Globe className="w-4 h-4" />
+                  {getLanguageDisplay()}
+                </button>
                 {router.pathname === '/results' && (
                   <Link 
                     href="/results" 

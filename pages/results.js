@@ -80,6 +80,16 @@ export default function ResultsPage() {
     return canDownload();
   };
 
+  const handleUpgradeClick = () => {
+    router.push('/pricing');
+  };
+
+  const showUpgradeAlert = (message) => {
+    if (confirm(`${message}\n\nWould you like to view our pricing plans?`)) {
+      router.push('/pricing');
+    }
+  };
+
   // Download functions
   const triggerDownload = async (endpoint, filename, payload) => {
     const response = await fetch(endpoint, {
@@ -109,7 +119,7 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       const credits = getCreditsRemaining();
-      alert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+      showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
       return;
     }
 
@@ -130,7 +140,7 @@ export default function ResultsPage() {
     } catch (error) {
       console.error('Download error:', error);
       if (error.message && error.message.includes('429')) {
-        alert('You have reached your limit. Please upgrade to Pro for unlimited downloads.');
+        showUpgradeAlert('You have reached your limit. Upgrade to Pro for unlimited downloads.');
       } else {
         alert('Failed to download PDF file. Please try again.');
       }
@@ -213,7 +223,7 @@ export default function ResultsPage() {
     }
 
     if (userPlan === 'free') {
-      alert('ATS optimization is a Pro feature. Please upgrade to access this functionality.');
+      showUpgradeAlert('ATS optimization is a Pro feature. Upgrade to access this functionality.');
       return;
     }
 
@@ -274,7 +284,7 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       const credits = getCreditsRemaining();
-      alert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+      showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
       return;
     }
 
@@ -559,7 +569,7 @@ export default function ResultsPage() {
                   {userPlan === 'free' && (
                     <>
                       <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                        <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all templates.
+                        <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all templates.
                       </div>
                       <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
                         <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0}/10 remaining. Credits reset every Monday at midnight Dublin time.
@@ -608,27 +618,30 @@ export default function ResultsPage() {
                   </div>
                   {userPlan === 'free' && (
                     <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                      <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> for all color themes.
+                      <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all color themes.
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">Tone</label>
-                <select 
-                  className="form-select w-full"
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value)}
-                >
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="concise">Concise</option>
-                </select>
-                <p className="text-xs text-gray-500">
-                  Select your preferred tone. Click "Generate" to apply changes (consumes 1 credit).
-                </p>
-              </div>
+              {/* Hide tone dropdown for CV-only results */}
+              {userGoal !== 'cv' && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700">Cover Letter Tone</label>
+                  <select 
+                    className="form-select w-full"
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="concise">Concise</option>
+                  </select>
+                  <p className="text-xs text-gray-500">
+                    Select your preferred tone. Click "Generate" to apply changes (consumes 1 credit).
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -691,18 +704,20 @@ export default function ResultsPage() {
                   <>
                     <div className="relative">
                       <button 
-                        className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl shadow-lg transition-all duration-300 ${
+                        className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl transition-all duration-300 ${
                           userPlan !== 'free'
-                            ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse'
-                            : 'btn-disabled cursor-not-allowed opacity-50'
+                            ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse shadow-lg'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300 shadow-inner'
                         } ${isGenerating ? 'cursor-not-allowed opacity-50 animate-none' : ''}`}
                         onClick={optimizeForATS}
                         disabled={isGenerating || userPlan === 'free'}
                       >
                         <div className="flex items-center gap-3">
-                          <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : ''}`} />
-                          <span>🚀 ATS Optimize</span>
-                          {userPlan === 'free' && <Lock className="w-5 h-5 ml-1" />}
+                          <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : 'text-gray-400'}`} />
+                          <span className={userPlan === 'free' ? 'text-gray-500' : ''}>
+                            {userPlan === 'free' ? '🔒' : '🚀'} ATS Optimize
+                          </span>
+                          {userPlan === 'free' && <Lock className="w-5 h-5 ml-1 text-gray-400" />}
                         </div>
                       </button>
                       
@@ -721,7 +736,7 @@ export default function ResultsPage() {
 
                     {userPlan === 'free' && (
                       <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2">
-                        <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline">Upgrade to Pro</span> to unlock this feature.
+                        <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> to unlock this feature.
                       </div>
                     )}
                   </>

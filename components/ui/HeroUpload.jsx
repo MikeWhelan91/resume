@@ -2,10 +2,13 @@ import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Upload, Sparkles, ArrowRight, Zap, Shield, Star, Clock } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function HeroUpload() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { getTerminology } = useLanguage();
+  const terms = getTerminology();
   const fileRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -30,7 +33,7 @@ export default function HeroUpload() {
 
   const loadLatestResume = async () => {
     setCheckingResume(true);
-    setLoadingMessage('Loading your most recent resume...');
+    setLoadingMessage(`Loading your most recent ${terms.resume}...`);
     try {
       const response = await fetch('/api/resumes/latest');
       if (response.ok) {
@@ -39,11 +42,11 @@ export default function HeroUpload() {
         setLoadingMessage('Perfect! Taking you to the wizard...');
         setTimeout(() => router.push('/wizard'), 500);
       } else {
-        alert('Failed to load your most recent resume. Please try again.');
+        alert(`Failed to load your most recent ${terms.resume}. Please try again.`);
       }
     } catch (error) {
       console.error('Error loading latest resume:', error);
-      alert('Failed to load your most recent resume. Please try again.');
+      alert(`Failed to load your most recent ${terms.resume}. Please try again.`);
     } finally {
       setCheckingResume(false);
       setLoadingMessage('');
@@ -58,19 +61,19 @@ export default function HeroUpload() {
     try{
       const fd = new FormData();
       fd.append('resume', f);
-      setLoadingMessage('Extracting text from resume...');
+      setLoadingMessage(`Extracting text from ${terms.resume}...`);
       const res = await fetch('/api/parse-resume',{method:'POST', body:fd});
-      setLoadingMessage('AI analyzing your experience...');
+      setLoadingMessage('AI analysing your experience...');
       const data = await res.json();
       if(res.ok){
         localStorage.setItem('resumeWizardDraft', JSON.stringify(data.resumeData||{}));
         setLoadingMessage('Perfect! Taking you to the wizard...');
         setTimeout(() => router.push('/wizard'), 500); // Small delay for user feedback
       } else {
-        alert(data.error || 'Failed to process resume');
+        alert(data.error || `Failed to process ${terms.resume}`);
       }
     } catch(err) {
-      alert('Failed to process resume. Please try again.');
+      alert(`Failed to process ${terms.resume}. Please try again.`);
     } finally{ 
       setLoading(false); 
       setLoadingMessage('');
@@ -98,18 +101,18 @@ export default function HeroUpload() {
             {/* Badge */}
             <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 mb-8 animate-fade-in">
               <Sparkles className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">AI-Powered Resume Optimization</span>
+              <span className="text-sm font-medium text-gray-700">AI-Powered {terms.Resume} Optimisation</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 animate-slide-up">
               Get Hired Faster with{' '}
-              <span className="text-gradient">Job-Specific Resumes</span>
+              <span className="text-gradient">Job-Specific {terms.ResumePlural}</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12 animate-slide-up" style={{animationDelay: '0.1s'}}>
-              Simply paste any job description and watch our AI transform your resume and cover letter to match perfectly. Get tailored documents for every application that beat ATS systems and land interviews.
+              Simply paste any job description and watch our AI transform your {terms.resume} and cover letter to match perfectly. Get tailored documents for every application that beat ATS systems and land interviews.
             </p>
 
             {/* CTA Buttons */}
@@ -124,7 +127,7 @@ export default function HeroUpload() {
                   disabled={loading || checkingResume}
                 >
                   <Clock className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Use Most Recent Resume
+                  Use Most Recent {terms.Resume}
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </button>
               )}
@@ -135,7 +138,7 @@ export default function HeroUpload() {
                 disabled={loading || checkingResume}
               >
                 <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                Upload Your Resume
+                Upload Your {terms.Resume}
                 {!(session?.user && hasLatestResume) && <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />}
               </button>
               
@@ -164,6 +167,13 @@ export default function HeroUpload() {
                 <span>ATS-Optimized</span>
               </div>
             </div>
+
+            {/* Pricing Link */}
+            <div className="mt-4 animate-fade-in" style={{animationDelay: '0.4s'}}>
+              <a href="/pricing" className="text-sm text-blue-600 hover:text-blue-700 underline">
+                View Pricing Plans
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -183,8 +193,8 @@ export default function HeroUpload() {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Upload className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">1. Upload Your Resume</h3>
-              <p className="text-gray-600">Upload your existing resume or build one from scratch using our smart wizard.</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">1. Upload Your {terms.Resume}</h3>
+              <p className="text-gray-600">Upload your existing {terms.resume} or build one from scratch using our smart wizard.</p>
             </div>
             
             <div className="card text-center p-8 group">
@@ -192,7 +202,7 @@ export default function HeroUpload() {
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">2. Paste Job Description</h3>
-              <p className="text-gray-600">Copy any job posting and our AI instantly analyzes the requirements to tailor your resume and cover letter.</p>
+              <p className="text-gray-600">Copy any job posting and our AI instantly analyses the requirements to tailor your {terms.resume} and cover letter.</p>
             </div>
             
             <div className="card text-center p-8 group">
@@ -200,7 +210,7 @@ export default function HeroUpload() {
                 <Star className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">3. Tailor Documents</h3>
-              <p className="text-gray-600">Download perfectly tailored resume and cover letter optimized for that specific job – repeat for every application!</p>
+              <p className="text-gray-600">Download perfectly tailored {terms.resume} and cover letter optimised for that specific job – repeat for every application!</p>
             </div>
           </div>
         </div>
@@ -215,11 +225,11 @@ export default function HeroUpload() {
           </div>
           
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            One Resume, <span className="text-gradient">Unlimited Tailored Versions</span>
+            One {terms.Resume}, <span className="text-gradient">Unlimited Tailored Versions</span>
           </h2>
           
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Stop sending the same generic resume to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
+            Stop sending the same generic {terms.resume} to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -267,7 +277,7 @@ export default function HeroUpload() {
             <div className="loading-spinner w-12 h-12 mx-auto"></div>
             <div className="space-y-2">
               <h3 className="text-xl font-semibold text-gray-900">
-                {checkingResume ? 'Loading Your Resume' : 'Processing Your Resume'}
+                {checkingResume ? `Loading Your ${terms.Resume}` : `Processing Your ${terms.Resume}`}
               </h3>
               <p className="text-gray-600">{loadingMessage}</p>
             </div>

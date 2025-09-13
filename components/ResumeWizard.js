@@ -9,6 +9,7 @@ import EducationCard from './wizard/EducationCard';
 // Templates removed - using simple preview only
 import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const emptyResume = {
   name: '',
@@ -65,6 +66,8 @@ const schemas = {
 export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { language, getTerminology } = useLanguage();
+  const terms = getTerminology();
   const [step, setStep] = useState(0);
   const stepIds = ['goal', 'basics', 'skills', 'work', 'education', 'review'];
   const stepLabels = ['Goal', 'Basics','Skills','Experience','Education','Review'];
@@ -256,6 +259,12 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     </div>
   );
 
+  const showUpgradeAlert = (message) => {
+    if (confirm(`${message}\n\nWould you like to view our pricing plans?`)) {
+      router.push('/pricing');
+    }
+  };
+
   async function submit(data) {
     if(step !== stepIds.length -1) return;
     
@@ -265,10 +274,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         setShowAccountPrompt(true);
         return;
       } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
-        alert(`You've used all your weekly credits (0/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've used all your weekly credits (0/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
         return;
       } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
-        alert(`You've reached your daily generation limit (0/30). Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've reached your daily generation limit (0/30). Upgrade to Pro for unlimited generations!`);
         return;
       }
     }
@@ -280,6 +289,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       fd.append('jobDesc', jd);
       fd.append('tone', tone);
       fd.append('userGoal', userGoal);
+      fd.append('language', language);
       
       // Save job description to localStorage for results page
       localStorage.setItem('jobDescription', jd);
@@ -348,8 +358,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'cv' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">Resume Only</div>
-                      <div className="text-sm text-gray-600">Optimize your resume for the job description</div>
+                      <div className="font-semibold text-gray-900">{terms.Resume} Only</div>
+                      <div className="text-sm text-gray-600">Optimise your {terms.resume} for the job description</div>
                       <div className="text-xs text-blue-600 font-medium">Uses 1 generation</div>
                     </div>
                   </div>
@@ -388,7 +398,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'both' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">Both Resume and Cover Letter</div>
+                      <div className="font-semibold text-gray-900">Both {terms.Resume} and Cover Letter</div>
                       <div className="text-sm text-gray-600">Get a complete application package</div>
                       <div className="text-xs text-green-600 font-medium">Uses 2 generations</div>
                     </div>
