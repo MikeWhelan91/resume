@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Settings, CreditCard, User, Shield, AlertTriangle, ExternalLink, Clock } from 'lucide-react';
 import SeoHead from '../components/SeoHead';
+import SubscriptionManager from '../components/ui/SubscriptionManager';
 
 export default function Account() {
   const { data: session, status } = useSession();
@@ -156,65 +157,16 @@ export default function Account() {
                 </div>
               </div>
 
-              {/* Billing & Subscription */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Billing & Subscription</h2>
-                  </div>
+              {/* Billing & Subscription - Enhanced */}
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Billing & Subscription</h2>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Current Plan</label>
-                    <p className="mt-1 text-sm text-gray-900 font-medium">
-                      {planDisplayNames[entitlement?.plan] || 'Loading...'}
-                    </p>
-                  </div>
-                  
-                  {entitlement?.plan === 'free' ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Weekly Credits</label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {entitlement?.freeWeeklyCreditsRemaining || 0} / 10 remaining
-                        </p>
-                        <p className="text-xs text-gray-500">Credits reset every Monday at midnight Dublin time</p>
-                      </div>
-                      
-                      <Link 
-                        href="/pricing"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        Upgrade to Pro
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <button
-                        onClick={handleBillingPortal}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Manage Billing
-                      </button>
-                      
-                      <div className="text-sm text-gray-600">
-                        <p>• Update payment methods</p>
-                        <p>• View billing history</p>
-                        <p>• Download invoices</p>
-                      </div>
-                      
-                      <Link 
-                        href="/account/cancel-subscription"
-                        className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        Cancel Subscription
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                <SubscriptionManager 
+                  entitlement={entitlement} 
+                  onUpdate={fetchEntitlements}
+                />
               </div>
 
               {/* Danger Zone */}

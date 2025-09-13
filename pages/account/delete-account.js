@@ -318,7 +318,7 @@ export default function DeleteAccount() {
                     {entitlement?.plan === 'free' && (
                       <div>
                         <label className="text-sm font-medium text-gray-500">Credits Remaining</label>
-                        <div className="text-gray-900">{entitlement.freeWeeklyCreditsRemaining || 0}/10</div>
+                        <div className="text-gray-900">{entitlement.freeWeeklyCreditsRemaining || 0} remaining</div>
                       </div>
                     )}
                   </div>

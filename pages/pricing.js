@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import SeoHead from '../components/SeoHead';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Check, Crown, Sparkles, ArrowRight, Zap } from 'lucide-react';
+import { Check, Crown, Sparkles, ArrowRight, Zap, Info, Clock } from 'lucide-react';
+import { InfoTooltip, HelpTooltip } from '../components/ui/TooltipPortal';
 
 export default function PricingPage() {
   const { data: session } = useSession();
@@ -67,7 +68,7 @@ export default function PricingPage() {
       monthlyPrice: 2.99,
       annualPrice: 2.99,
       features: [
-        '24-hour unlimited access',
+        '24-hour access period',
         '30 generations per day',
         '100 PDF downloads per day',
         '100 DOCX downloads per day',
@@ -144,10 +145,42 @@ export default function PricingPage() {
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-4xl font-bold text-gradient">TailoredCV Pricing</h1>
+                <HelpTooltip 
+                  content={
+                    <div className="space-y-3">
+                      <p><strong>Why choose TailoredCV?</strong></p>
+                      <ul className="space-y-1 text-sm">
+                        <li>• AI analyzes job descriptions to optimize your resume</li>
+                        <li>• Generate both resume and cover letter for each application</li>
+                        <li>• ATS-friendly formats ensure you pass initial screenings</li>
+                        <li>• Save hours of manual customization</li>
+                      </ul>
+                      <p className="text-blue-200 text-sm">💡 Most users see 3x more interview callbacks!</p>
+                    </div>
+                  }
+                />
               </div>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
                 Choose the perfect plan to create professional, ATS-friendly resumes and cover letters
               </p>
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 max-w-3xl mx-auto mb-8">
+                <div className="text-center space-y-2">
+                  <div className="flex items-center justify-center space-x-2 text-sm text-blue-800">
+                    <Info className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-semibold">New here? Start your journey:</span>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3 text-xs">
+                    <div className="bg-blue-100 rounded-lg p-3">
+                      <div className="font-medium text-blue-900">🚀 Try Immediately</div>
+                      <div className="text-blue-700">Upload & transform your resume - no signup needed</div>
+                    </div>
+                    <div className="bg-green-100 rounded-lg p-3">
+                      <div className="font-medium text-green-900">📈 Sign Up for More</div>
+                      <div className="text-green-700">Get 10 personalized CVs & cover letters/week + all templates</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
             </div>
           </div>
@@ -175,7 +208,27 @@ export default function PricingPage() {
                 )}
 
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    {plan.name === 'Free' && (
+                      <InfoTooltip 
+                        content="Perfect for trying our service! Get 10 tailored resumes per week to test our AI technology."
+                        position="top"
+                      />
+                    )}
+                    {plan.name === 'Day Pass' && (
+                      <InfoTooltip 
+                        content="Great for urgent applications! Get 24-hour access with 30 generations + 100 downloads - perfect for multiple job applications."
+                        position="top"
+                      />
+                    )}
+                    {plan.name.includes('Pro') && (
+                      <InfoTooltip 
+                        content="Unlimited access for serious job seekers. Apply to as many jobs as you want with no restrictions."
+                        position="top"
+                      />
+                    )}
+                  </div>
                   <p className="text-gray-600 mb-4">{plan.description}</p>
                   
                   <div className="mb-4">

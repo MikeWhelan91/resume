@@ -5,6 +5,7 @@ import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
 import SeoHead from '../components/SeoHead';
 import { useLanguage } from '../contexts/LanguageContext';
+import TrialSignupModal from '../components/ui/TrialSignupModal';
 import { 
   FileText, 
   Download, 
@@ -51,6 +52,8 @@ export default function ResultsPage() {
   const [resumeFormat, setResumeFormat] = useState('pdf');
   const [coverLetterFormat, setCoverLetterFormat] = useState('pdf');
   const [tone, setTone] = useState('professional');
+  const [showTrialSignup, setShowTrialSignup] = useState(false);
+  const [signupType, setSignupType] = useState('post_generation');
 
   // Credit system helpers for authenticated users
   const getCreditsRemaining = () => {
@@ -129,10 +132,9 @@ export default function ResultsPage() {
     }
   };
 
-  const showSignUpPrompt = (message) => {
-    if (confirm(`${message}\n\nWould you like to sign up for unlimited access?`)) {
-      router.push('/auth/signup');
-    }
+  const showSignUpPrompt = (message, type = 'no_credits') => {
+    setSignupType(type);
+    setShowTrialSignup(true);
   };
 
   // Download functions
@@ -165,10 +167,12 @@ export default function ResultsPage() {
     if (!canDownload()) {
       if (session) {
         const credits = getCreditsRemaining();
-        showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+        const remaining = getCreditsRemaining();
+        showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
       } else {
         const remaining = getTrialDownloadsRemaining();
-        showSignUpPrompt(`You've used all your trial downloads (${remaining}/2). Sign up for unlimited downloads!`);
+        const remaining = getTrialDownloadsRemaining();
+        showSignUpPrompt(`You've used all your trial downloads. You have ${remaining} downloads remaining. Sign up for unlimited downloads!`);
       }
       return;
     }
@@ -344,10 +348,12 @@ export default function ResultsPage() {
     if (!canGenerate()) {
       if (session) {
         const credits = getCreditsRemaining();
-        showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        const remaining = getCreditsRemaining();
+        showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
       } else {
         const remaining = getTrialGenerationsRemaining();
-        showSignUpPrompt(`You've used all your trial generations (${remaining}/2). Sign up for unlimited generations!`);
+        const remaining = getTrialGenerationsRemaining();
+        showSignUpPrompt(`You've used all your trial generations. You have ${remaining} generations remaining. Sign up for unlimited generations!`);
       }
       return;
     }
@@ -388,6 +394,15 @@ export default function ResultsPage() {
         if (trialResponse.ok) {
           const trialData = await trialResponse.json();
           setTrialUsage(trialData);
+          
+          // Show post-generation signup modal for trial users who still have credits
+          const remainingCredits = Math.max(0, trialData.generationsLimit - trialData.generationsUsed);
+          if (remainingCredits > 0) {
+            setTimeout(() => {
+              setSignupType('post_generation');
+              setShowTrialSignup(true);
+            }, 1500); // Small delay to let user see the results first
+          }
         }
       }
     } catch (error) {
@@ -660,7 +675,7 @@ export default function ResultsPage() {
                         <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all templates.
                       </div>
                       <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                        <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0}/10 remaining. Credits reset every Monday at midnight Dublin time.
+                        <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0} remaining. Credits reset every Monday at midnight Dublin time.
                       </div>
                     </>
                   )}
@@ -889,7 +904,7 @@ export default function ResultsPage() {
                     <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-sm font-medium text-blue-700">
-                        {getCreditsRemaining() || 0}/10 credits remaining
+                        {getCreditsRemaining() || 0} credits remaining
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
@@ -917,7 +932,7 @@ export default function ResultsPage() {
                     <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-teal-500 rounded-full animate-pulse"></div>
                       <span className="text-sm font-medium bg-gradient-to-r from-green-700 to-teal-700 bg-clip-text text-transparent">
-                        🎯 FREE TRIAL - {Math.floor(getTrialGenerationsRemaining()/2)}/1 CV+Letter combo, {getTrialDownloadsRemaining()}/2 downloads left
+                        🎯 FREE TRIAL - {getTrialDownloadsRemaining()} downloads remaining
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
@@ -952,6 +967,13 @@ export default function ResultsPage() {
         </div>
       </div>
 
+      {/* Trial Signup Modal */}
+      <TrialSignupModal 
+        isOpen={showTrialSignup}
+        onClose={() => setShowTrialSignup(false)}
+        type={signupType}
+        remainingCredits={getTrialGenerationsRemaining()}
+      />
     </>
   );
 }

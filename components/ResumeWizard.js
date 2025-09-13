@@ -10,6 +10,7 @@ import EducationCard from './wizard/EducationCard';
 import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
 import { useLanguage } from '../contexts/LanguageContext';
+import { InfoTooltip, HelpTooltip } from './ui/TooltipPortal';
 
 const emptyResume = {
   name: '',
@@ -304,16 +305,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     // Check if user can generate
     if (!canGenerate()) {
       if (!session?.user) {
-        // Trial user has exhausted their generations
+        // Trial user has exhausted their generations - show signup BEFORE generation attempt
         const remaining = getTrialGenerationsRemaining();
         console.log('Trial user exhausted, remaining:', remaining);
         setShowAccountPrompt(true);
         return;
       } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've used all your weekly credits (0/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've used all your weekly credits. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
         return;
       } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've reached your daily generation limit (0/30). Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've reached your daily generation limit. Upgrade to Pro for unlimited generations!`);
         return;
       }
     }
@@ -371,18 +372,30 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
             if (step > 0) setStep(s => s - 1);
           }}
         />
-      <div className="card p-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg animate-fade-in">
+      <div className="card p-6 bg-gray-50/90 backdrop-blur-sm border border-gray-200/50 shadow-lg animate-fade-in">
         {step === 0 && (
-          <section className="space-y-8">
+          <section className="space-y-6">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">What do you want to create?</h2>
+              <div className="flex items-center justify-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900">What do you want to create?</h2>
+                <HelpTooltip 
+                  content={
+                    <div className="space-y-3">
+                      <p><strong>Resume Only:</strong> Perfect if you already have a cover letter or the job doesn't require one.</p>
+                      <p><strong>Cover Letter Only:</strong> Generate a personalized cover letter when you have an up-to-date resume.</p>
+                      <p><strong>Both:</strong> Get a complete application package - recommended for maximum impact!</p>
+                      <p className="text-blue-200 text-sm">💡 Most successful applications include both documents.</p>
+                    </div>
+                  }
+                />
+              </div>
               <p className="text-gray-600">Choose what you'd like to optimize based on the job description.</p>
             </header>
-            <div className="space-y-6">
-              <div className="grid gap-4 max-w-2xl mx-auto">
-                <label className={`card p-6 transition-all duration-300 group border-2 ${
+            <div className="space-y-4">
+              <div className="grid gap-3 max-w-2xl mx-auto">
+                <label className={`card p-4 transition-all duration-300 group border-2 ${
                   !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-200'
-                }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'white', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
+                }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
                   <input 
                     type="radio" 
                     name="goal" 
@@ -399,16 +412,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">{terms.Resume} Only</div>
                       <div className="text-sm text-gray-600">Optimise your {terms.resume} for the job description</div>
-                      <div className="text-xs text-blue-600 font-medium">Uses 1 generation</div>
+                      <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
                       {!session && (
-                        <div className="text-xs text-red-500 font-medium mt-1">Sign up required</div>
+                        <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
                       )}
                     </div>
                   </div>
                 </label>
-                <label className={`card p-6 transition-all duration-300 group border-2 ${
+                <label className={`card p-4 transition-all duration-300 group border-2 ${
                   !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-purple-200'
-                }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'white', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
+                }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
                   <input 
                     type="radio" 
                     name="goal" 
@@ -425,14 +438,14 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Cover Letter Only</div>
                       <div className="text-sm text-gray-600">Generate a tailored cover letter for the job</div>
-                      <div className="text-xs text-purple-600 font-medium">Uses 1 generation</div>
+                      <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
                       {!session && (
-                        <div className="text-xs text-red-500 font-medium mt-1">Sign up required</div>
+                        <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
                       )}
                     </div>
                   </div>
                 </label>
-                <label className="card p-6 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200" style={{backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : 'white', borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(229 231 235)'}}>
+                <label className="card p-4 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200" style={{backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : 'rgb(249 250 251)', borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(229 231 235)'}}>
                   <input 
                     type="radio" 
                     name="goal" 
@@ -448,11 +461,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Both {terms.Resume} and Cover Letter</div>
                       <div className="text-sm text-gray-600">Get a complete application package</div>
-                      <div className="text-xs text-green-600 font-medium">
+                      <div className="text-xs text-green-600 font-bold">
                         {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
                       </div>
                       {!session && (
-                        <div className="text-xs text-green-600 font-medium mt-1">Try before you sign up!</div>
+                        <div className="text-xs text-green-600 font-bold mt-1">Try before you sign up!</div>
                       )}
                     </div>
                   </div>
@@ -465,37 +478,48 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 1 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
-              <p className="text-gray-600">Tell us who you are and how to reach you.</p>
+              <div className="flex items-center justify-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
+                <HelpTooltip 
+                  content={
+                    <div className="space-y-2">
+                      <p>Fill in your personal and contact details. This information will appear at the top of your resume.</p>
+                      <p><strong>Pro tip:</strong> Use a professional email address and ensure your phone number is current.</p>
+                      <p className="text-blue-200 text-sm">💡 All fields except name are optional, but more details = better results!</p>
+                    </div>
+                  }
+                />
+              </div>
+              <p className="text-gray-600">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
             </header>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-1 col-span-2">
-                <label className="text-sm font-medium text-gray-700">Name*</label>
+                <label className="text-sm font-bold text-gray-700">Name*</label>
                 <input {...register('name')} className="form-input" placeholder="Jane Doe" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Title / Headline</label>
+                <label className="text-sm font-bold text-gray-700">Title / Headline</label>
                 <input {...register('title')} className="form-input" placeholder="Software Engineer" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email</label>
+                <label className="text-sm font-bold text-gray-700">Email</label>
                 <input {...register('email')} type="email" className="form-input" placeholder="you@example.com" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Phone</label>
+                <label className="text-sm font-bold text-gray-700">Phone</label>
                 <input {...register('phone')} className="form-input" placeholder="555-123-4567" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Location</label>
+                <label className="text-sm font-bold text-gray-700">Location</label>
                 <input {...register('location')} className="form-input" placeholder="City, Country" />
               </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-medium text-gray-700">Summary</label>
+              <div className="col-span-full space-y-2">
+                <label className="text-sm font-bold text-gray-700">Summary</label>
                 <textarea {...register('summary')} rows={4} className="form-textarea" placeholder="3–5 lines, action-oriented" />
               </div>
             </div>
             <div className="space-y-4">
-              <div className="text-sm font-medium text-gray-700">Links</div>
+              <div className="text-sm font-bold text-gray-700">Links</div>
               {values.links.map((l, i) => (
                 <div key={i} className="grid grid-cols-2 gap-2 items-center">
                   <input {...register(`links.${i}.label`)} placeholder="Label" className="form-input" />
@@ -557,19 +581,21 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 5 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Review & Generate</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Job Description</h2>
               <p className="text-gray-600">Tailor your documents to the job description.</p>
             </header>
+            {userGoal !== 'cv' && (
+              <div className="mb-6">
+                <label className="text-sm font-bold text-gray-700 block mb-3">Cover Letter Tone</label>
+                <select className="form-select w-48" value={tone} onChange={e=>setTone(e.target.value)}>
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="concise">Concise</option>
+                </select>
+              </div>
+            )}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Tone</label>
-              <select className="form-select w-full" value={tone} onChange={e=>setTone(e.target.value)}>
-                <option value="professional">Professional</option>
-                <option value="friendly">Friendly</option>
-                <option value="concise">Concise</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Job Description*</label>
+              <label className="text-sm font-bold text-gray-700">Job Description*</label>
               <textarea 
                 className="form-textarea h-48 resize-vertical w-full" 
                 value={jd} 
@@ -584,7 +610,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       {/* Validation Message */}
       {!isValid && message && (
         <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
-          <p className="text-sm text-red-600 font-medium">{message}</p>
+          <p className="text-sm text-red-600 font-bold">{message}</p>
         </div>
       )}
       </form>
@@ -619,15 +645,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               </svg>
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-gray-900">Create Your Free Account</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Trial Credits Used Up</h3>
               <p className="text-gray-600">
-                Sign up now and get <strong>10 free generations per week</strong> to create tailored resumes and cover letters for every job you apply to!
+                You've used all your trial generations. 
+                Sign up now and get <strong>10 free generations per week</strong> to continue creating tailored resumes and cover letters!
               </p>
               <div className="text-sm text-gray-500 space-y-1">
                 <div>✓ 10 free generations weekly</div>
                 <div>✓ 10 PDF downloads weekly</div>
                 <div>✓ Save your progress</div>
-                <div>✓ Access all templates</div>
+                <div>✓ Professional template</div>
               </div>
             </div>
             <div className="flex flex-col space-y-3">
