@@ -9,6 +9,7 @@ import { withLimiter } from "../../lib/ratelimit";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
+import { checkTrialLimit, consumeTrialUsage } from '../../lib/trialUtils';
 
 export const config = { api: { bodyParser: false } };
 
@@ -95,6 +96,77 @@ async function expandSkills(client, skills){
     list.forEach(x => expanded.add(String(x).toLowerCase()));
   }
   return Array.from(expanded);
+}
+
+// ---- NEW: consolidate long skills into concise 1-2 word terms ----
+async function consolidateSkills(client, skills){
+  if(!skills || skills.length === 0) return skills;
+  
+  // Filter out skills that are already concise (1-2 words)
+  const longSkills = [];
+  const shortSkills = [];
+  
+  skills.forEach(skill => {
+    const wordCount = String(skill).trim().split(/\s+/).length;
+    if (wordCount <= 2) {
+      shortSkills.push(skill);
+    } else {
+      longSkills.push(skill);
+    }
+  });
+  
+  // If no long skills to consolidate, return original array
+  if (longSkills.length === 0) return skills;
+  
+  try {
+    const sys = `Output ONLY JSON: {"skills": string[]} Convert long skill descriptions into concise 1-2 word professional skill terms.
+
+RULES:
+1. Convert each skill to 1-2 words maximum
+2. Keep core technical/professional competency
+3. Use industry-standard terminology
+4. Remove filler words, explanations, context
+5. Maintain the SAME ORDER as input
+
+EXAMPLES:
+- "Experience with JavaScript programming and web development" → "JavaScript"
+- "Proficient in project management and team leadership" → "Project Management"
+- "Strong analytical and problem-solving abilities" → "Problem Solving"
+- "Customer service and client relationship management" → "Customer Service"
+- "Database administration and SQL optimization" → "Database Administration"`;
+
+    const user = `Consolidate these skills into concise terms:\n${longSkills.map((skill, i) => `${i + 1}. ${skill}`).join('\n')}`;
+    
+    const r = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+    });
+    
+    const result = safeJSON(r.choices?.[0]?.message?.content || '{"skills": []}');
+    const consolidatedSkills = Array.isArray(result.skills) 
+      ? result.skills.map(s => String(s).trim()).filter(Boolean)
+      : longSkills; // fallback to original if AI fails
+    
+    // Combine short skills + consolidated long skills, removing duplicates
+    const allSkills = [...shortSkills, ...consolidatedSkills];
+    const uniqueSkills = [];
+    const seen = new Set();
+    
+    allSkills.forEach(skill => {
+      const lowerSkill = String(skill).toLowerCase();
+      if (!seen.has(lowerSkill)) {
+        seen.add(lowerSkill);
+        uniqueSkills.push(skill);
+      }
+    });
+    
+    return uniqueSkills;
+  } catch (error) {
+    console.error('Error consolidating skills:', error);
+    return skills; // fallback to original skills
+  }
 }
 
 // ---- NEW: post-process bullets with modern resume best practices ----
@@ -233,9 +305,10 @@ async function coreHandler(req, res){
     const userGoal   = Array.isArray(fields?.userGoal) ? fields.userGoal[0] : (fields?.userGoal || "both");
     const language   = Array.isArray(fields?.language) ? fields.language[0] : (fields?.language || "en-US");
 
-    // Check user authentication and credits
+    // Check user authentication and credits (or trial limits)
     let userId = null;
     let generationCount = 1; // Default to 1 for single item
+    let isTrialUser = false;
     
     if (userGoal === 'both') {
       generationCount = 2; // Both resume and cover letter = 2 generations
@@ -244,6 +317,7 @@ async function coreHandler(req, res){
     try {
       const session = await getServerSession(req, res, authOptions);
       if (session?.user?.id) {
+        // Authenticated user - use credit system
         userId = session.user.id;
         
         // Check credit availability for the required generation count
@@ -258,21 +332,67 @@ async function coreHandler(req, res){
             });
           }
         }
+      } else {
+        // Anonymous user - use trial system
+        isTrialUser = true;
+        console.log('Trial user detected, userGoal:', userGoal);
+        
+        // For trial users, only allow 'both' option (enforced by UI but double-check here)
+        if (userGoal !== 'both') {
+          console.log('Trial user tried to use goal other than both:', userGoal);
+          return res.status(400).json({ 
+            error: 'Trial users can only generate both CV and cover letter together. Please sign up for individual options.',
+            code: 'TRIAL_BOTH_ONLY'
+          });
+        }
+        
+        // Check trial limits (we consume 2 generations for both CV + cover letter)
+        console.log('Checking trial limits for generation count:', generationCount);
+        const trialCheck = await checkTrialLimit(req, 'generation');
+        console.log('Trial check result:', trialCheck);
+        // We need at least 2 generations remaining since we consume 2
+        if (!trialCheck.allowed || trialCheck.remaining < 2) {
+          console.log('Trial limit exceeded');
+          return res.status(429).json({ 
+            error: 'Trial limit reached', 
+            message: `Trial allows ${trialCheck.limit} generations total. You have ${trialCheck.remaining} remaining. Sign up for unlimited access!`,
+            code: 'TRIAL_GENERATION_LIMIT'
+          });
+        }
+        console.log('Trial user passed all checks');
       }
     } catch (error) {
-      console.error('Error checking user session:', error);
+      console.error('Error checking user session or trial limits:', error);
+      // For trial users, if there's an error checking limits, allow the request (fail open)
+      if (!userId) {
+        isTrialUser = true;
+      }
     }
 
     if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
-    if (!jobDesc || jobDesc.trim().length < 30) return res.status(400).json({ error:"Job description too short", code:"E_BAD_INPUT" });
+    
+    // More lenient job description validation for trial users (10 chars vs 30 for authenticated users)
+    const minJobDescLength = isTrialUser ? 10 : 30;
+    if (!jobDesc || jobDesc.trim().length < minJobDescLength) {
+      return res.status(400).json({ 
+        error: `Job description too short (minimum ${minJobDescLength} characters)`, 
+        code:"E_BAD_INPUT" 
+      });
+    }
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Pass 1: résumé-only allow-list
-    const allowedSkillsBase = resumeData
-      ? (resumeData.skills || []).map(s=>String(s).toLowerCase())
+    // Pass 1: résumé-only allow-list (consolidate long skills first)
+    let allowedSkillsBase = resumeData
+      ? (resumeData.skills || [])
       : await extractAllowedSkills(client, resumeText);
-    const allowedSkills = await expandSkills(client, allowedSkillsBase);
+    
+    // Consolidate long skills into concise terms
+    allowedSkillsBase = await consolidateSkills(client, allowedSkillsBase);
+    
+    // Convert to lowercase for matching
+    const allowedSkillsLower = allowedSkillsBase.map(s=>String(s).toLowerCase());
+    const allowedSkills = await expandSkills(client, allowedSkillsLower);
     const expanded = new Set(allowedSkills);
     const allowedSkillsCSV = allowedSkills.join(", ");
 
@@ -387,7 +507,20 @@ async function coreHandler(req, res){
     if (resumeNeeded) {
       const allowed = new Set(allowedSkills);
       rd = normalizeResumeData(json.resumeData || {});
-      rd.skills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
+      
+      // Filter skills and ensure consolidated skills are preserved
+      const filteredSkills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
+      
+      // Add consolidated base skills that might not be in the expanded set
+      const consolidatedSet = new Set(filteredSkills.map(s => s.toLowerCase()));
+      allowedSkillsBase.forEach(skill => {
+        if (!consolidatedSet.has(skill.toLowerCase())) {
+          filteredSkills.push(skill);
+          consolidatedSet.add(skill.toLowerCase());
+        }
+      });
+      
+      rd.skills = filteredSkills;
 
       const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
       
@@ -421,16 +554,26 @@ async function coreHandler(req, res){
       payload.resumeData = rd;
     }
 
-    // Track usage and consume credits after successful generation
+    // Track usage and consume credits/trial usage after successful generation
     if (userId) {
       try {
-        // Consume the appropriate number of credits and track API usage
+        // Authenticated user - consume credits and track API usage
         for (let i = 0; i < generationCount; i++) {
           await consumeCredit(userId, 'generation');
           await trackApiUsage(userId, 'generation');
         }
       } catch (error) {
         console.error('Error tracking usage:', error);
+        // Don't block the response if tracking fails
+      }
+    } else if (isTrialUser) {
+      try {
+        // Trial user - consume trial usage (consume 2 for both CV + cover letter)
+        await consumeTrialUsage(req, 'generation');
+        await consumeTrialUsage(req, 'generation');
+        console.log(`Trial user consumed 2 generations (${generationCount} items generated)`);
+      } catch (error) {
+        console.error('Error tracking trial usage:', error);
         // Don't block the response if tracking fails
       }
     }

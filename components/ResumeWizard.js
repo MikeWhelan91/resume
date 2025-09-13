@@ -85,6 +85,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const [userPlan, setUserPlan] = useState('free');
   const [dayPassUsage, setDayPassUsage] = useState(null);
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+  const [trialUsage, setTrialUsage] = useState(null);
+  const [trialUsageLoading, setTrialUsageLoading] = useState(true);
+
+  // Force 'both' option for signed-out users
+  useEffect(() => {
+    if (!session && (userGoal === 'cv' || userGoal === 'cover-letter')) {
+      console.log('Forcing userGoal to both for trial user, was:', userGoal);
+      setUserGoal('both');
+    }
+  }, [session, userGoal]);
 
   useEffect(() => {
     const sub = watch(() => {
@@ -137,10 +147,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     return () => sub.unsubscribe();
   }, [watch, autosaveKey]);
 
-  // Fetch user entitlement data
+  // Fetch user entitlement data (authenticated) or trial usage (anonymous)
   useEffect(() => {
-    const fetchEntitlement = async () => {
+    const fetchUserData = async () => {
       if (session?.user?.id) {
+        // Authenticated user - fetch entitlements
         try {
           const [entitlementResponse, dayPassResponse] = await Promise.all([
             fetch('/api/entitlements'),
@@ -160,10 +171,22 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         } catch (error) {
           console.error('Error fetching entitlement:', error);
         }
+      } else {
+        // Anonymous user - fetch trial usage
+        try {
+          const trialResponse = await fetch('/api/trial-usage');
+          if (trialResponse.ok) {
+            const trialData = await trialResponse.json();
+            setTrialUsage(trialData);
+          }
+        } catch (error) {
+          console.error('Error fetching trial usage:', error);
+        }
+        setTrialUsageLoading(false);
       }
     };
 
-    fetchEntitlement();
+    fetchUserData();
   }, [session]);
 
   // Credit checking functions
@@ -177,9 +200,17 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     return null;
   };
 
+  const getTrialGenerationsRemaining = () => {
+    if (!session && trialUsage) {
+      return Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed);
+    }
+    return 0;
+  };
+
   const canGenerate = () => {
     if (!session?.user) {
-      return false; // Logged out users cannot generate
+      // Trial users - check trial usage
+      return trialUsage ? trialUsage.canGenerate : false;
     }
     if (userPlan === 'free') {
       return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
@@ -268,9 +299,14 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   async function submit(data) {
     if(step !== stepIds.length -1) return;
     
+    console.log('Submit called with userGoal:', userGoal, 'session:', !!session?.user);
+    
     // Check if user can generate
     if (!canGenerate()) {
       if (!session?.user) {
+        // Trial user has exhausted their generations
+        const remaining = getTrialGenerationsRemaining();
+        console.log('Trial user exhausted, remaining:', remaining);
         setShowAccountPrompt(true);
         return;
       } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
@@ -344,7 +380,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
             </header>
             <div className="space-y-6">
               <div className="grid gap-4 max-w-2xl mx-auto">
-                <label className="card p-6 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200" style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'white', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
+                <label className={`card p-6 transition-all duration-300 group border-2 ${
+                  !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-200'
+                }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'white', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
                   <input 
                     type="radio" 
                     name="goal" 
@@ -352,6 +390,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     checked={userGoal === 'cv'} 
                     onChange={(e) => setUserGoal(e.target.value)}
                     className="sr-only"
+                    disabled={!session}
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'transparent'}}>
@@ -361,10 +400,15 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       <div className="font-semibold text-gray-900">{terms.Resume} Only</div>
                       <div className="text-sm text-gray-600">Optimise your {terms.resume} for the job description</div>
                       <div className="text-xs text-blue-600 font-medium">Uses 1 generation</div>
+                      {!session && (
+                        <div className="text-xs text-red-500 font-medium mt-1">Sign up required</div>
+                      )}
                     </div>
                   </div>
                 </label>
-                <label className="card p-6 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200" style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'white', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
+                <label className={`card p-6 transition-all duration-300 group border-2 ${
+                  !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-purple-200'
+                }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'white', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
                   <input 
                     type="radio" 
                     name="goal" 
@@ -372,6 +416,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     checked={userGoal === 'cover-letter'} 
                     onChange={(e) => setUserGoal(e.target.value)}
                     className="sr-only"
+                    disabled={!session}
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'transparent'}}>
@@ -381,6 +426,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       <div className="font-semibold text-gray-900">Cover Letter Only</div>
                       <div className="text-sm text-gray-600">Generate a tailored cover letter for the job</div>
                       <div className="text-xs text-purple-600 font-medium">Uses 1 generation</div>
+                      {!session && (
+                        <div className="text-xs text-red-500 font-medium mt-1">Sign up required</div>
+                      )}
                     </div>
                   </div>
                 </label>
@@ -400,7 +448,12 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Both {terms.Resume} and Cover Letter</div>
                       <div className="text-sm text-gray-600">Get a complete application package</div>
-                      <div className="text-xs text-green-600 font-medium">Uses 2 generations</div>
+                      <div className="text-xs text-green-600 font-medium">
+                        {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
+                      </div>
+                      {!session && (
+                        <div className="text-xs text-green-600 font-medium mt-1">Try before you sign up!</div>
+                      )}
                     </div>
                   </div>
                 </label>

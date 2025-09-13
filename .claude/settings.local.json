@@ -22,7 +22,8 @@
       "Bash(fuser:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(copy .env.local .env)"
+      "Bash(copy .env.local .env)",
+      "Bash(del \"C:\\resume\\pages\\api\\consolidate-skills.js\")"
     ],
     "deny": [],
     "ask": []

@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
 import SeoHead from '../components/SeoHead';
+import { useLanguage } from '../contexts/LanguageContext';
 import { 
   FileText, 
   Download, 
@@ -31,6 +32,8 @@ const TEMPLATES = [
 export default function ResultsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { getTerminology } = useLanguage();
+  const terms = getTerminology();
   const [accent, setAccent] = useState(ACCENTS[0]);
   const [template, setTemplate] = useState(TEMPLATES[0].id);
   const [userData, setUserData] = useState(null);
@@ -43,23 +46,59 @@ export default function ResultsPage() {
   const [usage, setUsage] = useState({ usage: {} });
   const [usageLoading, setUsageLoading] = useState(true);
   const [dayPassUsage, setDayPassUsage] = useState(null);
+  const [trialUsage, setTrialUsage] = useState(null);
+  const [trialUsageLoading, setTrialUsageLoading] = useState(true);
   const [resumeFormat, setResumeFormat] = useState('pdf');
   const [coverLetterFormat, setCoverLetterFormat] = useState('pdf');
   const [tone, setTone] = useState('professional');
 
-  // Credit system helpers
+  // Credit system helpers for authenticated users
   const getCreditsRemaining = () => {
-    if (userPlan === 'free' && entitlement) {
+    if (session && userPlan === 'free' && entitlement) {
       return entitlement.freeWeeklyCreditsRemaining || 0;
     }
     return null; // Pro users have unlimited/different limits
   };
 
-  const canDownload = () => {
-    if (userPlan === 'free') {
-      return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+  // Trial system helpers for signed-out users
+  const getTrialGenerationsRemaining = () => {
+    if (!session && trialUsage) {
+      return Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed);
     }
-    return true; // Pro users can download (subject to their own limits)
+    return 0;
+  };
+
+  const getTrialDownloadsRemaining = () => {
+    if (!session && trialUsage) {
+      return Math.max(0, trialUsage.downloadsLimit - trialUsage.downloadsUsed);
+    }
+    return 0;
+  };
+
+  const canDownload = () => {
+    if (session) {
+      // Authenticated users
+      if (userPlan === 'free') {
+        return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+      }
+      return true; // Pro users can download (subject to their own limits)
+    } else {
+      // Trial users
+      return trialUsage ? trialUsage.canDownload : false;
+    }
+  };
+
+  const canGenerate = () => {
+    if (session) {
+      // Authenticated users
+      if (userPlan === 'free') {
+        return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+      }
+      return true; // Pro users can generate (subject to their own limits)
+    } else {
+      // Trial users - need at least 2 generations remaining (since each generation uses 2)
+      return trialUsage ? (trialUsage.generationsRemaining >= 2) : false;
+    }
   };
 
   const canUseDocx = () => {
@@ -90,6 +129,12 @@ export default function ResultsPage() {
     }
   };
 
+  const showSignUpPrompt = (message) => {
+    if (confirm(`${message}\n\nWould you like to sign up for unlimited access?`)) {
+      router.push('/auth/signup');
+    }
+  };
+
   // Download functions
   const triggerDownload = async (endpoint, filename, payload) => {
     const response = await fetch(endpoint, {
@@ -113,13 +158,18 @@ export default function ResultsPage() {
 
   const downloadCV = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
     if (!canDownload()) {
-      const credits = getCreditsRemaining();
-      showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+      if (session) {
+        const credits = getCreditsRemaining();
+        showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+      } else {
+        const remaining = getTrialDownloadsRemaining();
+        showSignUpPrompt(`You've used all your trial downloads (${remaining}/2). Sign up for unlimited downloads!`);
+      }
       return;
     }
 
@@ -130,12 +180,21 @@ export default function ResultsPage() {
         data: userData,
       });
       
-      // Refresh entitlement data after successful download
-      const entitlementResponse = await fetch('/api/entitlements');
-      if (entitlementResponse.ok) {
-        const entitlementData = await entitlementResponse.json();
-        setEntitlement(entitlementData);
-        setUserPlan(entitlementData.plan);
+      // Refresh usage data after successful download
+      if (session) {
+        const entitlementResponse = await fetch('/api/entitlements');
+        if (entitlementResponse.ok) {
+          const entitlementData = await entitlementResponse.json();
+          setEntitlement(entitlementData);
+          setUserPlan(entitlementData.plan);
+        }
+      } else {
+        // Refresh trial usage for anonymous users
+        const trialResponse = await fetch('/api/trial-usage');
+        if (trialResponse.ok) {
+          const trialData = await trialResponse.json();
+          setTrialUsage(trialData);
+        }
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -149,7 +208,7 @@ export default function ResultsPage() {
 
   const downloadCoverLetter = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -166,7 +225,7 @@ export default function ResultsPage() {
 
   const downloadResumeDocx = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -184,7 +243,7 @@ export default function ResultsPage() {
 
   const downloadCoverLetterDocx = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -218,7 +277,7 @@ export default function ResultsPage() {
 
   const optimizeForATS = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -261,11 +320,11 @@ export default function ResultsPage() {
         }
       }
       
-      alert('Resume optimized for ATS systems! Your resume has been enhanced with ATS-friendly formatting and keywords.');
+      alert(`${terms.Resume} optimized for ATS systems! Your ${terms.resume} has been enhanced with ATS-friendly formatting and keywords.`);
       
     } catch (error) {
       console.error('ATS optimization error:', error);
-      alert('Failed to optimize resume. Please try again.');
+      alert(`Failed to optimize ${terms.resume}. Please try again.`);
     } finally {
       setIsGenerating(false);
     }
@@ -273,7 +332,7 @@ export default function ResultsPage() {
 
   const generateTailoredContent = async () => {
     if (!userData) {
-      alert('No data available. Please generate a resume first.');
+      alert(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -282,9 +341,14 @@ export default function ResultsPage() {
       return;
     }
 
-    if (!canDownload()) {
-      const credits = getCreditsRemaining();
-      showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+    if (!canGenerate()) {
+      if (session) {
+        const credits = getCreditsRemaining();
+        showUpgradeAlert(`You've used all your weekly credits (${credits}/10). Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+      } else {
+        const remaining = getTrialGenerationsRemaining();
+        showSignUpPrompt(`You've used all your trial generations (${remaining}/2). Sign up for unlimited generations!`);
+      }
       return;
     }
 
@@ -310,12 +374,21 @@ export default function ResultsPage() {
       // Save updated data to localStorage
       localStorage.setItem('resumeResult', JSON.stringify(tailoredData));
       
-      // Refresh entitlement data after successful generation (credit consumed)
-      const entitlementResponse = await fetch('/api/entitlements');
-      if (entitlementResponse.ok) {
-        const entitlementData = await entitlementResponse.json();
-        setEntitlement(entitlementData);
-        setUserPlan(entitlementData.plan);
+      // Refresh usage data after successful generation
+      if (session) {
+        const entitlementResponse = await fetch('/api/entitlements');
+        if (entitlementResponse.ok) {
+          const entitlementData = await entitlementResponse.json();
+          setEntitlement(entitlementData);
+          setUserPlan(entitlementData.plan);
+        }
+      } else {
+        // Refresh trial usage for anonymous users
+        const trialResponse = await fetch('/api/trial-usage');
+        if (trialResponse.ok) {
+          const trialData = await trialResponse.json();
+          setTrialUsage(trialData);
+        }
       }
     } catch (error) {
       console.error('Generate error:', error);
@@ -353,10 +426,11 @@ export default function ResultsPage() {
     }
   }, []);
 
-  // Fetch user entitlement and usage
+  // Fetch user entitlement and usage (authenticated) or trial usage (anonymous)
   useEffect(() => {
     const fetchUserData = async () => {
       if (session?.user?.id) {
+        // Authenticated user - fetch entitlements and usage
         try {
           // Fetch entitlement, usage, and day pass usage in parallel
           const [entitlementResponse, usageResponse, dayPassResponse] = await Promise.all([
@@ -383,9 +457,21 @@ export default function ResultsPage() {
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
+      } else {
+        // Anonymous user - fetch trial usage
+        try {
+          const trialResponse = await fetch('/api/trial-usage');
+          if (trialResponse.ok) {
+            const trialData = await trialResponse.json();
+            setTrialUsage(trialData);
+          }
+        } catch (error) {
+          console.error('Error fetching trial usage:', error);
+        }
       }
       setEntitlementLoading(false);
       setUsageLoading(false);
+      setTrialUsageLoading(false);
     };
 
     if (status !== 'loading') {
@@ -399,7 +485,7 @@ export default function ResultsPage() {
     const renderCVPreview = () => (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Resume Preview</h3>
+          <h3 className="font-semibold text-gray-900">{terms.Resume} Preview</h3>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <FileText className="w-4 h-4" />
             <span>PDF Ready</span>
@@ -459,7 +545,7 @@ export default function ResultsPage() {
               </>
             ) : (
               <div style={{ textAlign: 'center', color: '#666', marginTop: `${100 * scale}px`, fontSize: `${10 * scale}px` }}>
-                No data available. Please generate a resume first.
+                {`No data available. Please generate a ${terms.resume} first.`}
               </div>
             )}
           </div>
@@ -473,8 +559,8 @@ export default function ResultsPage() {
     switch(userGoal) {
       case 'cv':
         return {
-          title: 'Your Tailored Resume',
-          description: 'Review and download your ATS-optimized resume, customized for the job description.'
+          title: `Your Tailored ${terms.Resume}`,
+          description: `Review and download your ATS-optimized ${terms.resume}, customized for the job description.`
         };
       case 'cover-letter':
         return {
@@ -485,7 +571,7 @@ export default function ResultsPage() {
       default:
         return {
           title: 'Your Tailored Documents',
-          description: 'Review and download your complete application package - resume and cover letter optimized for the job.'
+          description: `Review and download your complete application package - ${terms.resume} and cover letter optimized for the job.`
         };
     }
   };
@@ -512,7 +598,7 @@ export default function ResultsPage() {
             <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 mb-6 animate-fade-in">
               <Sparkles className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-gray-700">
-                {userGoal === 'cv' && 'Resume Generated'}
+                {userGoal === 'cv' && `${terms.Resume} Generated`}
                 {userGoal === 'cover-letter' && 'Cover Letter Generated'}
                 {userGoal === 'both' && 'Complete Package Generated'}
               </span>
@@ -678,13 +764,13 @@ export default function ResultsPage() {
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <button 
-                    className={`btn btn-primary flex items-center gap-2 justify-center ${
-                      (isGenerating || !jobDescription.trim() || !canDownload()) 
-                        ? 'cursor-not-allowed opacity-50' 
-                        : ''
+                    className={`btn flex items-center gap-2 justify-center ${
+                      (isGenerating || !jobDescription.trim() || !canGenerate()) 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300' 
+                        : 'btn-primary'
                     }`}
                     onClick={generateTailoredContent}
-                    disabled={isGenerating || !jobDescription.trim() || !canDownload()}
+                    disabled={isGenerating || !jobDescription.trim() || !canGenerate()}
                   >
                     {isGenerating ? (
                       <div className="loading-spinner w-4 h-4"></div>
@@ -706,39 +792,25 @@ export default function ResultsPage() {
                   <>
                     <div className="relative">
                       <button 
-                        className={`btn flex items-center gap-3 justify-center w-full text-lg font-semibold py-4 rounded-xl transition-all duration-300 ${
-                          userPlan !== 'free'
-                            ? 'bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white transform hover:scale-105 hover:shadow-xl animate-pulse shadow-lg'
-                            : 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300 shadow-inner'
-                        } ${isGenerating ? 'cursor-not-allowed opacity-50 animate-none' : ''}`}
+                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
+                          isGenerating || userPlan === 'free'
+                            ? 'cursor-not-allowed opacity-50' 
+                            : ''
+                        }`}
                         onClick={optimizeForATS}
                         disabled={isGenerating || userPlan === 'free'}
                       >
-                        <div className="flex items-center gap-3">
-                          <Target className={`w-5 h-5 ${userPlan !== 'free' && !isGenerating ? 'animate-bounce' : 'text-gray-400'}`} />
-                          <span className={userPlan === 'free' ? 'text-gray-500' : ''}>
-                            {userPlan === 'free' ? '🔒' : '🚀'} ATS Optimize
-                          </span>
-                          {userPlan === 'free' && <Lock className="w-5 h-5 ml-1 text-gray-400" />}
-                        </div>
+                        <Target className="w-4 h-4" />
+                        <span>
+                          ATS {terms.isUK ? 'Optimise' : 'Optimize'}
+                        </span>
+                        {userPlan === 'free' && <Lock className="w-4 h-4 ml-1" />}
                       </button>
-                      
-                      {userPlan !== 'free' && !isGenerating && (
-                        <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
-                          HOT
-                        </div>
-                      )}
                     </div>
 
                     {userPlan === 'free' && (
-                      <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
-                        <strong>Note:</strong> Generating tailored content consumes 1 credit.
-                      </div>
-                    )}
-
-                    {userPlan === 'free' && (
-                      <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2">
-                        <strong>Pro Feature:</strong> ATS Optimization enhances your resume for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> to unlock this feature.
+                      <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2 mt-2">
+                        <strong>Pro Feature:</strong> ATS {terms.isUK ? 'Optimisation' : 'Optimization'} enhances your {terms.resume} for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> to unlock this feature.
                       </div>
                     )}
                   </>
@@ -812,7 +884,7 @@ export default function ResultsPage() {
                   )}
                 </div>
                 
-                {userPlan === 'free' && (
+                {session && userPlan === 'free' && (
                   <div className="mt-4 text-center">
                     <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -837,6 +909,26 @@ export default function ResultsPage() {
                     <p className="text-xs text-gray-500 mt-2">
                       Day pass expires in {Math.max(0, Math.ceil((new Date(dayPassUsage.expiresAt) - new Date()) / (1000 * 60 * 60)))} hours
                     </p>
+                  </div>
+                )}
+
+                {!session && trialUsage && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg px-3 py-2">
+                      <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-teal-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium bg-gradient-to-r from-green-700 to-teal-700 bg-clip-text text-transparent">
+                        🎯 FREE TRIAL - {Math.floor(getTrialGenerationsRemaining()/2)}/1 CV+Letter combo, {getTrialDownloadsRemaining()}/2 downloads left
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Sign up for unlimited access!
+                    </p>
+                    <button 
+                      onClick={() => router.push('/auth/signup')}
+                      className="text-xs text-green-600 hover:text-green-700 font-medium underline mt-1"
+                    >
+                      Create Free Account
+                    </button>
                   </div>
                 )}
               </div>

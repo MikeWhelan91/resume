@@ -112,6 +112,18 @@ model SavedResume {
   @@index([expiresAt]) // For cleanup queries
 }
 
+model TrialUsage {
+  id               String   @id @default(cuid())
+  ipAddress        String   @unique
+  generationsUsed  Int      @default(0)
+  downloadsUsed    Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([ipAddress])
+  @@index([updatedAt]) // For cleanup of old records
+}
+
 enum Plan {
   free
   day_pass

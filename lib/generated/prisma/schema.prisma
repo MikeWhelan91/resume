@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  emailVerified    DateTime?
+  stripeCustomerId String?       @unique
+  createdAt        DateTime      @default(now())
+  password         String?
+  accounts         Account[]
+  apiUsage         ApiUsage[]
+  entitlement      Entitlement?
+  sessions         Session[]
+  savedResumes     SavedResume[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Entitlement {
+  userId                     String            @id
+  plan                       Plan              @default(free)
+  status                     EntitlementStatus @default(active)
+  features                   Json              @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
+  updatedAt                  DateTime          @updatedAt
+  expiresAt                  DateTime?
+  freeWeeklyCreditsRemaining Int               @default(5)
+  lastWeeklyReset            DateTime?
+  user                       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  route     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WebhookEvent {
+  eventId     String   @id
+  processedAt DateTime @default(now())
+}
+
+model SavedResume {
+  id        String    @id @default(cuid())
+  userId    String
+  data      Json // Resume form data
+  name      String? // Optional name for the resume
+  template  String    @default("classic")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // When this resume expires and should be deleted
+  isLatest  Boolean   @default(true) // Mark the most recent one
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isLatest])
+  @@index([expiresAt]) // For cleanup queries
+}
+
+enum Plan {
+  free
+  day_pass
+  pro_monthly
+  pro_annual
+}
+
+enum EntitlementStatus {
+  inactive
+  active
+  past_due
+  canceled
+}
