@@ -47,7 +47,20 @@ export const authOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token?.userId) session.user.id = token.userId
+      if (token?.userId) {
+        session.user.id = token.userId
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.userId },
+            select: { cookiePreferences: true }
+          })
+          if (user?.cookiePreferences) {
+            session.user.cookiePreferences = user.cookiePreferences
+          }
+        } catch (error) {
+          console.error('Session callback error:', error)
+        }
+      }
       return session
     },
     async signIn({ user, account, profile }) {
