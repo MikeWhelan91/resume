@@ -8,6 +8,7 @@ import Footer from "../components/ui/Footer";
 import { SessionProvider } from "next-auth/react";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
+import CookieBanner from "../components/ui/CookieBanner";
 
 export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
@@ -57,6 +58,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
               <Component {...pageProps} />
             </main>
             <Footer />
+            <CookieBanner />
           </div>
         </LanguageProvider>
       </ThemeProvider>

@@ -11,6 +11,21 @@ export default function Document() {
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0b" />
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-13VHZQMFPJ"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('consent', 'default', { analytics_storage: 'denied' });
+              gtag('config', 'G-13VHZQMFPJ');
+            `,
+          }}
+        />
       </Head>
       <body>
         <Main />

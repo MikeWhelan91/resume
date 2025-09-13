@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
     <>
       <SeoHead
         title="Privacy Policy - TailoredCV.app"
-        description="Learn how TailoredCV.app collects, uses, and protects your personal information and resume data."
+        description="Learn how TailoredCV.app collects, uses, and protects your personal information, including our use of cookies and analytics."
         canonical="https://tailoredcv.app/privacy"
       />
 
@@ -170,9 +170,14 @@ export default function PrivacyPolicy() {
                 <li>Analyze site usage and performance</li>
                 <li>Improve user experience</li>
               </ul>
-              
+
               <p className="text-gray-700 mt-4">
-                You can control cookies through your browser settings, but disabling cookies may affect functionality.
+                We use Google Analytics to better understand how visitors interact with TailoredCV.app. Analytics cookies are
+                optional and you can accept or decline them via the cookie banner. If you have an account, your preference is
+                saved with your profile.
+              </p>
+              <p className="text-gray-700 mt-4">
+                You can also control cookies through your browser settings, but disabling cookies may affect functionality.
               </p>
             </section>
 
