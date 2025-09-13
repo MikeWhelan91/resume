@@ -1,15 +1,16 @@
 import React from 'react';
-import Head from 'next/head';
 import { ArrowLeft, Briefcase, Palette, Users, Code, GraduationCap, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import SeoHead from '../../components/SeoHead';
 
 export default function TemplateGuidelines() {
   return (
     <>
-      <Head>
-        <title>Template Guidelines – TailoredCV.app</title>
-        <meta name="description" content="Learn how to choose the right resume template for your industry and career level. Professional template guidelines and best practices." />
-      </Head>
+      <SeoHead
+        title="Template Guidelines – TailoredCV.app"
+        description="Learn how to choose the right resume template for your industry and career level. Professional template guidelines and best practices."
+        canonical="https://tailoredcv.app/help/templates"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}

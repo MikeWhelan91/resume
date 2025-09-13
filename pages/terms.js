@@ -1,16 +1,16 @@
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { FileText, AlertTriangle, Scale, CreditCard } from 'lucide-react';
+import SeoHead from '../components/SeoHead';
 
 export default function TermsOfService() {
   return (
     <>
-      <Head>
-        <title>Terms of Service - TailoredCV.app</title>
-        <meta name="description" content="Terms and conditions for using TailoredCV.app resume and cover letter generation service." />
-        <meta name="robots" content="index, follow" />
-      </Head>
+      <SeoHead
+        title="Terms of Service - TailoredCV.app"
+        description="Terms and conditions for using TailoredCV.app resume and cover letter generation service."
+        canonical="https://tailoredcv.app/terms"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Header */}

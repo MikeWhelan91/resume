@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { Mail, MessageCircle, Book, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import SeoHead from '../components/SeoHead';
 
 export default function Support() {
   const [formData, setFormData] = useState({
@@ -67,10 +67,11 @@ export default function Support() {
 
   return (
     <>
-      <Head>
-        <title>Support – TailoredCV.app</title>
-        <meta name="description" content="Get help with TailoredCV.app. Find answers to common questions or contact our support team for assistance with your resume and cover letter needs." />
-      </Head>
+      <SeoHead
+        title="Support – TailoredCV.app"
+        description="Get help with TailoredCV.app. Find answers to common questions or contact our support team for assistance with your resume and cover letter needs."
+        canonical="https://tailoredcv.app/support"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Hero Section */}

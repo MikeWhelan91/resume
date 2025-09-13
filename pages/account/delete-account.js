@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, Trash2, Shield, Database, FileText, Clock, CheckCircle, X } from 'lucide-react';
+import SeoHead from '../../components/SeoHead';
 
 export default function DeleteAccount() {
   const { data: session, status } = useSession();
@@ -146,10 +146,12 @@ export default function DeleteAccount() {
     
     return (
       <>
-        <Head>
-          <title>Account Deletion Scheduled - TailoredCV.app</title>
-          <meta name="description" content="Your account deletion is scheduled" />
-        </Head>
+        <SeoHead
+          title="Account Deletion Scheduled - TailoredCV.app"
+          description="Your account deletion is scheduled"
+          canonical="https://tailoredcv.app/account/delete-account"
+          robots="noindex,nofollow"
+        />
 
         <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
@@ -235,10 +237,12 @@ export default function DeleteAccount() {
 
   return (
     <>
-      <Head>
-        <title>Delete Account - TailoredCV.app</title>
-        <meta name="description" content="Delete your TailoredCV.app account permanently" />
-      </Head>
+      <SeoHead
+        title="Delete Account - TailoredCV.app"
+        description="Delete your TailoredCV.app account permanently"
+        canonical="https://tailoredcv.app/account/delete-account"
+        robots="noindex,nofollow"
+      />
 
       <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-orange-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">

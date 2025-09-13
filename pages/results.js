@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
+import SeoHead from '../components/SeoHead';
 import { 
   FileText, 
   Download, 
@@ -494,10 +494,12 @@ export default function ResultsPage() {
 
   return (
     <>
-      <Head>
-        <title>{headerContent.title} – TailoredCV.app</title>
-        <meta name="description" content={headerContent.description}/>
-      </Head>
+      <SeoHead
+        title={`${headerContent.title} – TailoredCV.app`}
+        description={headerContent.description}
+        canonical="https://tailoredcv.app/results"
+        robots="noindex,nofollow"
+      />
       
       {/* Modern Hero Section */}
       <div className="relative overflow-hidden">
