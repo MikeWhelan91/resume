@@ -20,8 +20,8 @@ export default function StepNav({ steps, current, onChange, allowNext=true, onNe
             const state = i<current ? 'done' : i===current ? 'active' : 'todo';
             return (
               <li key={s} className="flex items-center cursor-pointer" onClick={()=>{ if(i<=current || allowNext) onChange(i); }}>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-blue-600 text-white':state==='active'?'border-2 border-blue-600 text-blue-600':'border border-gray-300 text-gray-400'}`}>{i+1}</span>
-                <span className={`text-sm transition-colors ${state==='active'?'text-gray-900 font-medium':'text-gray-500'}`}>{s}</span>
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-blue-600 text-white':state==='active'?'border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400':'border border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>{i+1}</span>
+                <span className={`text-sm transition-colors ${state==='active'?'text-gray-900 dark:text-white font-medium':'text-gray-500 dark:text-gray-400'}`}>{s}</span>
               </li>
             );
           })}

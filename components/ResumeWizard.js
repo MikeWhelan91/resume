@@ -372,12 +372,12 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
             if (step > 0) setStep(s => s - 1);
           }}
         />
-      <div className="card p-6 bg-gray-50/90 backdrop-blur-sm border border-gray-200/50 shadow-lg animate-fade-in">
+      <div className="card p-6 bg-gray-50/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg animate-fade-in">
         {step === 0 && (
           <section className="space-y-6">
             <header className="text-center space-y-3">
               <div className="flex items-center justify-center gap-2">
-                <h2 className="text-2xl font-bold text-gray-900">What do you want to create?</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">What do you want to create?</h2>
                 <HelpTooltip 
                   content={
                     <div className="space-y-3">
@@ -389,7 +389,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   }
                 />
               </div>
-              <p className="text-gray-600">Choose what you'd like to optimize based on the job description.</p>
+              <p className="text-gray-600 dark:text-gray-300">Choose what you'd like to optimize based on the job description.</p>
             </header>
             <div className="space-y-4">
               <div className="grid gap-3 max-w-2xl mx-auto">
@@ -537,8 +537,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 2 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Skills & Expertise</h2>
-              <p className="text-gray-600">Add your core skills and areas of expertise.</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Skills & Expertise</h2>
+              <p className="text-gray-600 dark:text-gray-300">Add your core skills and areas of expertise.</p>
             </header>
             <SkillsInput value={values.skills} onChange={v => setValue('skills', v)} />
           </section>

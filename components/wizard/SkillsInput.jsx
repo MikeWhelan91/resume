@@ -92,7 +92,7 @@ export default function SkillsInput({ value = [], onChange }) {
               animate={{ scale:1, opacity:1 }}
               exit={{ scale:0.8, opacity:0 }}
               transition={{ type:'spring', duration:0.2 }}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-zinc-300 bg-zinc-100 dark:bg-zinc-800"
+              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-zinc-300 dark:border-gray-600 bg-zinc-100 dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <span>{skill}</span>
               <button

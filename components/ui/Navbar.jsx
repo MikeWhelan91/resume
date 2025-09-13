@@ -206,18 +206,6 @@ export default function Navbar() {
               </Link>
             )}
             
-            {/* Language Toggle */}
-            <button
-              onClick={toggleLanguage}
-              className="nav-link group relative"
-              title={`Switch to ${getLanguageDisplay() === 'US English' ? 'UK English' : 'US English'}`}
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-xs">{getLanguageDisplay() === 'US English' ? 'US' : 'UK'}</span>
-            </button>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle />
           </div>
 
           {/* Auth Section */}
@@ -243,7 +231,7 @@ export default function Navbar() {
                       className="fixed inset-0 z-10"
                       onClick={() => setIsDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-20">
                       {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center space-x-2 mb-2">
@@ -401,7 +389,7 @@ export default function Navbar() {
             />
             
             {/* Mobile menu panel */}
-            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 shadow-xl border-l border-r border-b rounded-b-lg">
+            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-xl border-l border-r border-b dark:border-l-gray-700 dark:border-r-gray-700 dark:border-b-gray-700 rounded-b-lg">
               <div className="px-4 py-6 space-y-4">
                 {/* Navigation Links */}
                 <Link 
@@ -431,22 +419,6 @@ export default function Navbar() {
                   </Link>
                 )}
                 
-                {/* Language Toggle for Mobile */}
-                <button
-                  onClick={() => {
-                    toggleLanguage();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="mobile-nav-link"
-                >
-                  <Globe className="w-4 h-4" />
-                  {getLanguageDisplay()}
-                </button>
-                
-                {/* Theme Toggle for Mobile */}
-                <div className="px-4 py-2">
-                  <ThemeToggle />
-                </div>
                 {router.pathname === '/results' && (
                   <Link 
                     href="/results" 

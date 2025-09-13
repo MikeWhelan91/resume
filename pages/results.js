@@ -598,24 +598,18 @@ export default function ResultsPage() {
         robots="noindex,nofollow"
       />
       
-      {/* Modern Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50"></div>
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse" style={{animationDelay: '2s'}}></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Simple Header */}
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 mb-6 animate-fade-in">
-              <Sparkles className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {userGoal === 'cv' && `${terms.Resume} Generated`}
-                {userGoal === 'cover-letter' && 'Cover Letter Generated'}
-                {userGoal === 'both' && 'Complete Package Generated'}
+            <div className="inline-flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full px-4 py-2 mb-4">
+              <Sparkles className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                Documents Ready
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 animate-slide-up">{headerContent.title}</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto animate-slide-up" style={{animationDelay: '0.1s'}}>{headerContent.description}</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Documents Are Ready</h1>
+            <p className="text-gray-600 dark:text-gray-300">Download, customize, and apply with confidence.</p>
           </div>
         </div>
       </div>

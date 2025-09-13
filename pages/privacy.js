@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
         canonical="https://tailoredcv.app/privacy"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
@@ -20,12 +20,12 @@ export default function PrivacyPolicy() {
             <div className="text-center mb-8">
               <div className="flex items-center justify-center space-x-2 mb-4">
                 <Shield className="w-8 h-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
               </div>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Your privacy is important to us. This policy explains how we collect, use, and protect your information.
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
