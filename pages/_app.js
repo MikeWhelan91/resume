@@ -7,12 +7,14 @@ import Navbar from "../components/ui/Navbar";
 import Footer from "../components/ui/Footer";
 import { SessionProvider } from "next-auth/react";
 import { LanguageProvider } from "../contexts/LanguageContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
 
 export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
     <SessionProvider session={session}>
-      <LanguageProvider>
-        <Head>
+      <ThemeProvider>
+        <LanguageProvider>
+          <Head>
           <meta name="viewport" content="width=device-width,initial-scale=1" />
           <meta
             name="description"
@@ -49,14 +51,15 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
 
           <title>TailoredCV.app</title>
         </Head>
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-blue-50">
-          <Navbar />
-          <main className="flex-1">
-            <Component {...pageProps} />
-          </main>
-          <Footer />
-        </div>
-      </LanguageProvider>
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <Navbar />
+            <main className="flex-1">
+              <Component {...pageProps} />
+            </main>
+            <Footer />
+          </div>
+        </LanguageProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

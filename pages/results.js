@@ -166,11 +166,9 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       if (session) {
-        const credits = getCreditsRemaining();
         const remaining = getCreditsRemaining();
         showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
       } else {
-        const remaining = getTrialDownloadsRemaining();
         const remaining = getTrialDownloadsRemaining();
         showSignUpPrompt(`You've used all your trial downloads. You have ${remaining} downloads remaining. Sign up for unlimited downloads!`);
       }
@@ -347,11 +345,9 @@ export default function ResultsPage() {
 
     if (!canGenerate()) {
       if (session) {
-        const credits = getCreditsRemaining();
         const remaining = getCreditsRemaining();
         showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
       } else {
-        const remaining = getTrialGenerationsRemaining();
         const remaining = getTrialGenerationsRemaining();
         showSignUpPrompt(`You've used all your trial generations. You have ${remaining} generations remaining. Sign up for unlimited generations!`);
       }

@@ -4,6 +4,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const router = useRouter();
@@ -154,7 +155,7 @@ export default function Navbar() {
   // Removed popup-based functions - now using dedicated pages
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 glass dark:bg-gray-800/80 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
@@ -214,6 +215,9 @@ export default function Navbar() {
               <Globe className="w-4 h-4" />
               <span className="text-xs">{getLanguageDisplay() === 'US English' ? 'US' : 'UK'}</span>
             </button>
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
           </div>
 
           {/* Auth Section */}
@@ -438,6 +442,11 @@ export default function Navbar() {
                   <Globe className="w-4 h-4" />
                   {getLanguageDisplay()}
                 </button>
+                
+                {/* Theme Toggle for Mobile */}
+                <div className="px-4 py-2">
+                  <ThemeToggle />
+                </div>
                 {router.pathname === '/results' && (
                   <Link 
                     href="/results" 

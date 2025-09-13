@@ -123,7 +123,7 @@ export default function HeroUpload() {
   return (
     <div className="relative">
       {/* Hero Section */}
-      <div className="relative bg-white">
+      <div className="relative bg-white dark:bg-gray-900">
         {/* Minimal background accents */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-24 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-transparent rounded-full blur-3xl opacity-30"></div>
@@ -138,16 +138,16 @@ export default function HeroUpload() {
               
 
               {/* Clean headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-tight mb-6">
                 Your {terms.resume},
                 <br />
-                <span className="text-blue-600">perfectly matched</span>
+                <span className="text-blue-600 dark:text-blue-400">perfectly matched</span>
                 <br />
                 to every job
               </h1>
 
               {/* Clear value prop */}
-              <p className="text-xl text-gray-600 leading-relaxed mb-10 max-w-lg">
+              <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-10 max-w-lg">
                 Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
               </p>
 
