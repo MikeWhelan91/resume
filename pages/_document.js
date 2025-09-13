@@ -8,7 +8,9 @@ export default function Document() {
         <meta httpEquiv="x-ua-compatible" content="IE=edge" />
         <link rel="icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1e3a8a" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0b" />
       </Head>
       <body>
         <Main />

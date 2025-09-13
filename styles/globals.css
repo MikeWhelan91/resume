@@ -99,7 +99,7 @@ body {
 
 /* Legacy styles kept for compatibility */
 /* Simple global styles */
-body { margin: 0; background: #f7f7f7; color: #333; }
+body { margin: 0; }
 .app-container { min-height: 100vh; }
 .container { max-width: 768px; margin: 0 auto; padding: 1rem; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
