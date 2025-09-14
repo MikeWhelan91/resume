@@ -70,8 +70,8 @@ export default function Account() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -94,16 +94,16 @@ export default function Account() {
         robots="noindex,nofollow"
       />
 
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-bg py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <h1 className="text-3xl font-bold text-text flex items-center">
               <Settings className="w-8 h-8 mr-3 text-indigo-600" />
               Account Settings
             </h1>
-            <p className="text-gray-600 mt-2">Manage your account, billing, and preferences</p>
+            <p className="text-muted mt-2">Manage your account, billing, and preferences</p>
           </div>
 
           {/* Deletion Warning Banner */}
@@ -139,20 +139,20 @@ export default function Account() {
             <div className="lg:col-span-2 space-y-8">
               
               {/* Profile Section */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-surface text-text rounded-lg shadow-sm border border-border p-6">
                 <div className="flex items-center mb-4">
                   <User className="w-5 h-5 mr-2 text-indigo-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
+                  <h2 className="text-lg font-semibold text-text">Profile Information</h2>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{session.user.name}</p>
+                    <label className="block text-sm font-medium text-muted">Name</label>
+                    <p className="mt-1 text-sm text-text">{session.user.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{session.user.email}</p>
+                    <label className="block text-sm font-medium text-muted">Email</label>
+                    <p className="mt-1 text-sm text-text">{session.user.email}</p>
                   </div>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function Account() {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Billing & Subscription</h2>
+                  <h2 className="text-lg font-semibold text-text">Billing & Subscription</h2>
                 </div>
                 <SubscriptionManager 
                   entitlement={entitlement} 
@@ -170,20 +170,20 @@ export default function Account() {
               </div>
 
               {/* Danger Zone */}
-              <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
+              <div className="bg-surface text-text rounded-lg shadow-sm border border-red-200 p-6">
                 <div className="flex items-center mb-4">
                   <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
                   <h2 className="text-lg font-semibold text-red-900">Danger Zone</h2>
                 </div>
                 
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted">
                     Once you delete your account, there is no going back. This action cannot be undone.
                   </p>
                   
                   <Link 
                     href="/account/delete-account"
-                    className="inline-flex items-center px-4 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="inline-flex items-center px-4 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-surface hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     <AlertTriangle className="w-4 h-4 mr-2" />
                     Delete Account
@@ -195,13 +195,13 @@ export default function Account() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-surface text-text rounded-lg shadow-sm border border-border p-6">
                 <div className="flex items-center mb-3">
                   <Shield className="w-5 h-5 mr-2 text-green-600" />
-                  <h3 className="font-medium text-gray-900">Account Security</h3>
+                  <h3 className="font-medium text-text">Account Security</h3>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">Your account is secured with OAuth authentication.</p>
-                <div className="text-xs text-gray-500">
+                <p className="text-sm text-muted mb-3">Your account is secured with OAuth authentication.</p>
+                <div className="text-xs text-muted">
                   <p>• No passwords to manage</p>
                   <p>• Secure third-party login</p>
                   <p>• Regular security updates</p>

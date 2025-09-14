@@ -95,6 +95,70 @@
   --transition-bounce: 350ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+/* Dark theme overrides: avoid pure colors, ensure comfortable contrast */
+.dark {
+  /* Muted primary/secondary hues for dark UI */
+  --color-primary: #357ABD;           /* toned-down blue */
+  --color-primary-dark: #2B5FA0;
+  --color-primary-light: #5A93C7;
+  --color-primary-50: #1a2430;       /* soft tints suitable as hovers */
+  --color-primary-100: #1f2c3b;
+  --color-primary-500: #357ABD;
+  --color-primary-600: #2B5FA0;
+  --color-primary-700: #234D82;
+
+  --color-secondary: #7C83F3;        /* softened indigo */
+  --color-secondary-dark: #666DDA;
+  --color-secondary-light: #9AA0F7;
+
+  --color-accent: #2FB38A;           /* desaturated green */
+  --color-accent-dark: #279276;
+  --color-accent-light: #49C3A0;
+
+  --color-warning: #E0A24D;          /* softened amber */
+  --color-error: #E16363;            /* softened red */
+  --color-success: #37B58F;          /* softened green */
+
+  /* Neutrals tuned for dark surfaces (no pure black/white) */
+  --color-gray-50:  #16181a;
+  --color-gray-100: #1c1f22;
+  --color-gray-200: #22262a;
+  --color-gray-300: #2a2f34;
+  --color-gray-400: #343a40;
+  --color-gray-500: #3f464d;
+  --color-gray-600: #4c545c;
+  --color-gray-700: #5a6370;
+  --color-gray-800: #6b7686;
+  --color-gray-900: #c9d1d9;         /* used rarely for contrast accents */
+
+  /* Surfaces */
+  --color-surface: #1c1e20;          /* cards, panels */
+  --color-surface-elevated: #222528; 
+  --color-surface-muted: #232528;    /* headers/footers */
+  --color-background: #121212;       /* app background */
+  --color-background-alt: #151618;
+
+  /* Text */
+  --color-text-primary: #e0e0e0;     /* off-white */
+  --color-text-secondary: #b0b4bb;   /* muted text */
+  --color-text-muted: #8a8f98;       /* captions */
+  --color-text-inverse: #121214;     /* on bright accents */
+
+  /* Borders & focus */
+  --color-border: #32363b;
+  --color-border-light: #2a2d31;
+  --color-border-focus: #357ABD;     /* matches dark primary */
+
+  /* Shadows: prefer soft lifts rather than heavy drop shadows */
+  --shadow-xs: 0 0 0 1px rgb(255 255 255 / 0.05);
+  --shadow-sm: 0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-md: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-lg: 0 0 0 1px rgb(255 255 255 / 0.10);
+  --shadow-xl: 0 0 0 1px rgb(255 255 255 / 0.12);
+  --shadow-2xl: 0 0 0 1px rgb(255 255 255 / 0.14);
+  --shadow-colored: 0 0 0 1px rgb(53 122 189 / 0.20);
+}
+
 /* Reset & Base Styles */
 * {
   box-sizing: border-box;
@@ -110,10 +174,11 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Tie base colors to global theme tokens so dark mode applies */
 body {
   font-family: var(--font-family-sans);
-  background: var(--color-background);
-  color: var(--color-text-primary);
+  background: rgb(var(--tc-bg));  /* tie to global tokens for consistency */
+  color: rgb(var(--tc-text));
   overflow-x: hidden;
 }
 
@@ -240,28 +305,27 @@ body {
   margin-bottom: var(--space-2);
 }
 
+/* Use global theme tokens so inputs adapt to dark mode */
 .form-input {
   width: 100%;
   padding: var(--space-4);
   font-size: 0.875rem;
   line-height: 1.25;
-  color: var(--color-text-primary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  color: rgb(var(--tc-text));
+  background: rgb(var(--tc-surface));
+  border: 1px solid rgb(var(--tc-border));
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--tc-shadow-sm);
   transition: all var(--transition-fast);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgb(0 102 255 / 0.1);
+  border-color: rgb(var(--tc-accent));
+  box-shadow: 0 0 0 3px rgba(var(--tc-accent), 0.15);
 }
 
-.form-input::placeholder {
-  color: var(--color-text-muted);
-}
+.form-input::placeholder { color: rgb(var(--tc-muted)); }
 
 .form-textarea {
   resize: vertical;
@@ -270,11 +334,58 @@ body {
 
 .form-select {
   appearance: none;
+  color: rgb(var(--tc-text));
+  background: rgb(var(--tc-surface));
+  border: 1px solid rgb(var(--tc-border));
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+}
+
+/* Normalize native inputs for dark mode across the app (fallback when .form-input isn't used) */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'],
+input[type='tel'],
+input[type='month'],
+textarea,
+select {
+  background: rgb(var(--tc-surface));
+  color: rgb(var(--tc-text));
+  border: 1px solid rgb(var(--tc-border));
+}
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='url']:focus,
+input[type='tel']:focus,
+input[type='month']:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgb(var(--tc-accent));
+  box-shadow: 0 0 0 3px rgba(var(--tc-accent), 0.15);
+}
+
+/* Fix WebKit autofill yellow in dark mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(var(--tc-text));
+  caret-color: rgb(var(--tc-text));
+  -webkit-box-shadow: 0 0 0px 1000px rgb(var(--tc-surface)) inset;
+  box-shadow: 0 0 0px 1000px rgb(var(--tc-surface)) inset;
+  transition: background-color 0s ease-in-out 9999s;
 }
 
 /* Modern Navigation */

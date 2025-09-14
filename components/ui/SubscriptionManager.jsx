@@ -98,7 +98,7 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
 
   if (!entitlement) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-surface text-text rounded-lg border border-border p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
           <div className="h-6 bg-gray-200 rounded w-1/2"></div>
@@ -114,7 +114,7 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
   const isProPlan = entitlement.plan?.startsWith('pro_');
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-surface text-text rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-${planDetails.color}-100`}>
@@ -125,8 +125,8 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
             )}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{planDetails.name}</h3>
-            <p className="text-sm text-gray-600">{planDetails.price}</p>
+            <h3 className="text-lg font-semibold text-text">{planDetails.name}</h3>
+            <p className="text-sm text-muted">{planDetails.price}</p>
           </div>
         </div>
         {getStatusBadge(entitlement.status)}
@@ -134,12 +134,12 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
 
       {/* Plan Features */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Plan Includes:</h4>
+        <h4 className="text-sm font-medium text-muted mb-3">Plan Includes:</h4>
         <ul className="space-y-2">
           {planDetails.features.map((feature, index) => (
             <li key={index} className="flex items-center space-x-2">
               <Check className="w-4 h-4 text-green-500" />
-              <span className="text-sm text-gray-600">{feature}</span>
+              <span className="text-sm text-muted">{feature}</span>
             </li>
           ))}
         </ul>

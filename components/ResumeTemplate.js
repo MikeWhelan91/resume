@@ -20,7 +20,7 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
           <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
-          <p style={{ fontSize: `${9 * scale}px`, color: '#666' }}>
+          <p className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>
             {userData.resumeData?.email || userData.email || 'your.email@example.com'} •
             {userData.resumeData?.phone || userData.phone || 'Your Phone'}
           </p>
@@ -38,7 +38,7 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
             <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Core Competencies</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${4 * scale}px` }}>
               {userData.resumeData.skills.map((skill, i) => (
-                <span key={i} style={{ fontSize: `${8 * scale}px`, padding: `${2 * scale}px ${6 * scale}px`, backgroundColor: '#f0f0f0', borderRadius: `${3 * scale}px` }}>{skill}</span>
+                <span key={i} className="resume-skill-tag" style={{ fontSize: `${8 * scale}px`, padding: `${2 * scale}px ${6 * scale}px`, borderRadius: `${3 * scale}px` }}>{skill}</span>
               ))}
             </div>
           </div>
@@ -51,8 +51,8 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
               <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px` }}>
                 <div>
                   <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold' }}>{safeProp(exp, 'title')}</div>
-                  <div style={{ fontSize: `${9 * scale}px`, color: '#666' }}>{safeProp(exp, 'company')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
+                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>{safeProp(exp, 'company')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
                 {exp.bullets && exp.bullets.length > 0 && (
                   <div className="bullet-list">
@@ -73,8 +73,8 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
               <div key={i} className="education-item" style={{ marginBottom: `${4 * scale}px` }}>
                 <div>
                   <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               </div>
             ))}
@@ -82,7 +82,7 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
         )}
       </>
     ) : (
-      <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+      <div className="resume-no-data">
         No data available. Please generate a resume first.
       </div>
     )}
@@ -97,14 +97,14 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
           <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
-          <p style={{ fontSize: `${9 * scale}px`, color: '#666' }}>
+          <p className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>
             {userData.resumeData?.email || userData.email || 'your.email@example.com'} •
             {userData.resumeData?.phone || userData.phone || 'Your Phone'}
           </p>
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, backgroundColor: '#f8f9fa', borderLeft: `${4 * scale}px solid ${accent}`, borderRadius: `${4 * scale}px` }}>
+          <div className="resume-summary-bg" style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, borderLeft: `${4 * scale}px solid ${accent}`, borderRadius: `${4 * scale}px` }}>
             <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>About</h2>
             <p style={{ fontSize: `${9 * scale}px` }}>{userData.resumeData.summary}</p>
           </div>
@@ -115,7 +115,7 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
             <div>
               <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Skills</h2>
               {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
-                <div key={i} style={{ fontSize: `${8 * scale}px`, marginBottom: `${2 * scale}px`, padding: `${2 * scale}px`, backgroundColor: '#f0f0f0' }}>{skill}</div>
+                <div key={i} className="resume-skill-tag" style={{ fontSize: `${8 * scale}px`, marginBottom: `${2 * scale}px`, padding: `${2 * scale}px` }}>{skill}</div>
               ))}
             </div>
           )}
@@ -126,8 +126,8 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
               {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
                 <div key={i} style={{ marginBottom: `${6 * scale}px` }}>
                   <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               ))}
             </div>
@@ -141,7 +141,7 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
               <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px`, padding: `${6 * scale}px`, border: `${1 * scale}px solid #e0e0e0`, borderRadius: `${4 * scale}px` }}>
                 <div style={{ marginBottom: `${3 * scale}px` }}>
                   <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent }}>{safeProp(exp, 'title')}</div>
-                  <div style={{ fontSize: `${9 * scale}px`, color: '#666' }}>{safeProp(exp, 'company')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>{safeProp(exp, 'company')}</div>
                   <div style={{ fontSize: `${8 * scale}px`, color: '#666', backgroundColor: '#f0f0f0', padding: `${1 * scale}px ${4 * scale}px`, borderRadius: `${2 * scale}px`, display: 'inline-block', marginTop: `${2 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
                 {exp.bullets && exp.bullets.length > 0 && (
@@ -157,7 +157,7 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
         )}
       </>
     ) : (
-      <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+      <div className="resume-no-data">
         No data available. Please generate a resume first.
       </div>
     )}
@@ -242,7 +242,7 @@ const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
                   <div key={i} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
                     <div style={{ fontSize: `${8 * scale}px`, color: '#666', fontStyle: 'italic' }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
-                    <div style={{ fontSize: `${8 * scale}px`, color: '#666' }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                    <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                   </div>
                 ))}
               </>
@@ -251,7 +251,7 @@ const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
       </>
     ) : (
-      <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+      <div className="resume-no-data">
         No data available. Please generate a resume first.
       </div>
     )}
@@ -330,7 +330,7 @@ const MinimalTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
       </>
     ) : (
-      <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+      <div className="resume-no-data">
         No data available. Please generate a resume first.
       </div>
     )}
@@ -500,7 +500,7 @@ const ExecutiveTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
       </>
     ) : (
-      <div style={{ textAlign: 'center', color: '#666', marginTop: '100px', fontSize: '10px' }}>
+      <div className="resume-no-data">
         No data available. Please generate a resume first.
       </div>
     )}

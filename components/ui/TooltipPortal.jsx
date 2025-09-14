@@ -20,7 +20,7 @@ function TooltipContent({
     <div
       style={style}
       className={`
-        fixed z-[9999] bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700
+        fixed z-[9999] bg-surface text-text rounded-lg shadow-xl border border-border
         ${sizeClasses[size]}
         opacity-100 scale-100 transition-all duration-200 ease-out
       `}
@@ -28,7 +28,7 @@ function TooltipContent({
       {persistent && (
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors border border-gray-600"
+          className="absolute -top-2 -right-2 w-6 h-6 bg-surface hover:bg-bg/20 rounded-full flex items-center justify-center transition-colors border border-border"
         >
           <X className="w-3 h-3" />
         </button>
@@ -179,7 +179,7 @@ export default function Tooltip({
         <div className="flex items-center cursor-help">
           {children}
           {showIcon && (
-            <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 ml-1 transition-colors" />
+            <HelpCircle className="w-4 h-4 text-muted hover:text-text ml-1 transition-colors" />
           )}
         </div>
       </div>
@@ -217,7 +217,7 @@ export function HelpTooltip({ content, ...props }) {
       size="lg"
       {...props}
     >
-      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors">
+      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent transition-colors">
         <HelpCircle className="w-3 h-3" />
       </button>
     </Tooltip>
@@ -229,10 +229,10 @@ export function FeatureTooltip({ title, description, children, ...props }) {
   const content = (
     <div className="space-y-2">
       <div className="flex items-center space-x-2">
-        <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-        <span className="font-semibold text-blue-200">{title}</span>
+        <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+        <span className="font-semibold text-accent">{title}</span>
       </div>
-      <p className="text-gray-200">{description}</p>
+      <p className="text-muted">{description}</p>
     </div>
   );
 

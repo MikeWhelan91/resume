@@ -209,16 +209,16 @@ export default function OnboardingTour({
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {currentStepData.title}
               </h3>
             </div>
             <button
               onClick={handleSkip}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               title="Skip tour"
             >
               <X className="w-5 h-5" />
@@ -226,7 +226,7 @@ export default function OnboardingTour({
           </div>
 
           {/* Content */}
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
             {currentStepData.description}
           </p>
 
@@ -248,7 +248,7 @@ export default function OnboardingTour({
 
           {/* Actions */}
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Step {currentStep + 1} of {steps.length}
             </div>
             
@@ -286,7 +286,7 @@ export default function OnboardingTour({
           <div className="text-center mt-4">
             <button
               onClick={handleSkip}
-              className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+              className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
             >
               Skip tour
             </button>

@@ -113,7 +113,7 @@ export default function MyResumes() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -128,14 +128,14 @@ export default function MyResumes() {
         robots="noindex,nofollow"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-blue-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">My Saved Resumes</h1>
-                <p className="text-gray-600">View, edit, and manage your saved resumes</p>
+                <h1 className="text-3xl font-bold text-text mb-2">My Saved Resumes</h1>
+                <p className="text-muted">View, edit, and manage your saved resumes</p>
               </div>
               <Link href="/wizard" className="btn btn-primary">
                 <FileText className="w-4 h-4 mr-2" />
@@ -148,8 +148,8 @@ export default function MyResumes() {
           {resumes.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No saved resumes yet</h3>
-              <p className="text-gray-600 mb-6">Create your first resume to get started</p>
+              <h3 className="text-lg font-medium text-text mb-2">No saved resumes yet</h3>
+              <p className="text-muted mb-6">Create your first resume to get started</p>
               <Link href="/wizard" className="btn btn-primary">
                 <FileText className="w-4 h-4 mr-2" />
                 Create Resume
@@ -160,16 +160,16 @@ export default function MyResumes() {
               {resumes.map((resume) => (
                 <div
                   key={resume.id}
-                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="bg-surface text-text rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
                   <div className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                        <h3 className="font-semibold text-text mb-1 truncate">
                           {resume.name || 'Untitled Resume'}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted">
                           Template: {resume.template || 'Classic'}
                         </p>
                       </div>
@@ -182,7 +182,7 @@ export default function MyResumes() {
 
                     {/* Dates */}
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-muted">
                         <Calendar className="w-4 h-4 mr-2" />
                         Created {formatDate(resume.createdAt)}
                       </div>

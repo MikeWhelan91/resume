@@ -410,8 +410,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'cv' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{terms.Resume} Only</div>
-                      <div className="text-sm text-gray-600">Optimise your {terms.resume} for the job description</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Optimise your {terms.resume} for the job description</div>
                       <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
@@ -436,8 +436,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'cover-letter' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">Cover Letter Only</div>
-                      <div className="text-sm text-gray-600">Generate a tailored cover letter for the job</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">Cover Letter Only</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Generate a tailored cover letter for the job</div>
                       <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
@@ -459,8 +459,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                       {userGoal === 'both' && <div className="w-2 h-2 bg-white rounded-full"></div>}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">Both {terms.Resume} and Cover Letter</div>
-                      <div className="text-sm text-gray-600">Get a complete application package</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">Both {terms.Resume} and Cover Letter</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Get a complete application package</div>
                       <div className="text-xs text-green-600 font-bold">
                         {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
                       </div>
@@ -479,7 +479,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           <section className="space-y-8">
             <header className="text-center space-y-3">
               <div className="flex items-center justify-center gap-2">
-                <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
+                <h2 className="text-2xl font-bold text-text">Basic Information</h2>
                 <HelpTooltip 
                   content={
                     <div className="space-y-2">
@@ -490,36 +490,36 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   }
                 />
               </div>
-              <p className="text-gray-600">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
+              <p className="text-muted">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
             </header>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-1 col-span-2">
-                <label className="text-sm font-bold text-gray-700">Name*</label>
+                <label className="text-sm font-bold text-muted">Name*</label>
                 <input {...register('name')} className="form-input" placeholder="Jane Doe" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Title / Headline</label>
+                <label className="text-sm font-bold text-muted">Title / Headline</label>
                 <input {...register('title')} className="form-input" placeholder="Software Engineer" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Email</label>
+                <label className="text-sm font-bold text-muted">Email</label>
                 <input {...register('email')} type="email" className="form-input" placeholder="you@example.com" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Phone</label>
+                <label className="text-sm font-bold text-muted">Phone</label>
                 <input {...register('phone')} className="form-input" placeholder="555-123-4567" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Location</label>
+                <label className="text-sm font-bold text-muted">Location</label>
                 <input {...register('location')} className="form-input" placeholder="City, Country" />
               </div>
               <div className="col-span-full space-y-2">
-                <label className="text-sm font-bold text-gray-700">Summary</label>
+                <label className="text-sm font-bold text-muted">Summary</label>
                 <textarea {...register('summary')} rows={4} className="form-textarea" placeholder="3–5 lines, action-oriented" />
               </div>
             </div>
             <div className="space-y-4">
-              <div className="text-sm font-bold text-gray-700">Links</div>
+              <div className="text-sm font-bold text-muted">Links</div>
               {values.links.map((l, i) => (
                 <div key={i} className="grid grid-cols-2 gap-2 items-center">
                   <input {...register(`links.${i}.label`)} placeholder="Label" className="form-input" />
@@ -537,8 +537,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 2 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Skills & Expertise</h2>
-              <p className="text-gray-600 dark:text-gray-300">Add your core skills and areas of expertise.</p>
+              <h2 className="text-2xl font-bold text-text">Skills & Expertise</h2>
+              <p className="text-muted">Add your core skills and areas of expertise.</p>
             </header>
             <SkillsInput value={values.skills} onChange={v => setValue('skills', v)} />
           </section>
@@ -547,8 +547,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 3 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Work Experience</h2>
-              <p className="text-gray-600">Highlight your relevant professional experience.</p>
+              <h2 className="text-2xl font-bold text-text">Work Experience</h2>
+              <p className="text-muted">Highlight your relevant professional experience.</p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>
@@ -564,8 +564,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 4 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Education</h2>
-              <p className="text-gray-600">Your academic background and qualifications.</p>
+              <h2 className="text-2xl font-bold text-text">Education</h2>
+              <p className="text-muted">Your academic background and qualifications.</p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>
@@ -581,12 +581,12 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 5 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Job Description</h2>
-              <p className="text-gray-600">Tailor your documents to the job description.</p>
+              <h2 className="text-2xl font-bold text-text">Job Description</h2>
+              <p className="text-muted">Tailor your documents to the job description.</p>
             </header>
             {userGoal !== 'cv' && (
               <div className="mb-6">
-                <label className="text-sm font-bold text-gray-700 block mb-3">Cover Letter Tone</label>
+                <label className="text-sm font-bold text-muted block mb-3">Cover Letter Tone</label>
                 <select className="form-select w-48" value={tone} onChange={e=>setTone(e.target.value)}>
                   <option value="professional">Professional</option>
                   <option value="friendly">Friendly</option>
@@ -595,7 +595,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Job Description*</label>
+              <label className="text-sm font-bold text-muted">Job Description*</label>
               <textarea 
                 className="form-textarea h-48 resize-vertical w-full" 
                 value={jd} 
@@ -621,8 +621,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           <div className="card p-8 max-w-md w-full text-center space-y-6 animate-scale-in">
             <div className="loading-spinner w-16 h-16 mx-auto"></div>
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold text-gray-900">Generating Your Documents</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-text">Generating Your Documents</h3>
+              <p className="text-muted">
                 AI is analyzing your resume and the job description to create tailored documents. This may take a moment...
               </p>
             </div>
@@ -639,18 +639,18 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
       {showAccountPrompt && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="card p-8 max-w-md w-full text-center space-y-6 animate-scale-in mx-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto">
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-gray-900">Trial Credits Used Up</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-text">Trial Credits Used Up</h3>
+              <p className="text-muted">
                 You've used all your trial generations. 
                 Sign up now and get <strong>10 free generations per week</strong> to continue creating tailored resumes and cover letters!
               </p>
-              <div className="text-sm text-gray-500 space-y-1">
+              <div className="text-sm text-muted space-y-1">
                 <div>✓ 10 free generations weekly</div>
                 <div>✓ 10 PDF downloads weekly</div>
                 <div>✓ Save your progress</div>
@@ -672,7 +672,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               </button>
               <button 
                 onClick={() => setShowAccountPrompt(false)}
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-sm text-muted hover:text-text transition-colors"
               >
                 Maybe later
               </button>

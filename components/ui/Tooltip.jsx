@@ -63,7 +63,7 @@ export default function Tooltip({
   const tooltipContent = (
     <div 
       className={`
-        absolute z-50 bg-gray-900 text-white rounded-lg shadow-lg
+        absolute z-50 bg-surface text-text rounded-lg shadow-lg border border-border
         ${positionClasses[position]}
         ${sizeClasses[size]}
         ${isVisible ? 'opacity-100 visible' : 'opacity-0 invisible'}
@@ -73,7 +73,7 @@ export default function Tooltip({
       {/* Arrow */}
       <div 
         className={`
-          absolute w-0 h-0 border-4 border-gray-900
+          absolute w-0 h-0 border-4 border-border
           ${arrowClasses[position]}
         `}
       />
@@ -83,7 +83,7 @@ export default function Tooltip({
         {persistent && (
           <button
             onClick={() => setIsVisible(false)}
-            className="absolute -top-1 -right-1 w-4 h-4 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors"
+            className="absolute -top-1 -right-1 w-4 h-4 bg-surface hover:bg-bg/20 rounded-full flex items-center justify-center transition-colors"
           >
             <X className="w-2.5 h-2.5" />
           </button>
@@ -107,7 +107,7 @@ export default function Tooltip({
       >
         {children}
         {showIcon && (
-          <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 ml-1 transition-colors" />
+          <HelpCircle className="w-4 h-4 text-muted hover:text-text ml-1 transition-colors" />
         )}
       </div>
       {tooltipContent}
@@ -133,7 +133,7 @@ export function HelpTooltip({ content, ...props }) {
       size="lg"
       {...props}
     >
-      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors">
+      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-300 transition-colors">
         <HelpCircle className="w-3 h-3" />
       </button>
     </Tooltip>

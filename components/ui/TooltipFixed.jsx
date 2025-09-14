@@ -155,7 +155,7 @@ export default function Tooltip({
         <div className="flex items-center cursor-help">
           {children}
           {showIcon && (
-            <HelpCircle className="w-4 h-4 text-gray-400 hover:text-gray-600 ml-1 transition-colors" />
+            <HelpCircle className="w-4 h-4 text-muted hover:text-text ml-1 transition-colors" />
           )}
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function Tooltip({
         <div
           style={tooltipStyle}
           className={`
-            bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700
+            bg-surface text-text rounded-lg shadow-xl border border-border
             ${sizeClasses[size]}
             ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
             transition-all duration-200 ease-out
@@ -174,7 +174,7 @@ export default function Tooltip({
           {persistent && (
             <button
               onClick={() => setIsVisible(false)}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors border border-gray-600"
+              className="absolute -top-2 -right-2 w-6 h-6 bg-surface hover:bg-bg/20 rounded-full flex items-center justify-center transition-colors border border-border"
             >
               <X className="w-3 h-3" />
             </button>
@@ -211,7 +211,7 @@ export function HelpTooltip({ content, ...props }) {
       size="lg"
       {...props}
     >
-      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors">
+      <button className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-300 transition-colors">
         <HelpCircle className="w-3 h-3" />
       </button>
     </Tooltip>

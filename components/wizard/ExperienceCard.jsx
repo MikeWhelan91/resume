@@ -23,10 +23,10 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
 
   return (
     <motion.div layout initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
-      className="bg-white dark:bg-zinc-900 border rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+      className="bg-surface text-text border border-border rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-zinc-600">Company*</label>
+          <label className="text-xs font-medium text-muted">Company*</label>
           <input
             className="form-input"
             value={value.company}
@@ -35,7 +35,7 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-zinc-600">Job Title*</label>
+          <label className="text-xs font-medium text-muted">Job Title*</label>
           <input
             className="form-input"
             value={value.title}
@@ -44,7 +44,7 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-zinc-600">Location</label>
+          <label className="text-xs font-medium text-muted">Location</label>
           <input
             className="form-input"
             value={value.location || ''}
@@ -53,7 +53,7 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-600">Start</label>
+            <label className="text-xs font-medium text-muted">Start</label>
             <input
               type="month"
               className="form-input"
@@ -62,7 +62,7 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-600">End</label>
+            <label className="text-xs font-medium text-muted">End</label>
             <input
               type="month"
               disabled={value.present}
@@ -78,8 +78,8 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
         </div>
       </div>
 
-      <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700 space-y-2">
-        <div className="text-xs font-medium text-zinc-500">Bullets</div>
+      <div className="pt-2 border-t border-border space-y-2">
+        <div className="text-xs font-medium text-muted">Bullets</div>
         <div className="flex gap-2">
           <input
             className="form-input flex-1"
@@ -95,14 +95,14 @@ export default function ExperienceCard({ value, onChange, onRemove, onDuplicate,
             {(value.bullets || []).map((b, i) => (
               <motion.li key={i} initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="flex items-start gap-2">
                 <span className="flex-1 text-sm">{b}</span>
-                <button type="button" onClick={()=>removeBullet(i)} aria-label="Remove bullet" className="text-zinc-500 hover:text-zinc-800">×</button>
+                <button type="button" onClick={()=>removeBullet(i)} aria-label="Remove bullet" className="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">×</button>
               </motion.li>
             ))}
           </AnimatePresence>
         </ul>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+      <div className="flex justify-end gap-2 pt-2 border-t border-border">
         {onDuplicate && <button type="button" onClick={onDuplicate} className="btn btn-ghost btn-sm">Duplicate role</button>}
         {onRemove && <button type="button" onClick={onRemove} className="text-sm text-red-600">Remove role</button>}
       </div>

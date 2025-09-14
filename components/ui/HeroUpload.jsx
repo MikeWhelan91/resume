@@ -123,86 +123,54 @@ export default function HeroUpload() {
   return (
     <div className="relative">
       {/* Hero Section */}
-      <div className="relative bg-white dark:bg-gray-900">
+      <div className="relative bg-bg">
         {/* Minimal background accents */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-24 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-transparent rounded-full blur-3xl opacity-30"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-100 to-transparent rounded-full blur-3xl opacity-30"></div>
+          <div className="absolute top-24 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/8 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-primary/2 to-transparent rounded-full blur-3xl"></div>
         </div>
         
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center lg:items-start min-h-[85vh] py-6 lg:py-12">
+        <div className="relative tc-container">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start min-h-[90vh] py-12 lg:py-20">
             
             {/* Left Column - Content */}
-            <div className="flex-1 lg:pr-16 text-center max-w-2xl lg:max-w-none">
+            <div className="flex-1 lg:pr-20 text-center lg:text-left max-w-2xl lg:max-w-none">
               
 
               {/* Clean headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-tight mb-6">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text leading-tight mb-8">
                 Your {terms.resume},
                 <br />
-                <span className="text-blue-600 dark:text-blue-400">perfectly matched</span>
+                <span className="text-primary">perfectly matched</span>
                 <br />
                 to every job
               </h1>
 
               {/* Clear value prop */}
-              <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-10 max-w-lg">
+              <p className="text-xl text-muted leading-relaxed mb-12 max-w-2xl">
                 Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
               </p>
 
 
-              {/* Primary CTA */}
-              <div className="flex justify-center mb-16" data-tour="upload-options">
+              <div className="mb-16">
                 <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFile} className="hidden" />
-              
-                {/* Primary CTA - Start Fresh */}
-                <InfoTooltip 
-                  content="Build your resume from scratch using our step-by-step wizard."
-                  position="bottom"
-                >
-                  <button 
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-8 py-4 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center group"
-                    onClick={handleCreateNew} 
-                    disabled={loading || checkingResume}
-                  >
-                    <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                    Start Fresh
-                  </button>
-                </InfoTooltip>
-
-                {/* Recent resume option for logged-in users */}
-                {session?.user && hasLatestResume && (
-                  <InfoTooltip 
-                    content="Continue editing your previously saved resume."
-                    position="bottom"
-                  >
-                    <button 
-                      className="text-blue-600 hover:text-blue-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center group"
-                      onClick={loadLatestResume}
-                      disabled={loading || checkingResume}
-                    >
-                      <Clock className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                      Use Recent
-                    </button>
-                  </InfoTooltip>
-                )}
               </div>
             </div>
 
             {/* Right Column - Visual */}
-            <div className="flex-1 lg:pl-16 max-w-xl lg:max-w-none mt-2 lg:mt-0">
+            <div className="flex-1 lg:pl-20 max-w-xl lg:max-w-none mt-12 lg:mt-0">
               <div className="relative">
                 {/* Main demo card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 relative z-10">
+                <div className="tc-card-elevated tc-card-hover relative z-10">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Upload className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center">
+                        <Upload className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900 dark:text-white">{terms.resume} Upload</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Instant AI Analysis</div>
+                        <div className="font-semibold text-text">{terms.resume} Upload</div>
+                        <div className="text-xs text-muted">Instant AI Analysis</div>
                       </div>
                     </div>
                     <div className="flex space-x-1">
@@ -214,100 +182,136 @@ export default function HeroUpload() {
                   
                   {/* Clickable upload interface */}
                   <div 
-                    className="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-300 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 group"
+                    className="border-2 border-dashed border-border dark:border-border-strong rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all duration-250 group"
                     onClick={() => fileRef.current?.click()}
                   >
-                    <Upload className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-3 transition-colors" />
-                    <div className="text-sm font-medium text-gray-700 group-hover:text-blue-700 mb-1 transition-colors">Drop your {terms.resume.toLowerCase()} here</div>
-                    <div className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">PDF, DOCX, or TXT • Up to 10MB</div>
+                    <Upload className="w-10 h-10 text-muted group-hover:text-primary mx-auto mb-6 transition-colors duration-250" />
+                    <div className="space-y-2">
+                      <div className="text-base font-medium text-text group-hover:text-primary transition-colors duration-250">Drop your {terms.Resume} here</div>
+                      <div className="text-sm text-muted group-hover:text-primary/80 transition-colors duration-250">PDF, DOCX, or TXT • Up to 10MB</div>
+                    </div>
                   </div>
                   
                   {/* Steps preview */}
-                  <div className="mt-6 space-y-3">
-                    <div className="flex items-center space-x-3 text-sm">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  <div className="mt-8 space-y-4">
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="w-8 h-8 bg-success-light rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-success rounded-full"></div>
                       </div>
-                      <span className="text-gray-600">AI extracts your information</span>
+                      <span className="text-muted">AI extracts your information</span>
                     </div>
-                    <div className="flex items-center space-x-3 text-sm">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-primary rounded-full"></div>
                       </div>
-                      <span className="text-gray-600">Paste job description</span>
+                      <span className="text-muted">Paste job description</span>
                     </div>
-                    <div className="flex items-center space-x-3 text-sm">
-                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
                       </div>
-                      <span className="text-gray-600">Get tailored documents</span>
+                      <span className="text-muted">Get tailored documents</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Background accent cards */}
-                <div className="absolute top-4 -right-4 w-48 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl opacity-10 -z-10"></div>
-                <div className="absolute -bottom-4 -left-4 w-32 h-24 bg-gradient-to-tr from-green-500 to-blue-500 rounded-xl opacity-10 -z-10"></div>
+                {/* Start Fresh Button - moved here */}
+                <div className="mt-6 flex flex-col items-center space-y-3">
+                  <InfoTooltip 
+                    content="Build your resume from scratch using our step-by-step wizard."
+                    position="bottom"
+                  >
+                    <button 
+                      className="btn btn-primary btn-xl w-full max-w-sm group"
+                      onClick={handleCreateNew} 
+                      disabled={loading || checkingResume}
+                    >
+                      <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
+                      Start Fresh
+                    </button>
+                  </InfoTooltip>
+
+                  {/* Recent resume option for logged-in users */}
+                  {session?.user && hasLatestResume && (
+                    <InfoTooltip 
+                      content="Continue editing your previously saved resume."
+                      position="bottom"
+                    >
+                      <button 
+                        className="btn btn-outline btn-md group"
+                        onClick={loadLatestResume}
+                        disabled={loading || checkingResume}
+                      >
+                        <Clock className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                        Use Recent
+                      </button>
+                    </InfoTooltip>
+                  )}
+                </div>
+
+                {/* Subtle accent elements */}
+                <div className="absolute top-8 -right-8 w-24 h-24 bg-primary/5 rounded-full -z-10"></div>
+                <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-primary/8 rounded-full -z-10"></div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* First-time user help callout */}
+        {/* First-time user help modal */}
         {!session && showNewUserHelp && (
-          <div className="bg-gray-50 border-t">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 relative max-w-2xl mx-auto">
-                  <button 
-                    onClick={() => setShowNewUserHelp(false)}
-                    className="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="flex items-start space-x-3">
-                    <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="text-sm font-medium text-blue-900 mb-1">
-                        👋 New to TailoredCV? Here's how it works:
-                      </h3>
-                      <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                        <li>Upload your existing resume or build one from scratch</li>
-                        <li>Paste any job description you want to apply for</li>
-                        <li>Get a perfectly tailored resume + cover letter in seconds!</li>
-                      </ol>
-                      <div className="mt-2 space-y-1">
-                        <p className="text-xs text-blue-600">
-                          ✨ Try it free - no signup required for your first resume!
-                        </p>
-                        <p className="text-xs text-green-600">
-                          📈 Sign up for 10 personalized CVs & cover letters per week + premium templates
-                        </p>
-                      </div>
-                    </div>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-surface border border-border rounded-xl p-6 relative max-w-md w-full shadow-xl">
+              <button 
+                onClick={() => setShowNewUserHelp(false)}
+                className="absolute top-3 right-3 text-muted hover:text-text transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center flex-shrink-0">
+                  <Info className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-text mb-3">
+                    👋 New to TailoredCV? Here's how it works:
+                  </h3>
+                  <ol className="text-sm text-muted space-y-2 list-decimal list-inside mb-4">
+                    <li>Upload your existing {terms.resume} or build one from scratch</li>
+                    <li>Paste any job description you want to apply for</li>
+                    <li>Get a perfectly tailored {terms.resume} + cover letter in seconds!</li>
+                  </ol>
+                  <div className="space-y-2">
+                    <p className="text-xs text-primary">
+                      ✨ Try it free - no signup required for your first {terms.resume}!
+                    </p>
+                    <p className="text-xs text-success">
+                      📈 Sign up for 10 personalized {terms.ResumePlural} & cover letters per week + premium templates
+                    </p>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-blue-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">From Job Description to Perfect Match</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-text mb-4">From Job Description to Perfect Match</h2>
+            <p className="text-lg text-muted max-w-2xl mx-auto">
               Transform any job posting into a winning application in three simple steps
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8" data-tour="process-steps">
-            <div className="card text-center p-8 group">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+          <div className="grid md:grid-cols-3 gap-8 text-text" data-tour="process-steps">
+            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+              <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Upload className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">1. Upload Your {terms.Resume}</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-text mb-3">1. Upload Your {terms.Resume}</h3>
+              <p className="text-muted">
                 Upload your existing {terms.resume} or build one from scratch using our smart wizard.
               </p>
               <InfoTooltip 
@@ -321,12 +325,12 @@ export default function HeroUpload() {
               </InfoTooltip>
             </div>
             
-            <div className="card text-center p-8 group">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+              <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Zap className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">2. Paste Job Description</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-text mb-3">2. Paste Job Description</h3>
+              <p className="text-muted">
                 Copy any job posting and our AI instantly analyses the requirements to tailor your {terms.resume} and cover letter.
               </p>
               <InfoTooltip 
@@ -340,12 +344,12 @@ export default function HeroUpload() {
               </InfoTooltip>
             </div>
             
-            <div className="card text-center p-8 group">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+              <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Star className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">3. Tailor Documents</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-text mb-3">3. Tailor Documents</h3>
+              <p className="text-muted">
                 Download perfectly tailored {terms.resume} and cover letter optimised for that specific job – repeat for every application!
               </p>
               <InfoTooltip 
@@ -363,31 +367,31 @@ export default function HeroUpload() {
       </div>
 
       {/* Call-to-Action Section */}
-      <div className="py-20 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
+      <div className="py-20 bg-blue-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 mb-6">
+          <div className="inline-flex items-center space-x-2 bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-full px-4 py-2 mb-6">
             <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-gray-700">Apply to Multiple Jobs</span>
+            <span className="text-sm font-medium text-text">Apply to Multiple Jobs</span>
           </div>
           
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-text mb-6">
             One {terms.Resume}, <span className="text-gradient">Unlimited Tailored Versions</span>
           </h2>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-muted mb-8 max-w-2xl mx-auto">
             Stop sending the same generic {terms.resume} to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
               <div className="text-2xl font-bold text-blue-600 mb-2">10x</div>
               <div className="text-sm text-gray-600">Faster Application Process</div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
               <div className="text-2xl font-bold text-purple-600 mb-2">95%</div>
               <div className="text-sm text-gray-600">ATS Compatibility Rate</div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
               <div className="text-2xl font-bold text-green-600 mb-2">3x</div>
               <div className="text-sm text-gray-600">More Interview Callbacks</div>
             </div>
@@ -422,10 +426,10 @@ export default function HeroUpload() {
           <div className="card p-8 max-w-sm w-full text-center space-y-6 animate-scale-in">
             <div className="loading-spinner w-12 h-12 mx-auto"></div>
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold text-text">
                 {checkingResume ? `Loading Your ${terms.Resume}` : `Processing Your ${terms.Resume}`}
               </h3>
-              <p className="text-gray-600">{loadingMessage}</p>
+              <p className="text-muted">{loadingMessage}</p>
             </div>
             <div className="loading-dots">
               <span></span>

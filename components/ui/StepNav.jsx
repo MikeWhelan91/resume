@@ -20,8 +20,8 @@ export default function StepNav({ steps, current, onChange, allowNext=true, onNe
             const state = i<current ? 'done' : i===current ? 'active' : 'todo';
             return (
               <li key={s} className="flex items-center cursor-pointer" onClick={()=>{ if(i<=current || allowNext) onChange(i); }}>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-blue-600 text-white':state==='active'?'border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400':'border border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>{i+1}</span>
-                <span className={`text-sm transition-colors ${state==='active'?'text-gray-900 dark:text-white font-medium':'text-gray-500 dark:text-gray-400'}`}>{s}</span>
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-accent text-accent-contrast':state==='active'?'border-2 border-accent text-accent':'border border-border text-muted'}`}>{i+1}</span>
+                <span className={`text-sm transition-colors ${state==='active'?'text-text font-medium':'text-muted'}`}>{s}</span>
               </li>
             );
           })}
@@ -67,12 +67,12 @@ export default function StepNav({ steps, current, onChange, allowNext=true, onNe
       
       {/* Mobile: Progress bar with buttons */}
       <div className="md:hidden space-y-4">
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+        <div className="flex items-center justify-between text-sm text-muted mb-2">
           <span>Step {current + 1} of {steps.length}</span>
           <span>{steps[current]}</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-blue-600 rounded-full transition-all duration-300" style={{width:`${(current)/(steps.length-1)*100}%`}} />
+        <div className="h-2 bg-border/50 rounded-full">
+          <div className="h-full bg-accent rounded-full transition-all duration-300" style={{width:`${(current)/(steps.length-1)*100}%`}} />
         </div>
         
         {showButtons && (

@@ -50,7 +50,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 bg-gray-800 text-white p-4 z-50 text-sm">
+    <div className="fixed bottom-0 inset-x-0 bg-surface border-t border-border text-text p-4 z-50 text-sm">
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="flex-1">
           We use cookies to improve your experience and for analytics. You can accept or decline analytics cookies.
@@ -58,13 +58,13 @@ export default function CookieBanner() {
         <div className="flex gap-2">
           <button
             onClick={() => handleChoice(false)}
-            className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+            className="px-4 py-2 bg-muted text-text rounded hover:bg-muted/80 transition-colors"
           >
             Decline
           </button>
           <button
             onClick={() => handleChoice(true)}
-            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
           >
             Accept
           </button>

@@ -124,7 +124,7 @@ export default function DeleteAccount() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -153,19 +153,19 @@ export default function DeleteAccount() {
           robots="noindex,nofollow"
         />
 
-        <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
+        <div className="min-h-screen bg-red-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
             {/* Header */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
                 <Clock className="w-8 h-8 text-orange-600" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Account Deletion Scheduled</h1>
-              <p className="text-lg text-gray-600">Your account is scheduled for deletion in {hoursRemaining} hours</p>
+              <h1 className="text-3xl font-bold text-text mb-2">Account Deletion Scheduled</h1>
+              <p className="text-lg text-muted">Your account is scheduled for deletion in {hoursRemaining} hours</p>
             </div>
 
             {/* Deletion Info Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+            <div className="bg-surface text-text rounded-xl shadow-lg border border-border p-8 mb-8">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -173,8 +173,8 @@ export default function DeleteAccount() {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Deletion Details</h3>
-                  <div className="space-y-3 text-gray-700">
+                  <h3 className="text-xl font-semibold text-text mb-4">Deletion Details</h3>
+                  <div className="space-y-3 text-text">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Scheduled for:</span>
                       <span>{scheduledDate.toLocaleString()}</span>
@@ -225,7 +225,7 @@ export default function DeleteAccount() {
 
             {/* Help Section */}
             <div className="mt-12 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted">
                 Need help? <a href="mailto:support@tailoredcv.app" className="text-blue-600 hover:underline">Contact Support</a>
               </p>
             </div>
@@ -244,11 +244,11 @@ export default function DeleteAccount() {
         robots="noindex,nofollow"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-orange-50">
+      <div className="min-h-screen bg-red-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           {/* Back Button */}
           <div className="mb-8">
-            <Link href="/account" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/account" className="inline-flex items-center text-muted hover:text-text transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Account Settings
             </Link>
@@ -259,14 +259,14 @@ export default function DeleteAccount() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
               <Trash2 className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Delete Account</h1>
-            <p className="text-lg text-gray-600">Permanently delete your TailoredCV.app account and data</p>
+            <h1 className="text-3xl font-bold text-text mb-2">Delete Account</h1>
+            <p className="text-lg text-muted">Permanently delete your TailoredCV.app account and data</p>
           </div>
 
           {step === 1 && (
             <>
               {/* Warning Card */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+              <div className="bg-surface text-text rounded-xl shadow-lg border border-border p-8 mb-8">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -274,9 +274,9 @@ export default function DeleteAccount() {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">⚠️ Important: 48-Hour Waiting Period</h3>
+                    <h3 className="text-xl font-semibold text-text mb-4">⚠️ Important: 48-Hour Waiting Period</h3>
                     <div className="prose prose-gray max-w-none">
-                      <p className="text-gray-700 mb-4">
+                      <p className="text-text mb-4">
                         To prevent abuse of our credit system, account deletion has a <strong>48-hour waiting period</strong>. 
                         Here's how it works:
                       </p>
@@ -300,39 +300,39 @@ export default function DeleteAccount() {
               </div>
 
               {/* Current Account Info */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
-                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <div className="bg-surface text-text rounded-xl shadow-lg border border-border p-8 mb-8">
+                <h3 className="text-xl font-semibold text-text mb-6 flex items-center">
                   <Database className="w-5 h-5 mr-2" />
                   Your Account Information
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Email</label>
-                      <div className="text-gray-900">{session.user.email}</div>
+                      <label className="text-sm font-medium text-muted">Email</label>
+                      <div className="text-text">{session.user.email}</div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Current Plan</label>
-                      <div className="text-gray-900">{planDisplayNames[entitlement?.plan] || 'Free Plan'}</div>
+                      <label className="text-sm font-medium text-muted">Current Plan</label>
+                      <div className="text-text">{planDisplayNames[entitlement?.plan] || 'Free Plan'}</div>
                     </div>
                     {entitlement?.plan === 'free' && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Credits Remaining</label>
-                        <div className="text-gray-900">{entitlement.freeWeeklyCreditsRemaining || 0} remaining</div>
+                        <label className="text-sm font-medium text-muted">Credits Remaining</label>
+                        <div className="text-text">{entitlement.freeWeeklyCreditsRemaining || 0} remaining</div>
                       </div>
                     )}
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Member Since</label>
-                      <div className="text-gray-900">
+                      <label className="text-sm font-medium text-muted">Member Since</label>
+                      <div className="text-text">
                         {session.user.createdAt ? new Date(session.user.createdAt).toLocaleDateString() : 'Unknown'}
                       </div>
                     </div>
                     {entitlement?.plan !== 'free' && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Subscription Status</label>
-                        <div className="text-gray-900 capitalize">{entitlement.status || 'Active'}</div>
+                        <label className="text-sm font-medium text-muted">Subscription Status</label>
+                        <div className="text-text capitalize">{entitlement.status || 'Active'}</div>
                       </div>
                     )}
                   </div>
@@ -340,15 +340,15 @@ export default function DeleteAccount() {
               </div>
 
               {/* What Will Be Deleted */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
-                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <div className="bg-surface text-text rounded-xl shadow-lg border border-border p-8 mb-8">
+                <h3 className="text-xl font-semibold text-text mb-6 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
                   What Will Be Permanently Deleted
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Personal Data</h4>
-                    <ul className="space-y-2 text-gray-700">
+                    <h4 className="font-semibold text-text mb-3">Personal Data</h4>
+                    <ul className="space-y-2 text-text">
                       <li className="flex items-center">
                         <X className="w-4 h-4 text-red-500 mr-2" />
                         Account profile and settings
@@ -368,8 +368,8 @@ export default function DeleteAccount() {
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Subscription & Billing</h4>
-                    <ul className="space-y-2 text-gray-700">
+                    <h4 className="font-semibold text-text mb-3">Subscription & Billing</h4>
+                    <ul className="space-y-2 text-text">
                       <li className="flex items-center">
                         <X className="w-4 h-4 text-red-500 mr-2" />
                         Active subscriptions (auto-cancelled)
@@ -414,18 +414,18 @@ export default function DeleteAccount() {
           {step === 2 && (
             <>
               {/* Final Confirmation */}
-              <div className="bg-white rounded-xl shadow-lg border border-red-200 p-8 mb-8">
+            <div className="bg-surface text-text rounded-xl shadow-lg border border-red-200 p-8 mb-8">
                 <div className="text-center mb-8">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
                     <AlertTriangle className="w-8 h-8 text-red-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Final Confirmation</h3>
-                  <p className="text-gray-600">This will schedule your account for deletion in 48 hours</p>
+                  <h3 className="text-2xl font-bold text-text mb-2">Final Confirmation</h3>
+                  <p className="text-muted">This will schedule your account for deletion in 48 hours</p>
                 </div>
 
                 <div className="max-w-md mx-auto">
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted mb-2">
                       Type <span className="font-bold text-red-600">DELETE</span> to confirm:
                     </label>
                     <input
@@ -459,10 +459,10 @@ export default function DeleteAccount() {
 
           {/* Help Section */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               Having second thoughts? <Link href="/account" className="text-blue-600 hover:underline">Return to Account Settings</Link>
             </p>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-muted mt-2">
               Need help? <a href="mailto:support@tailoredcv.app" className="text-blue-600 hover:underline">Contact Support</a>
             </p>
           </div>

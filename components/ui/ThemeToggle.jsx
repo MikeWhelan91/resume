@@ -36,7 +36,7 @@ export default function ThemeToggle() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-text hover:opacity-90 hover:bg-surface/60 transition-colors"
         aria-label="Toggle theme"
       >
         <CurrentIcon className="w-4 h-4" />
@@ -45,7 +45,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+        <div className="absolute left-0 mt-2 w-36 bg-surface rounded-lg shadow-lg border border-border py-1 z-50">
           {themes.map((themeOption) => {
             const Icon = themeOption.icon;
             const isActive = theme === themeOption.key;
@@ -59,8 +59,8 @@ export default function ThemeToggle() {
                 }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 text-sm transition-colors ${
                   isActive 
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'text-accent bg-accent/10' 
+                    : 'text-text/80 hover:text-text hover:bg-surface/60'
                 }`}
               >
                 <Icon className="w-4 h-4" />

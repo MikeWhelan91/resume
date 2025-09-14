@@ -155,19 +155,19 @@ export default function Navbar() {
   // Removed popup-based functions - now using dedicated pages
 
   return (
-    <nav className="sticky top-0 z-50 glass dark:bg-gray-800/80 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="sticky top-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border">
+      <div className="tc-container">
+        <div className="flex justify-between items-center h-20">
           {/* Logo/Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3 group">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all duration-250">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-200"></div>
+                <div className="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-250"></div>
               </div>
-              <span className="text-xl font-bold text-gradient">TailoredCV.app</span>
+              <span className="text-xl font-bold text-text group-hover:text-primary transition-colors duration-250">TailoredCV.app</span>
             </Link>
           </div>
 
@@ -216,7 +216,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 bg-white/60 hover:bg-white/80 px-3 py-2 rounded-lg border border-gray-200/50 transition-all duration-200"
+                  className="flex items-center space-x-2 text-sm text-text hover:opacity-90 bg-surface/60 hover:bg-surface/80 px-3 py-2 rounded-lg border border-border/50 transition-all duration-200"
                 >
                   <div className="flex items-center space-x-2">
                     {getPlanIcon(userPlan)}
@@ -231,19 +231,19 @@ export default function Navbar() {
                       className="fixed inset-0 z-10"
                       onClick={() => setIsDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-20">
+                    <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-xl border border-border py-2 z-20">
                       {/* User Info */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-3 border-b border-border">
                         <div className="flex items-center space-x-2 mb-2">
                           {getPlanIcon(userPlan)}
-                          <span className="font-medium text-gray-900">{getPlanDisplayName(userPlan, entitlement)}</span>
+                          <span className="font-medium text-text">{getPlanDisplayName(userPlan, entitlement)}</span>
                           {userPlan !== 'free' && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               Active
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
+                        <p className="text-sm text-muted truncate">{session.user.email}</p>
                         
                         {/* Usage Stats */}
                         {(() => {
@@ -252,11 +252,11 @@ export default function Navbar() {
                           
                           return (
                             <div className="mt-3 space-y-2">
-                              <div className="text-xs font-medium text-gray-700 mb-1">Usage Overview</div>
+                              <div className="text-xs font-medium text-muted mb-1">Usage Overview</div>
                               
                               {/* Generations */}
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">Generations</span>
+                                <span className="text-muted">Generations</span>
                                 <span className="font-medium">
                                   {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number'
                                     ? `${stats.generations.used}/${stats.generations.limit}`
@@ -267,9 +267,9 @@ export default function Navbar() {
                               
                               {/* Progress bar for finite limits */}
                               {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number' && (
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div className="w-full bg-border/50 rounded-full h-1.5">
                                   <div 
-                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                    className="bg-accent h-1.5 rounded-full transition-all duration-300"
                                     style={{ width: `${Math.min(100, (stats.generations.used / stats.generations.limit) * 100)}%` }}
                                   />
                                 </div>
@@ -278,14 +278,14 @@ export default function Navbar() {
                               {/* Downloads */}
                               <div className="pt-1 space-y-1">
                                 <div className="flex justify-between items-center text-xs">
-                                  <span className="text-gray-600">PDF Downloads</span>
+                                  <span className="text-muted">PDF Downloads</span>
                                   <span className="font-medium">
                                     {stats.downloads.pdf.limit === 0 ? 'Not available' : 
                                      `${stats.downloads.pdf.used}/${stats.downloads.pdf.limit}${stats.downloads.pdf.period ? ` per ${stats.downloads.pdf.period}` : ''}`}
                                   </span>
                                 </div>
                                 <div className="flex justify-between items-center text-xs">
-                                  <span className="text-gray-600">DOCX Downloads</span>
+                                  <span className="text-muted">DOCX Downloads</span>
                                   <span className="font-medium">
                                     {stats.downloads.docx.limit === 0 ? 'Not available' : 
                                      `${stats.downloads.docx.used}/${stats.downloads.docx.limit}${stats.downloads.docx.period ? ` per ${stats.downloads.docx.period}` : ''}`}
@@ -301,7 +301,7 @@ export default function Navbar() {
                       <div className="py-1">
                         <button
                           onClick={handleBillingClick}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2"
                         >
                           <CreditCard className="w-4 h-4" />
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
@@ -311,19 +311,19 @@ export default function Navbar() {
                         <Link
                           href="/account"
                           onClick={() => setIsDropdownOpen(false)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2"
                         >
                           <Settings className="w-4 h-4" />
                           <span>Account Settings</span>
                         </Link>
                         
-                        <div className="border-t border-gray-100 my-1"></div>
+                        <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                         <button
                           onClick={() => {
                             setIsDropdownOpen(false);
                             signOut({ callbackUrl: '/', redirect: true });
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
+                          className="w-full text-left px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2"
                         >
                           <LogOut className="w-4 h-4" />
                           <span>Sign Out</span>
@@ -337,22 +337,22 @@ export default function Navbar() {
               <div className="flex items-center space-x-2">
                 <Link
                   href="/auth/signin"
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost btn-sm focus-ring"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-4 h-4 mr-2" />
                   Sign In
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm focus-ring"
                 >
                   Sign Up
                 </Link>
                 <Link 
                   href="/wizard" 
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm focus-ring"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 mr-2" />
                   Get Started
                 </Link>
               </div>
@@ -389,7 +389,7 @@ export default function Navbar() {
             />
             
             {/* Mobile menu panel */}
-            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-xl border-l border-r border-b dark:border-l-gray-700 dark:border-r-gray-700 dark:border-b-gray-700 rounded-b-lg">
+            <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-surface border border-border shadow-xl rounded-b-lg">
               <div className="px-4 py-6 space-y-4">
                 {/* Navigation Links */}
                 <Link 
@@ -431,19 +431,19 @@ export default function Navbar() {
                 )}
 
                 {/* Auth Section */}
-                <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                   {status === 'loading' ? (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
                   ) : session ? (
                     <div className="space-y-4">
                       {/* User Info */}
-                      <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         {getPlanIcon(userPlan)}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{getPlanDisplayName(userPlan, entitlement)}</p>
-                          <p className="text-sm text-gray-600 truncate">{session.user.email}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{getPlanDisplayName(userPlan, entitlement)}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{session.user.email}</p>
                           {userPlan === 'free' && entitlement && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                               {entitlement.freeWeeklyCreditsRemaining || 0}/10 credits remaining
                             </p>
                           )}
@@ -462,7 +462,7 @@ export default function Navbar() {
                             setIsMobileMenuOpen(false);
                             handleBillingClick();
                           }}
-                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200"
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700"
                         >
                           <CreditCard className="w-4 h-4" />
                           <span>{userPlan === 'free' ? 'Upgrade Plan' : 'Manage Billing'}</span>
@@ -471,7 +471,7 @@ export default function Navbar() {
                         <Link
                           href="/account"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200"
+                          className="w-full flex items-center space-x-2 text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700"
                         >
                           <Settings className="w-4 h-4" />
                           <span>Account Settings</span>
@@ -511,7 +511,7 @@ export default function Navbar() {
                         className="w-full btn btn-primary btn-sm"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Sparkles className="w-4 h-4" />
+                        <Sparkles className="w-4 h-4 mr-2" />
                         Get Started
                       </Link>
                     </div>

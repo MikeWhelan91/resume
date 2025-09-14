@@ -18,7 +18,7 @@ export default function A4Preview({ children, scale = 0.72, className = "" }) {
   return (
     <div className={`relative overflow-hidden a4-outer ${className}`} style={outerStyle}>
       <div
-        className="origin-top-left bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_25px_rgba(0,0,0,0.08)]"
+        className="origin-top-left bg-white dark:bg-gray-800 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_10px_25px_rgba(0,0,0,0.08)]"
         style={innerStyle}
       >
         <style>{`

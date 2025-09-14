@@ -69,7 +69,7 @@ export default function CancelSubscription() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -92,13 +92,13 @@ export default function CancelSubscription() {
         robots="noindex,nofollow"
       />
 
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Back Button */}
           <Link 
             href="/account"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Account Settings
@@ -111,30 +111,30 @@ export default function CancelSubscription() {
                 <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Cancel Subscription</h1>
-            <p className="text-gray-600">We're sorry to see you go!</p>
+            <h1 className="text-3xl font-bold text-text mb-2">Cancel Subscription</h1>
+            <p className="text-muted">We're sorry to see you go!</p>
           </div>
 
           <div className="space-y-8">
             
             {/* Current Plan Info */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-surface text-text rounded-lg shadow-sm border border-border p-6">
               <div className="flex items-center mb-4">
                 <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Current Subscription</h2>
+                <h2 className="text-lg font-semibold text-text">Current Subscription</h2>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-text">
                       {planDisplayNames[entitlement?.plan] || 'Loading...'}
                     </p>
-                    <p className="text-sm text-gray-600">Active subscription</p>
+                    <p className="text-sm text-muted">Active subscription</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Next billing</p>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm text-muted">Next billing</p>
+                    <p className="text-sm font-medium text-text">
                       {entitlement?.plan?.includes('yearly') ? 'Annual' : 'Monthly'}
                     </p>
                   </div>
@@ -143,39 +143,39 @@ export default function CancelSubscription() {
             </div>
 
             {/* What You'll Lose */}
-            <div className="bg-white rounded-lg shadow-sm border border-orange-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">What you'll lose after cancellation:</h2>
+            <div className="bg-surface text-text rounded-lg shadow-sm border border-orange-200 p-6">
+              <h2 className="text-lg font-semibold text-text mb-4">What you'll lose after cancellation:</h2>
               
               <div className="space-y-3">
                 <div className="flex items-start">
                   <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                   <div>
-                    <p className="text-gray-900 font-medium">Unlimited document generations</p>
-                    <p className="text-sm text-gray-600">You'll be limited to 15 free generations per week</p>
+                    <p className="text-text font-medium">Unlimited document generations</p>
+                    <p className="text-sm text-muted">You'll be limited to 15 free generations per week</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
                   <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                   <div>
-                    <p className="text-gray-900 font-medium">DOCX downloads</p>
-                    <p className="text-sm text-gray-600">Only PDF downloads will be available</p>
+                    <p className="text-text font-medium">DOCX downloads</p>
+                    <p className="text-sm text-muted">Only PDF downloads will be available</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
                   <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                   <div>
-                    <p className="text-gray-900 font-medium">Premium templates</p>
-                    <p className="text-sm text-gray-600">Access limited to Professional template only</p>
+                    <p className="text-text font-medium">Premium templates</p>
+                    <p className="text-sm text-muted">Access limited to Professional template only</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
                   <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                   <div>
-                    <p className="text-gray-900 font-medium">Priority support</p>
-                    <p className="text-sm text-gray-600">Standard support response times will apply</p>
+                    <p className="text-text font-medium">Priority support</p>
+                    <p className="text-sm text-muted">Standard support response times will apply</p>
                   </div>
                 </div>
               </div>
@@ -190,7 +190,7 @@ export default function CancelSubscription() {
               <div className="flex flex-wrap gap-3">
                 <Link 
                   href="/support"
-                  className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-surface hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Share Feedback
                 </Link>
@@ -204,8 +204,8 @@ export default function CancelSubscription() {
             </div>
 
             {/* Cancellation Process */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">How cancellation works:</h2>
+            <div className="bg-surface text-text rounded-lg shadow-sm border border-border p-6">
+              <h2 className="text-lg font-semibold text-text mb-4">How cancellation works:</h2>
               
               <div className="space-y-4">
                 <div className="flex items-start">
@@ -213,8 +213,8 @@ export default function CancelSubscription() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-gray-900 font-medium">Keep access until billing period ends</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-text font-medium">Keep access until billing period ends</p>
+                    <p className="text-sm text-muted">
                       You'll retain Pro features until the end of your current billing cycle
                     </p>
                   </div>
@@ -225,8 +225,8 @@ export default function CancelSubscription() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-gray-900 font-medium">No immediate charges</p>
-                    <p className="text-sm text-gray-600">Your subscription will simply not renew</p>
+                    <p className="text-text font-medium">No immediate charges</p>
+                    <p className="text-sm text-muted">Your subscription will simply not renew</p>
                   </div>
                 </div>
                 
@@ -235,15 +235,15 @@ export default function CancelSubscription() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-gray-900 font-medium">Easy to resubscribe</p>
-                    <p className="text-sm text-gray-600">You can upgrade again anytime</p>
+                    <p className="text-text font-medium">Easy to resubscribe</p>
+                    <p className="text-sm text-muted">You can upgrade again anytime</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-surface text-text rounded-lg shadow-sm border border-border p-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleCancelSubscription}
@@ -265,13 +265,13 @@ export default function CancelSubscription() {
                 
                 <Link 
                   href="/account"
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-border text-base font-medium rounded-md text-text bg-surface hover:bg-bg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Keep My Subscription
                 </Link>
               </div>
               
-              <p className="text-xs text-gray-500 mt-4 text-center">
+              <p className="text-xs text-muted mt-4 text-center">
                 This will open Stripe's secure billing portal where you can manage your subscription.
               </p>
             </div>

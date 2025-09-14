@@ -134,14 +134,14 @@ export default function PricingPage() {
         canonical="https://tailoredcv.app/pricing"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="min-h-screen bg-bg">
         {/* Header */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
+          <div className="absolute inset-0 bg-blue-600/10"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
             <div className="text-center">
               <div className="flex items-center justify-center space-x-2 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-4xl font-bold text-gradient">TailoredCV Pricing</h1>
@@ -160,10 +160,10 @@ export default function PricingPage() {
                   }
                 />
               </div>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+              <p className="text-xl text-muted max-w-3xl mx-auto mb-4">
                 Choose the perfect plan to create professional, ATS-friendly resumes and cover letters
               </p>
-              <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 max-w-3xl mx-auto mb-8">
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 max-w-3xl mx-auto mb-8">
                 <div className="text-center space-y-2">
                   <div className="flex items-center justify-center space-x-2 text-sm text-blue-800">
                     <Info className="w-4 h-4 flex-shrink-0" />
@@ -194,13 +194,13 @@ export default function PricingPage() {
                 key={plan.name}
                 className={`relative rounded-2xl border-2 p-8 shadow-lg transition-all duration-300 hover:shadow-xl ${
                   plan.popular
-                    ? 'border-blue-500 bg-white scale-105'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-blue-500 bg-surface scale-105'
+                    : 'border-border bg-surface hover:border-border'
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+                    <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow-lg">
                       <Crown className="w-4 h-4 mr-2" />
                       Most Popular
                     </span>
@@ -209,7 +209,7 @@ export default function PricingPage() {
 
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    <h3 className="text-2xl font-bold text-text">{plan.name}</h3>
                     {plan.name === 'Free' && (
                       <InfoTooltip 
                         content="Perfect for trying our service! Get 10 tailored resumes per week to test our AI technology."
@@ -229,36 +229,36 @@ export default function PricingPage() {
                       />
                     )}
                   </div>
-                  <p className="text-gray-600 mb-4">{plan.description}</p>
+                  <p className="text-muted mb-4">{plan.description}</p>
                   
                   <div className="mb-4">
                     {plan.monthlyPrice === 0 ? (
-                      <div className="text-4xl font-bold text-gray-900">Free</div>
+                        <div className="text-4xl font-bold text-text">Free</div>
                     ) : plan.name === 'Day Pass' ? (
                       <div className="flex items-center justify-center space-x-2">
-                        <span className="text-4xl font-bold text-gray-900">
+                        <span className="text-4xl font-bold text-text">
                           €{plan.monthlyPrice}
                         </span>
-                        <span className="text-gray-600">/24h</span>
+                        <span className="text-muted">/24h</span>
                       </div>
                     ) : plan.name === 'Pro Annual' ? (
                       <div className="text-center">
                         <div className="flex items-center justify-center space-x-2">
-                          <span className="text-4xl font-bold text-gray-900">
+                          <span className="text-4xl font-bold text-text">
                             €{plan.annualPrice}
                           </span>
-                          <span className="text-gray-600">/year</span>
+                          <span className="text-muted">/year</span>
                         </div>
-                        <div className="text-sm text-gray-500 mt-1">
+                        <div className="text-sm text-muted mt-1">
                           €{plan.monthlyPrice}/month equivalent
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
-                        <span className="text-4xl font-bold text-gray-900">
+                        <span className="text-4xl font-bold text-text">
                           €{plan.monthlyPrice}
                         </span>
-                        <span className="text-gray-600">/month</span>
+                        <span className="text-muted">/month</span>
                       </div>
                     )}
                   </div>
@@ -268,7 +268,7 @@ export default function PricingPage() {
                   {plan.features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-start space-x-3">
                       <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
+                      <span className="text-text">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -284,8 +284,8 @@ export default function PricingPage() {
                   disabled={loading === plan.planType}
                   className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                     plan.buttonVariant === 'primary'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                      : 'bg-surface text-text hover:bg-bg border border-border'
                   } ${loading === plan.planType ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading === plan.planType ? (
@@ -299,7 +299,7 @@ export default function PricingPage() {
                 </button>
 
                 {plan.name === 'Free' && (
-                  <p className="text-center text-sm text-gray-500 mt-4">
+                  <p className="text-center text-sm text-muted mt-4">
                     No credit card required
                   </p>
                 )}
@@ -310,37 +310,37 @@ export default function PricingPage() {
           {/* FAQ Section */}
           <div className="mt-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-text mb-4">Frequently Asked Questions</h2>
+              <p className="text-muted max-w-2xl mx-auto">
                 Got questions? We've got answers.
               </p>
             </div>
 
             <div className="max-w-4xl mx-auto space-y-8">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">What happens when I run out of credits?</h3>
-                <p className="text-gray-600">
+              <div className="bg-surface text-text rounded-lg border border-border p-6">
+                <h3 className="text-lg font-medium text-text mb-2">What happens when I run out of credits?</h3>
+                <p className="text-muted">
                   Free users get 10 credits per week that reset every Monday at midnight Dublin time. Each generation consumes 1 credit. Pro users have unlimited usage.
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Can I cancel my subscription anytime?</h3>
-                <p className="text-gray-600">
+              <div className="bg-surface text-text rounded-lg border border-border p-6">
+                <h3 className="text-lg font-medium text-text mb-2">Can I cancel my subscription anytime?</h3>
+                <p className="text-muted">
                   Yes! You can cancel your subscription at any time. You'll retain access to Pro features until the end of your current billing period.
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">What's the difference between templates?</h3>
-                <p className="text-gray-600">
+              <div className="bg-surface text-text rounded-lg border border-border p-6">
+                <h3 className="text-lg font-medium text-text mb-2">What's the difference between templates?</h3>
+                <p className="text-muted">
                   Free users get access to our Professional template. Pro users unlock all premium templates including Modern, Creative, Minimal, Two Column, and Executive designs.
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">How does the Day Pass work?</h3>
-                <p className="text-gray-600">
+              <div className="bg-surface text-text rounded-lg border border-border p-6">
+                <h3 className="text-lg font-medium text-text mb-2">How does the Day Pass work?</h3>
+                <p className="text-muted">
                   The Day Pass gives you 24 hours of full Pro access starting from the moment of purchase. You get 30 generations, 100 PDF & DOCX downloads, all premium templates, and full customization features - perfect for urgent job applications.
                 </p>
               </div>
@@ -350,14 +350,14 @@ export default function PricingPage() {
 
           {/* CTA Section */}
           <div className="mt-20 text-center">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+            <div className="bg-blue-600 rounded-2xl p-8 text-white">
               <h2 className="text-3xl font-bold mb-4">Ready to create your perfect resume?</h2>
               <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
                 Join thousands of professionals who've landed their dream jobs with TailoredCV
               </p>
               <Link 
                 href={session ? '/wizard' : '/auth/signup'} 
-                className="inline-flex items-center space-x-2 bg-white text-blue-600 px-8 py-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center space-x-2 bg-surface text-primary px-8 py-4 rounded-lg font-medium hover:bg-surface-elevated transition-colors"
               >
                 <Zap className="w-5 h-5" />
                 <span>Get Started Now</span>

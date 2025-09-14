@@ -45,11 +45,11 @@ export default function FirstTimeUserGuide() {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       
       {/* Guide Modal */}
-      <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-2xl border border-gray-200 animate-scale-in my-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 animate-scale-in my-8 max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+          className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
         >
           <X className="w-6 h-6" />
         </button>
@@ -57,13 +57,13 @@ export default function FirstTimeUserGuide() {
         {/* Header */}
         <div className="p-8 pb-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Sparkles className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Welcome to TailoredCV! 👋
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400 dark:text-gray-500">
               Transform your job applications with AI-powered resume and cover letter optimization
             </p>
           </div>
@@ -75,8 +75,8 @@ export default function FirstTimeUserGuide() {
                 <Upload className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">1. Upload Your Resume</h3>
-                <p className="text-xs text-gray-600">Or build one from scratch using our wizard</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">1. Upload Your Resume</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Or build one from scratch using our wizard</p>
               </div>
             </div>
 
@@ -85,8 +85,8 @@ export default function FirstTimeUserGuide() {
                 <Zap className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">2. Paste Job Description</h3>
-                <p className="text-xs text-gray-600">AI analyzes requirements and tailors your documents</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">2. Paste Job Description</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">AI analyzes requirements and tailors your documents</p>
               </div>
             </div>
 
@@ -95,35 +95,35 @@ export default function FirstTimeUserGuide() {
                 <Download className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">3. Download & Apply</h3>
-                <p className="text-xs text-gray-600">Get perfectly matched resume + cover letter</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">3. Download & Apply</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Get perfectly matched resume + cover letter</p>
               </div>
             </div>
           </div>
 
           {/* Benefits */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
+          <div className="bg-blue-50 rounded-xl p-4 mb-6">
             <div className="text-center">
-              <h3 className="font-semibold text-gray-900 mb-2 text-sm">Why TailoredCV works:</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm">Why TailoredCV works:</h3>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-lg font-bold text-blue-600">10x</div>
-                  <div className="text-xs text-gray-600">Faster</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Faster</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-purple-600">95%</div>
-                  <div className="text-xs text-gray-600">ATS Pass</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">ATS Pass</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-green-600">3x</div>
-                  <div className="text-xs text-gray-600">More Callbacks</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">More Callbacks</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Free Trial + Plan Notice */}
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div className="text-center">
               <div className="text-green-800 font-semibold text-sm mb-1">✨ Start Completely Free</div>
               <div className="text-green-700 text-xs mb-2">Try immediately - no signup required!</div>

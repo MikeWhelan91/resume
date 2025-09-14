@@ -496,13 +496,13 @@ export default function ResultsPage() {
     const renderCVPreview = () => (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">{terms.Resume} Preview</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Preview</h3>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <FileText className="w-4 h-4" />
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
           <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
         </div>
       </div>
@@ -515,13 +515,13 @@ export default function ResultsPage() {
     return (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Cover Letter Preview</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white">Cover Letter Preview</h3>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <FileText className="w-4 h-4" />
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
           <div style={{ padding: `${25 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
             {userData ? (
               <>
@@ -599,7 +599,7 @@ export default function ResultsPage() {
       />
       
       {/* Simple Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-surface text-text border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full px-4 py-2 mb-4">
@@ -608,8 +608,8 @@ export default function ResultsPage() {
                 Documents Ready
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Documents Are Ready</h1>
-            <p className="text-gray-600 dark:text-gray-300">Download, customize, and apply with confidence.</p>
+            <h1 className="text-3xl font-bold text-text mb-2">Your Documents Are Ready</h1>
+            <p className="text-muted">Download, customize, and apply with confidence.</p>
           </div>
         </div>
       </div>
@@ -620,15 +620,15 @@ export default function ResultsPage() {
           <aside className="lg:col-span-1">
             <div className="card p-6 space-y-6 sticky top-8">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <Palette className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Customization</h2>
+                <h2 className="text-lg font-semibold text-text">Customization</h2>
               </div>
           
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700">Template Style</label>
+                  <label className="text-sm font-medium text-muted">Template Style</label>
                   <div className="grid grid-cols-2 gap-2">
                     {TEMPLATES.map(t => {
                       const isProTemplate = t.id !== 'professional';
@@ -640,10 +640,10 @@ export default function ResultsPage() {
                           key={t.id}
                           className={`relative p-3 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
                             isSelected 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : isLocked 
-                              ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-accent bg-accent/10 text-text' 
+                          : isLocked 
+                          ? 'border-border bg-bg text-muted cursor-not-allowed' 
+                          : 'border-border bg-surface text-text hover:border-border hover:bg-bg'
                           }`}
                           onClick={() => !isLocked && setTemplate(t.id)}
                           disabled={isLocked}
@@ -653,7 +653,7 @@ export default function ResultsPage() {
                             {isLocked && <Lock className="w-4 h-4" />}
                           </div>
                           {isProTemplate && userPlan === 'free' && (
-                            <div className="text-xs text-gray-400 mt-1">Pro only</div>
+                            <div className="text-xs text-muted mt-1">Pro only</div>
                           )}
                         </button>
                       );
@@ -661,10 +661,10 @@ export default function ResultsPage() {
                   </div>
                   {userPlan === 'free' && (
                     <>
-                      <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                      <div className="text-xs text-muted bg-yellow-50 border border-yellow-200 rounded-lg p-2">
                         <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all templates.
                       </div>
-                      <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                      <div className="text-xs text-muted bg-blue-50 border border-blue-200 rounded-lg p-2">
                         <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0} remaining. Credits reset every Monday at midnight Dublin time.
                       </div>
                     </>
@@ -675,7 +675,7 @@ export default function ResultsPage() {
               {/* Theme Colors - Only for CV/Resume users */}
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-muted flex items-center gap-2">
                     Theme Color
                     {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
                   </h3>
@@ -720,7 +720,7 @@ export default function ResultsPage() {
               {/* Hide tone dropdown for CV-only results */}
               {userGoal !== 'cv' && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700">Cover Letter Tone</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cover Letter Tone</label>
                   <select 
                     className="form-select w-full"
                     value={tone}
@@ -738,14 +738,14 @@ export default function ResultsPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700" htmlFor="jobDescription">Job Description</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="jobDescription">Job Description</label>
                   {jobDescription.trim() && (
                     <button
                       onClick={() => {
                         setJobDescription('');
                         localStorage.removeItem('jobDescription');
                       }}
-                      className="text-xs text-gray-500 hover:text-gray-700 underline"
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
                     >
                       Clear
                     </button>
@@ -771,7 +771,7 @@ export default function ResultsPage() {
                   <button 
                     className={`btn flex items-center gap-2 justify-center ${
                       (isGenerating || !jobDescription.trim() || !canGenerate()) 
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300' 
+                        ? 'bg-border text-muted cursor-not-allowed border border-border' 
                         : 'btn-primary'
                     }`}
                     onClick={generateTailoredContent}
@@ -826,19 +826,19 @@ export default function ResultsPage() {
                 <div className={`grid gap-4 ${userGoal === 'both' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   {(userGoal === 'cv' || userGoal === 'both') && (
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-gray-700">Resume Format</label>
+                      <label className="text-sm font-bold text-muted">Resume Format</label>
                       <div className="relative">
                         <select
                           value={resumeFormat}
                           onChange={(e) => setResumeFormat(e.target.value)}
-                          className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
                         >
                           <option value="pdf">PDF</option>
                           <option value="docx" disabled={!canUseDocx()}>
                             DOCX {!canUseDocx() && '(Pro only)'}
                           </option>
                         </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                       </div>
                       <button 
                         className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
@@ -858,19 +858,19 @@ export default function ResultsPage() {
                   
                   {(userGoal === 'cover-letter' || userGoal === 'both') && (
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-gray-700">Cover Letter Format</label>
+                      <label className="text-sm font-bold text-muted">Cover Letter Format</label>
                       <div className="relative">
                         <select
                           value={coverLetterFormat}
                           onChange={(e) => setCoverLetterFormat(e.target.value)}
-                          className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
                         >
                           <option value="pdf">PDF</option>
                           <option value="docx" disabled={!canUseDocx()}>
                             DOCX {!canUseDocx() && '(Pro only)'}
                           </option>
                         </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                       </div>
                       <button 
                         className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
@@ -905,9 +905,9 @@ export default function ResultsPage() {
 
                 {userPlan === 'day_pass' && dayPassUsage && (
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-200 rounded-lg px-3 py-2">
-                      <div className="w-2 h-2 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium bg-gradient-to-r from-orange-700 to-pink-700 bg-clip-text text-transparent">
+                    <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-orange-700">
                         {dayPassUsage.generationsUsed}/{dayPassUsage.generationsLimit} generations used today
                       </span>
                     </div>
@@ -919,9 +919,9 @@ export default function ResultsPage() {
 
                 {!session && trialUsage && (
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg px-3 py-2">
-                      <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-teal-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium bg-gradient-to-r from-green-700 to-teal-700 bg-clip-text text-transparent">
+                    <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-green-700">
                         🎯 FREE TRIAL - {getTrialDownloadsRemaining()} downloads remaining
                       </span>
                     </div>
@@ -943,10 +943,10 @@ export default function ResultsPage() {
           {/* Right side previews */}
           <section className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-teal-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <FileText className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">Document Previews</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Previews</h2>
             </div>
             
             <div className={`grid gap-6 ${userGoal === 'both' ? 'xl:grid-cols-2' : 'grid-cols-1 max-w-2xl mx-auto'}`}>
