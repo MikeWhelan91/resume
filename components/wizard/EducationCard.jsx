@@ -77,7 +77,6 @@ export default function EducationCard({ value, onChange, onRemove, onDuplicate, 
             type="checkbox" 
             checked={value.present || false} 
             onChange={e => updateField('present', e.target.checked)}
-            className="w-4 h-4 text-primary bg-surface border-border rounded focus:ring-primary focus:ring-2 accent-primary"
           />
           <label htmlFor={`edu-present-${index}`} className="text-sm text-text">Present</label>
         </div>

@@ -23,7 +23,8 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(copy .env.local .env)",
-      "Bash(del \"C:\\resume\\pages\\api\\consolidate-skills.js\")"
+      "Bash(del \"C:\\resume\\pages\\api\\consolidate-skills.js\")",
+      "Bash(del \"C:\\Users\\whela\\resume\\pages\\api\\billing\\create-portal-session.js\")"
     ],
     "deny": [],
     "ask": []
