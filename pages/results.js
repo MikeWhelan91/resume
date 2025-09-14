@@ -96,8 +96,11 @@ export default function ResultsPage() {
       // Authenticated users
       if (userPlan === 'free') {
         return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+      } else if (userPlan === 'day_pass') {
+        // Day pass users have generation limits
+        return dayPassUsage ? (dayPassUsage.generationsUsed < dayPassUsage.generationsLimit) : false;
       }
-      return true; // Pro users can generate (subject to their own limits)
+      return true; // Pro users can generate (unlimited)
     } else {
       // Trial users - need at least 2 generations remaining (since each generation uses 2)
       return trialUsage ? (trialUsage.generationsRemaining >= 2) : false;
@@ -210,8 +213,17 @@ export default function ResultsPage() {
 
     if (!canDownload()) {
       if (session) {
-        const remaining = getCreditsRemaining();
-        showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+        if (userPlan === 'free') {
+          const remaining = getCreditsRemaining();
+          showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+        } else if (userPlan === 'day_pass') {
+          // Day pass users should have unlimited downloads, so this shouldn't happen
+          showUpgradeAlert('Unable to download at this time. Please try again or contact support if the issue persists.');
+        }
+        // Pro users should never hit this condition, but if they do, show generic message
+        else {
+          showUpgradeAlert('Unable to download at this time. Please try again or contact support if the issue persists.');
+        }
       } else {
         const remaining = getTrialDownloadsRemaining();
         showSignUpPrompt(`You've used all your trial downloads. You have ${remaining} downloads remaining. Sign up for unlimited downloads!`);
@@ -420,8 +432,16 @@ export default function ResultsPage() {
 
     if (!canGenerate()) {
       if (session) {
-        const remaining = getCreditsRemaining();
-        showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        if (userPlan === 'free') {
+          const remaining = getCreditsRemaining();
+          showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        } else if (userPlan === 'day_pass') {
+          showUpgradeAlert(`You've reached your day pass generation limit. Upgrade to Pro for unlimited generations or purchase another day pass!`);
+        }
+        // Pro users should never hit this condition, but if they do, show generic message
+        else {
+          showUpgradeAlert('Unable to generate at this time. Please try again or contact support if the issue persists.');
+        }
       } else {
         const remaining = getTrialGenerationsRemaining();
         showSignUpPrompt(`You've used all your trial generations. You have ${remaining} generations remaining. Sign up for unlimited generations!`);
@@ -596,12 +616,12 @@ export default function ResultsPage() {
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
-          <div style={{ padding: `${25 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '300px', maxHeight: '400px'}}>
+          <div style={{ padding: `${25 * scale}px`, fontSize: `${12 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
             {userData ? (
               <>
                 <div style={{ marginBottom: `${15 * scale}px`, textAlign: 'right' }}>
-                  <p style={{ fontSize: `${9 * scale}px`, color: '#666' }}>
+                  <p style={{ fontSize: `${11 * scale}px`, color: '#666' }}>
                     {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   </p>
                 </div>
@@ -609,12 +629,12 @@ export default function ResultsPage() {
                 <div style={{ marginBottom: `${15 * scale}px` }}>
                   {userData.coverLetter ? (
                     limitCoverLetter(userData.coverLetter).map((paragraph, i) => (
-                      <p key={i} style={{ fontSize: `${9 * scale}px`, marginBottom: `${8 * scale}px`, textAlign: 'justify' }}>
+                      <p key={i} style={{ fontSize: `${11 * scale}px`, marginBottom: `${8 * scale}px`, textAlign: 'justify' }}>
                         {paragraph.trim()}
                       </p>
                     ))
                   ) : (
-                    <p style={{ fontSize: `${9 * scale}px`, textAlign: 'justify' }}>
+                    <p style={{ fontSize: `${11 * scale}px`, textAlign: 'justify' }}>
                       Dear Hiring Manager,<br/><br/>
                       I am writing to express my interest in the position at your company. With my background and experience, I believe I would be a valuable addition to your team.<br/><br/>
                       Thank you for considering my application. I look forward to hearing from you.
@@ -623,14 +643,14 @@ export default function ResultsPage() {
                 </div>
 
                 <div style={{ marginTop: `${20 * scale}px` }}>
-                  <p style={{ fontSize: `${9 * scale}px` }}>Sincerely,</p>
-                  <p style={{ fontSize: `${9 * scale}px`, marginTop: `${15 * scale}px`, fontWeight: 'bold' }}>
+                  <p style={{ fontSize: `${11 * scale}px` }}>Sincerely,</p>
+                  <p style={{ fontSize: `${11 * scale}px`, marginTop: `${15 * scale}px`, fontWeight: 'bold' }}>
                     {userData.resumeData?.name || userData.name || 'Your Name'}
                   </p>
                 </div>
               </>
             ) : (
-              <div style={{ textAlign: 'center', color: '#666', marginTop: `${100 * scale}px`, fontSize: `${10 * scale}px` }}>
+              <div style={{ textAlign: 'center', color: '#666', marginTop: `${100 * scale}px`, fontSize: `${12 * scale}px` }}>
                 {`No data available. Please generate a ${terms.resume} first.`}
               </div>
             )}

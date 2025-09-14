@@ -20,6 +20,7 @@ export default function HeroUpload() {
   const [checkingResume, setCheckingResume] = useState(false);
   const [showNewUserHelp, setShowNewUserHelp] = useState(false);
   const [showTourTrigger, setShowTourTrigger] = useState(false);
+  const [hasJustUploaded, setHasJustUploaded] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -91,6 +92,7 @@ export default function HeroUpload() {
     const f = e.target.files?.[0];
     if(!f) return;
     setLoading(true);
+    setHasJustUploaded(true); // Mark that user has uploaded
     setLoadingMessage('Uploading file...');
     try{
       const fd = new FormData();
@@ -135,7 +137,7 @@ export default function HeroUpload() {
           <div className="flex flex-col lg:flex-row items-center lg:items-start min-h-[90vh] py-12 lg:py-20">
             
             {/* Left Column - Content */}
-            <div className="flex-1 lg:pr-20 text-center lg:text-left max-w-2xl lg:max-w-none">
+            <div className="flex-1 lg:pr-20 text-center max-w-2xl lg:max-w-none">
               
 
               {/* Clean headline */}
@@ -169,7 +171,7 @@ export default function HeroUpload() {
                         <Upload className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold text-text">{terms.resume} Upload</div>
+                        <div className="font-semibold text-text">{terms.Resume} Upload</div>
                         <div className="text-xs text-muted">Instant AI Analysis</div>
                       </div>
                     </div>
@@ -231,8 +233,8 @@ export default function HeroUpload() {
                     </button>
                   </InfoTooltip>
 
-                  {/* Recent resume option for logged-in users - hide during upload */}
-                  {session?.user && hasLatestResume && !loading && (
+                  {/* Recent resume option for logged-in users - hide during upload and after upload */}
+                  {session?.user && hasLatestResume && !loading && !hasJustUploaded && (
                     <InfoTooltip 
                       content="Continue editing your previously saved resume."
                       position="bottom"
@@ -384,16 +386,16 @@ export default function HeroUpload() {
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
-              <div className="text-2xl font-bold text-blue-600 mb-2">10x</div>
-              <div className="text-sm text-muted">Faster Application Process</div>
+              <div className="text-2xl font-bold text-blue-600 mb-2">AI</div>
+              <div className="text-sm text-muted">Powered Customization</div>
             </div>
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
-              <div className="text-2xl font-bold text-purple-600 mb-2">95%</div>
-              <div className="text-sm text-muted">ATS Compatibility Rate</div>
+              <div className="text-2xl font-bold text-purple-600 mb-2">ATS</div>
+              <div className="text-sm text-muted">Optimized Format</div>
             </div>
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
-              <div className="text-2xl font-bold text-green-600 mb-2">3x</div>
-              <div className="text-sm text-muted">More Interview Callbacks</div>
+              <div className="text-2xl font-bold text-green-600 mb-2">PDF</div>
+              <div className="text-sm text-muted">Professional Output</div>
             </div>
           </div>
           
