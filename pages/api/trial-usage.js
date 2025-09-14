@@ -1,4 +1,12 @@
-import { prisma } from '../../lib/prisma';
+// Import prisma with error handling
+let prisma;
+try {
+  const prismaModule = require('../../lib/prisma');
+  prisma = prismaModule.prisma;
+} catch (error) {
+  console.error('Failed to import Prisma client:', error);
+  prisma = null;
+}
 
 // Helper function to get client IP
 function getClientIP(req) {

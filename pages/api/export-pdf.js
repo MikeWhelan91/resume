@@ -4,22 +4,23 @@ import React from "react";
 import ReactDOMServer from "react-dom/server";
 import puppeteer from "puppeteer";
 
-import Classic from "../../components/templates/Classic";
-import TwoCol from "../../components/templates/TwoCol";
-import Centered from "../../components/templates/Centered";
-import Sidebar from "../../components/templates/Sidebar";
-import Modern from "../../components/templates/Modern";
+import ResumeTemplate from "../../components/ResumeTemplate";
 
 export const config = {
   api: { bodyParser: { sizeLimit: "1mb" } },
 };
 
 const TEMPLATE_MAP = {
-  classic: Classic,
-  twocol: TwoCol,
-  centered: Centered,
-  sidebar: Sidebar,
-  modern: Modern,
+  classic: 'professional',
+  twocol: 'twocolumn',
+  centered: 'minimal',
+  sidebar: 'twocolumn',
+  modern: 'modern',
+  professional: 'professional',
+  creative: 'creative',
+  minimal: 'minimal',
+  twocolumn: 'twocolumn',
+  executive: 'executive',
 };
 
 async function launchBrowser() {
@@ -41,8 +42,16 @@ const INLINED_CSS = [
 
 /** Build a full HTML doc around a given template */
 function renderHtml({ data, template = "classic", mode = "ats" }) {
-  const Comp = TEMPLATE_MAP[String(template).toLowerCase()] || Classic;
-  const body = ReactDOMServer.renderToStaticMarkup(<Comp data={data || {}} />);
+  const templateName = TEMPLATE_MAP[String(template).toLowerCase()] || 'professional';
+  const body = ReactDOMServer.renderToStaticMarkup(
+    <ResumeTemplate 
+      userData={data || {}} 
+      template={templateName} 
+      accent="#2563eb" 
+      isPDF={true}
+      userPlan="pro"
+    />
+  );
 
   // ATS mode: enforce monochrome, remove backgrounds/shadows; print-safe
   const atsCss = `

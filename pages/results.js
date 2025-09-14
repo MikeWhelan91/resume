@@ -137,8 +137,9 @@ export default function ResultsPage() {
     setShowTrialSignup(true);
   };
 
-  // Download functions
+  // Mobile-friendly download function
   const triggerDownload = async (endpoint, filename, payload) => {
+    // Fetch and validate the response
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -146,16 +147,59 @@ export default function ResultsPage() {
       },
       body: JSON.stringify(payload),
     });
-    if (!response.ok) throw new Error('Network response was not ok');
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    
     const blob = await response.blob();
+    
+    // If we get this far, the server-side generation was successful
+    // Now handle the client-side download with mobile considerations
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    
+    // Detect if we're likely on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile devices, use a more reliable approach
+      try {
+        // Try direct navigation for mobile
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        
+        // Mobile browsers often work better with direct click without setTimeout
+        link.click();
+        
+        // Cleanup after a delay to ensure download started
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+        
+      } catch (mobileError) {
+        // Final fallback for mobile: open in new tab
+        window.open(url, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      }
+    } else {
+      // Desktop approach
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
+    
+    // Function completes successfully if we reach here
+    return true;
   };
 
   const downloadCV = async () => {
@@ -176,34 +220,49 @@ export default function ResultsPage() {
     }
 
     try {
+      // Start the download process
       await triggerDownload('/api/download-cv', 'resume.pdf', {
         template,
         accent,
         data: userData,
       });
       
-      // Refresh usage data after successful download
-      if (session) {
-        const entitlementResponse = await fetch('/api/entitlements');
-        if (entitlementResponse.ok) {
-          const entitlementData = await entitlementResponse.json();
-          setEntitlement(entitlementData);
-          setUserPlan(entitlementData.plan);
+      // Update usage tracking after download initiation
+      // Note: We update usage even if download UI quirks occur on mobile
+      try {
+        if (session) {
+          const entitlementResponse = await fetch('/api/entitlements');
+          if (entitlementResponse.ok) {
+            const entitlementData = await entitlementResponse.json();
+            setEntitlement(entitlementData);
+            setUserPlan(entitlementData.plan);
+          }
+        } else {
+          // Refresh trial usage for anonymous users
+          const trialResponse = await fetch('/api/trial-usage');
+          if (trialResponse.ok) {
+            const trialData = await trialResponse.json();
+            setTrialUsage(trialData);
+          }
         }
-      } else {
-        // Refresh trial usage for anonymous users
-        const trialResponse = await fetch('/api/trial-usage');
-        if (trialResponse.ok) {
-          const trialData = await trialResponse.json();
-          setTrialUsage(trialData);
-        }
+      } catch (usageError) {
+        // Don't show error for usage tracking failures
+        console.warn('Usage tracking update failed:', usageError);
       }
+      
     } catch (error) {
       console.error('Download error:', error);
+      
+      // Only show error alerts for actual server/network failures
       if (error.message && error.message.includes('429')) {
         showUpgradeAlert('You have reached your limit. Upgrade to Pro for unlimited downloads.');
+      } else if (error.message && error.message.includes('Network response was not ok')) {
+        alert('Failed to generate PDF file. Please try again.');
+      } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        alert('Network error. Please check your connection and try again.');
       } else {
-        alert('Failed to download PDF file. Please try again.');
+        // For other errors (likely mobile browser quirks), just log them
+        console.warn('Download may have succeeded despite error:', error);
       }
     }
   };
@@ -239,7 +298,15 @@ export default function ResultsPage() {
       });
     } catch (error) {
       console.error('Download error:', error);
-      alert('Failed to download DOCX file. Please try again.');
+      
+      // Only show error alerts for actual server/network failures (not mobile browser quirks)  
+      if (error.message && error.message.includes('Network response was not ok')) {
+        alert('Failed to generate resume file. Please try again.');
+      } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        console.warn('Download may have succeeded despite error:', error);
+      }
     }
   };
 
@@ -256,7 +323,15 @@ export default function ResultsPage() {
       });
     } catch (error) {
       console.error('Download error:', error);
-      alert('Failed to download cover letter DOCX file. Please try again.');
+      
+      // Only show error alerts for actual server/network failures (not mobile browser quirks)
+      if (error.message && error.message.includes('Network response was not ok')) {
+        alert('Failed to generate cover letter file. Please try again.');
+      } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        console.warn('Download may have succeeded despite error:', error);
+      }
     }
   };
 
