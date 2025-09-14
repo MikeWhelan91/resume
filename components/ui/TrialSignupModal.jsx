@@ -48,8 +48,8 @@ export default function TrialSignupModal({
         
         <div className="grid md:grid-cols-2 gap-4 text-sm">
           <div className="bg-surface rounded-lg p-4 border border-border">
-            <div className="font-medium text-gray-700 mb-2">🚀 Trial (You)</div>
-            <ul className="space-y-1 text-gray-600">
+            <div className="font-medium text-muted mb-2">🚀 Trial (You)</div>
+            <ul className="space-y-1 text-muted">
               <li>• 2 total generations</li>
               <li>• PDF downloads only</li>
               <li>• Basic templates</li>
@@ -68,7 +68,7 @@ export default function TrialSignupModal({
         </div>
       </div>
 
-      <div className="text-center text-xs text-gray-500 mb-6">
+      <div className="text-center text-xs text-muted mb-6">
         💡 <strong>Pro tip:</strong> Most users apply to 5-10 jobs per week. Free accounts give you enough generations for serious job hunting!
       </div>
     </>
@@ -84,7 +84,7 @@ export default function TrialSignupModal({
         <h2 className="text-2xl font-bold text-text mb-2">
           Trial credits used up
         </h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-muted mb-4">
           You've used all <strong>2 trial generations</strong>. Sign up to continue with 10 free generations per week!
         </p>
       </div>
@@ -102,7 +102,7 @@ export default function TrialSignupModal({
             </div>
             <div>
               <div className="font-medium text-gray-900 dark:text-white">10 personalized {terms.resumePlural} per week</div>
-              <div className="text-gray-600">5x more than your trial - enough for serious job hunting</div>
+              <div className="text-muted">5x more than your trial - enough for serious job hunting</div>
             </div>
           </div>
           
@@ -112,7 +112,7 @@ export default function TrialSignupModal({
             </div>
             <div>
               <div className="font-medium text-gray-900 dark:text-white">PDF + DOCX downloads</div>
-              <div className="text-gray-600">Professional formats accepted everywhere</div>
+              <div className="text-muted">Professional formats accepted everywhere</div>
             </div>
           </div>
           
@@ -122,13 +122,13 @@ export default function TrialSignupModal({
             </div>
             <div>
               <div className="font-medium text-gray-900 dark:text-white">Professional template</div>
-              <div className="text-gray-600">Clean, ATS-friendly design</div>
+              <div className="text-muted">Clean, ATS-friendly design</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="text-center text-xs text-gray-500 mb-6">
+      <div className="text-center text-xs text-muted mb-6">
         ✨ <strong>Still completely free</strong> - no credit card required, ever!
       </div>
     </>
@@ -144,7 +144,7 @@ export default function TrialSignupModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors z-10"
+          className="absolute top-4 right-4 text-muted hover:text-text transition-colors z-10"
         >
           <X className="w-6 h-6" />
         </button>
@@ -195,7 +195,7 @@ export default function TrialSignupModal({
 
           {/* Footer note */}
           <div className="text-center mt-6">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               By signing up, you agree to our Terms of Service and Privacy Policy.
               <br />
               <strong>No spam, ever.</strong> We only email you about your account.
@@ -207,7 +207,7 @@ export default function TrialSignupModal({
             <div className="text-center mt-4">
               <button
                 onClick={onClose}
-                className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 underline transition-colors"
+                className="text-sm text-muted hover:text-text underline transition-colors"
               >
                 Maybe later, I'll continue as trial user
               </button>

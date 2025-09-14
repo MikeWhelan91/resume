@@ -571,8 +571,8 @@ export default function ResultsPage() {
     const renderCVPreview = () => (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Preview</h3>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <h3 className="font-semibold text-text">{terms.Resume} Preview</h3>
+          <div className="flex items-center space-x-2 text-sm text-muted">
             <FileText className="w-4 h-4" />
             <span>PDF Ready</span>
           </div>
@@ -590,8 +590,8 @@ export default function ResultsPage() {
     return (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900 dark:text-white">Cover Letter Preview</h3>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <h3 className="font-semibold text-text">Cover Letter Preview</h3>
+          <div className="flex items-center space-x-2 text-sm text-muted">
             <FileText className="w-4 h-4" />
             <span>PDF Ready</span>
           </div>
@@ -736,10 +736,10 @@ export default function ResultsPage() {
                   </div>
                   {userPlan === 'free' && (
                     <>
-                      <div className="text-xs text-muted bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                      <div className="text-xs text-muted bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
                         <strong>Free Plan:</strong> Only Professional template available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all templates.
                       </div>
-                      <div className="text-xs text-muted bg-blue-50 border border-blue-200 rounded-lg p-2">
+                      <div className="text-xs text-muted bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2">
                         <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0} remaining. Credits reset every Monday at midnight Dublin time.
                       </div>
                     </>
@@ -785,7 +785,7 @@ export default function ResultsPage() {
                     })}
                   </div>
                   {userPlan === 'free' && (
-                    <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                    <div className="text-xs text-muted bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
                       <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all color themes.
                     </div>
                   )}
@@ -795,7 +795,7 @@ export default function ResultsPage() {
               {/* Hide tone dropdown for CV-only results */}
               {userGoal !== 'cv' && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cover Letter Tone</label>
+                  <label className="text-sm font-medium text-muted">Cover Letter Tone</label>
                   <select 
                     className="form-select w-full"
                     value={tone}
@@ -805,7 +805,7 @@ export default function ResultsPage() {
                     <option value="friendly">Friendly</option>
                     <option value="concise">Concise</option>
                   </select>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     Select your preferred tone. Click "Generate" to apply changes (consumes 1 credit).
                   </p>
                 </div>
@@ -813,14 +813,14 @@ export default function ResultsPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="jobDescription">Job Description</label>
+                  <label className="text-sm font-medium text-muted" htmlFor="jobDescription">Job Description</label>
                   {jobDescription.trim() && (
                     <button
                       onClick={() => {
                         setJobDescription('');
                         localStorage.removeItem('jobDescription');
                       }}
-                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
+                      className="text-xs text-muted hover:text-text underline"
                     >
                       Clear
                     </button>
@@ -889,7 +889,7 @@ export default function ResultsPage() {
                     </div>
 
                     {userPlan === 'free' && (
-                      <div className="text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded-lg p-2 mt-2">
+                      <div className="text-xs text-muted bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2 mt-2">
                         <strong>Pro Feature:</strong> ATS {terms.isUK ? 'Optimisation' : 'Optimization'} enhances your {terms.resume} for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> to unlock this feature.
                       </div>
                     )}
@@ -966,13 +966,13 @@ export default function ResultsPage() {
                 
                 {session && userPlan === 'free' && (
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                    <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-sm font-medium text-blue-700">
                         {getCreditsRemaining() || 0} credits remaining
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted mt-2">
                       Credits reset every Monday at midnight Dublin time
                     </p>
                   </div>
@@ -980,13 +980,13 @@ export default function ResultsPage() {
 
                 {userPlan === 'day_pass' && dayPassUsage && (
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                    <div className="inline-flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                       <span className="text-sm font-medium text-orange-700">
                         {dayPassUsage.generationsUsed}/{dayPassUsage.generationsLimit} generations used today
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted mt-2">
                       Day pass expires in {Math.max(0, Math.ceil((new Date(dayPassUsage.expiresAt) - new Date()) / (1000 * 60 * 60)))} hours
                     </p>
                   </div>
@@ -994,13 +994,13 @@ export default function ResultsPage() {
 
                 {!session && trialUsage && (
                   <div className="mt-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <span className="text-sm font-medium text-green-700">
                         🎯 FREE TRIAL - {getTrialDownloadsRemaining()} downloads remaining
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted mt-2">
                       Sign up for unlimited access!
                     </p>
                     <button 
@@ -1021,7 +1021,7 @@ export default function ResultsPage() {
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <FileText className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Previews</h2>
+              <h2 className="text-lg font-semibold text-text">Document Previews</h2>
             </div>
             
             <div className={`grid gap-6 ${userGoal === 'both' ? 'xl:grid-cols-2' : 'grid-cols-1 max-w-2xl mx-auto'}`}>

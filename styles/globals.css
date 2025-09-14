@@ -127,6 +127,10 @@
   color: rgb(102, 102, 102); /* #666 - readable in both light and dark for PDF */
 }
 
+.dark .resume-muted {
+  color: rgb(156, 163, 175); /* gray-400 for dark mode visibility */
+}
+
 .resume-skill-tag {
   background-color: rgb(240, 240, 240); /* #f0f0f0 - readable in light mode */
 }
@@ -148,7 +152,10 @@
   color: rgb(102, 102, 102); /* #666 - consistent for PDF */
   text-align: center;
   margin-top: 100px;
-  font-size: 10px;
+}
+
+.dark .resume-no-data {
+  color: rgb(156, 163, 175); /* gray-400 for dark mode visibility */
 }
 
 /* Base Styles */

@@ -1,8 +1,11 @@
-  import fs from "fs";
+import fs from "fs";
 import path from "path";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import puppeteer from "puppeteer";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
+import { checkTrialLimit, consumeTrialUsage } from '../../lib/trialUtils';
 
 import ResumeTemplate from "../../components/ResumeTemplate";
 
@@ -79,6 +82,33 @@ function renderHtml({ data, template = "classic", mode = "ats" }) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  
+  // Check authentication and trial limits
+  let userId = null;
+  let isTrialUser = false;
+  
+  try {
+    const session = await getServerSession(req, res, authOptions);
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else {
+      // Anonymous trial user - check trial limits
+      isTrialUser = true;
+      const trialCheck = await checkTrialLimit(req, 'export');
+      if (!trialCheck.allowed) {
+        return res.status(429).json({ 
+          error: 'Trial export limit reached', 
+          message: `Trial allows ${trialCheck.limit} PDF exports. Sign up for unlimited exports!`,
+          code: 'TRIAL_EXPORT_LIMIT'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking authentication/trial limits:', error);
+    // For security, fail closed if we can't verify permissions
+    return res.status(500).json({ error: 'Unable to verify permissions' });
+  }
+  
   try {
     const { data, template = "classic", mode = "ats", filename = "resume" } =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
@@ -98,11 +128,25 @@ export default async function handler(req, res) {
     await page.close();
     await browser.close();
 
+    // Consume trial usage for anonymous users after successful PDF generation
+    if (isTrialUser) {
+      try {
+        await consumeTrialUsage(req, 'export');
+      } catch (error) {
+        console.error('Error tracking trial export usage:', error);
+        // Don't block the response if tracking fails
+      }
+    }
+
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${String(filename).replace(/"/g, "")}.pdf"`);
     return res.send(Buffer.from(pdf));
   } catch (e) {
     console.error("[export-pdf] error:", e);
-    return res.status(500).json({ error: "Failed to generate PDF", detail: String(e?.message || e) });
+    // Don't expose sensitive error details in production
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? String(e?.message || e)
+      : 'PDF generation failed';
+    return res.status(500).json({ error: "Failed to generate PDF", detail: errorMessage });
   }
 }

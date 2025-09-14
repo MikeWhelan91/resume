@@ -389,7 +389,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   }
                 />
               </div>
-              <p className="text-gray-600 dark:text-gray-300">Choose what you'd like to optimize based on the job description.</p>
+              <p className="text-muted">Choose what you'd like to optimize based on the job description.</p>
             </header>
             <div className="space-y-4">
               <div className="grid gap-3 max-w-2xl mx-auto">
@@ -407,11 +407,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'transparent'}}>
-                      {userGoal === 'cv' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                      {userGoal === 'cv' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Optimise your {terms.resume} for the job description</div>
+                      <div className="text-sm text-muted">Optimise your {terms.resume} for the job description</div>
                       <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
@@ -433,11 +433,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'transparent'}}>
-                      {userGoal === 'cover-letter' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                      {userGoal === 'cover-letter' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Cover Letter Only</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Generate a tailored cover letter for the job</div>
+                      <div className="text-sm text-muted">Generate a tailored cover letter for the job</div>
                       <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
@@ -456,11 +456,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'transparent'}}>
-                      {userGoal === 'both' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                      {userGoal === 'both' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Both {terms.Resume} and Cover Letter</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Get a complete application package</div>
+                      <div className="text-sm text-muted">Get a complete application package</div>
                       <div className="text-xs text-green-600 font-bold">
                         {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
                       </div>

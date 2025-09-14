@@ -108,7 +108,7 @@ export default function Account() {
 
           {/* Deletion Warning Banner */}
           {deletionStatus?.hasPendingDeletion && (
-            <div className="mb-8 bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <div className="mb-8 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   <Clock className="w-6 h-6 text-orange-600" />
@@ -183,7 +183,7 @@ export default function Account() {
                   
                   <Link 
                     href="/account/delete-account"
-                    className="inline-flex items-center px-4 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-surface hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="inline-flex items-center px-4 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-surface hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     <AlertTriangle className="w-4 h-4 mr-2" />
                     Delete Account
@@ -208,7 +208,7 @@ export default function Account() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 mb-2">Need Help?</h3>
                 <p className="text-sm text-blue-700 mb-3">
                   Have questions about your account or billing?

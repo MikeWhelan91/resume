@@ -45,11 +45,11 @@ export default function FirstTimeUserGuide() {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       
       {/* Guide Modal */}
-      <div className="relative max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 animate-scale-in my-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-2xl border border-border animate-scale-in my-8 max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
+          className="absolute top-4 right-4 text-muted hover:text-text transition-colors z-10"
         >
           <X className="w-6 h-6" />
         </button>
@@ -63,7 +63,7 @@ export default function FirstTimeUserGuide() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Welcome to TailoredCV! 👋
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 dark:text-gray-500">
+            <p className="text-muted">
               Transform your job applications with AI-powered resume and cover letter optimization
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function FirstTimeUserGuide() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">1. Upload Your Resume</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Or build one from scratch using our wizard</p>
+                <p className="text-xs text-muted">Or build one from scratch using our wizard</p>
               </div>
             </div>
 
@@ -86,7 +86,7 @@ export default function FirstTimeUserGuide() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">2. Paste Job Description</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">AI analyzes requirements and tailors your documents</p>
+                <p className="text-xs text-muted">AI analyzes requirements and tailors your documents</p>
               </div>
             </div>
 
@@ -96,7 +96,7 @@ export default function FirstTimeUserGuide() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">3. Download & Apply</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Get perfectly matched resume + cover letter</p>
+                <p className="text-xs text-muted">Get perfectly matched resume + cover letter</p>
               </div>
             </div>
           </div>
@@ -108,15 +108,15 @@ export default function FirstTimeUserGuide() {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-lg font-bold text-blue-600">10x</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">Faster</div>
+                  <div className="text-xs text-muted">Faster</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-purple-600">95%</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">ATS Pass</div>
+                  <div className="text-xs text-muted">ATS Pass</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-green-600">3x</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 dark:text-gray-500">More Callbacks</div>
+                  <div className="text-xs text-muted">More Callbacks</div>
                 </div>
               </div>
             </div>

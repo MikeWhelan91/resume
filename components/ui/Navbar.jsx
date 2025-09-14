@@ -437,13 +437,13 @@ export default function Navbar() {
                   ) : session ? (
                     <div className="space-y-4">
                       {/* User Info */}
-                      <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center space-x-3 px-4 py-3 bg-surface rounded-lg">
                         {getPlanIcon(userPlan)}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{getPlanDisplayName(userPlan, entitlement)}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{session.user.email}</p>
+                          <p className="text-sm font-medium text-text truncate">{getPlanDisplayName(userPlan, entitlement)}</p>
+                          <p className="text-sm text-muted truncate">{session.user.email}</p>
                           {userPlan === 'free' && entitlement && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-muted">
                               {entitlement.freeWeeklyCreditsRemaining || 0}/10 credits remaining
                             </p>
                           )}

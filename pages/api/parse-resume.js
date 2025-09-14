@@ -5,6 +5,9 @@ import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import OpenAI from "openai";
 import { normalizeResumeData } from "../../lib/normalizeResume";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
+import { checkTrialLimit, consumeTrialUsage } from '../../lib/trialUtils';
 
 export const config = { api: { bodyParser: false } };
 
@@ -32,8 +35,40 @@ async function extractTextFromFile(file){
 }
 
 function parseForm(req){
-  const form = formidable({ multiples:false, uploadDir: os.tmpdir(), keepExtensions:true, maxFileSize: 20*1024*1024 });
-  return new Promise((resolve,reject)=>form.parse(req,(err,fields,files)=>err?reject(err):resolve({fields,files})));
+  const form = formidable({ 
+    multiples: false, 
+    uploadDir: os.tmpdir(), 
+    keepExtensions: true, 
+    maxFileSize: 10*1024*1024, // Reduced from 20MB to 10MB for security
+    filter: function ({name, originalFilename, mimetype}) {
+      // Only allow specific file types
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+      ];
+      const allowedExtensions = ['.pdf', '.docx', '.txt'];
+      const ext = originalFilename?.toLowerCase().split('.').pop();
+      
+      return allowedTypes.includes(mimetype) || allowedExtensions.includes(`.${ext}`);
+    }
+  });
+  return new Promise((resolve,reject)=>form.parse(req,(err,fields,files)=>{
+    if (err) {
+      // Clean up any uploaded files on error
+      if (files) {
+        Object.values(files).forEach(file => {
+          const f = Array.isArray(file) ? file : [file];
+          f.forEach(singleFile => {
+            try { fs.unlinkSync(singleFile.filepath || singleFile.path); } catch {}
+          });
+        });
+      }
+      reject(err);
+    } else {
+      resolve({fields,files});
+    }
+  }));
 }
 
 function stripCodeFence(s=""){ const m = String(s).trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i); return m ? m[1] : s; }
@@ -42,6 +77,33 @@ function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { retur
 export default async function handler(req,res){
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
+  
+  // Check authentication and trial limits
+  let userId = null;
+  let isTrialUser = false;
+  
+  try {
+    const session = await getServerSession(req, res, authOptions);
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else {
+      // Anonymous trial user - check trial limits
+      isTrialUser = true;
+      const trialCheck = await checkTrialLimit(req, 'parse');
+      if (!trialCheck.allowed) {
+        return res.status(429).json({ 
+          error: 'Trial parsing limit reached', 
+          message: `Trial allows ${trialCheck.limit} resume parses. Sign up for unlimited parsing!`,
+          code: 'TRIAL_PARSE_LIMIT'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking authentication/trial limits:', error);
+    // For security, fail closed if we can't verify permissions
+    return res.status(500).json({ error: 'Unable to verify permissions' });
+  }
+  
   try{
     const { fields, files } = await parseForm(req);
     let resumeText = '';
@@ -65,9 +127,24 @@ Experience: company,title,start,end,location?,bullets[]. Education: school,degre
     const json = safeJSON(resp.choices?.[0]?.message?.content || "");
     if (!json) return res.status(502).json({ error:"Bad model output" });
     const rd = normalizeResumeData(json.resumeData || json);
+    
+    // Consume trial usage for anonymous users after successful processing
+    if (isTrialUser) {
+      try {
+        await consumeTrialUsage(req, 'parse');
+      } catch (error) {
+        console.error('Error tracking trial parse usage:', error);
+        // Don't block the response if tracking fails
+      }
+    }
+    
     return res.status(200).json({ resumeData: rd });
   }catch(err){
-    console.error(err);
-    return res.status(500).json({ error:"Server error", detail:String(err?.message||err) });
+    console.error('Parse-resume error:', err);
+    // Don't expose sensitive error details in production
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? String(err?.message || err)
+      : 'Processing failed';
+    return res.status(500).json({ error: "Server error", detail: errorMessage });
   }
 }

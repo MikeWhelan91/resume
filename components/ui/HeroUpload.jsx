@@ -231,8 +231,8 @@ export default function HeroUpload() {
                     </button>
                   </InfoTooltip>
 
-                  {/* Recent resume option for logged-in users */}
-                  {session?.user && hasLatestResume && (
+                  {/* Recent resume option for logged-in users - hide during upload */}
+                  {session?.user && hasLatestResume && !loading && (
                     <InfoTooltip 
                       content="Continue editing your previously saved resume."
                       position="bottom"
@@ -296,7 +296,7 @@ export default function HeroUpload() {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-blue-50 dark:bg-gray-900">
+      <div className="py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-text mb-4">From Job Description to Perfect Match</h2>
@@ -306,7 +306,7 @@ export default function HeroUpload() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 text-text" data-tour="process-steps">
-            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
               <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Upload className="w-8 h-8 text-white" />
               </div>
@@ -325,7 +325,7 @@ export default function HeroUpload() {
               </InfoTooltip>
             </div>
             
-            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
               <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Zap className="w-8 h-8 text-white" />
               </div>
@@ -344,7 +344,7 @@ export default function HeroUpload() {
               </InfoTooltip>
             </div>
             
-            <div className="card bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-center p-8 group">
+            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
               <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <Star className="w-8 h-8 text-white" />
               </div>
@@ -367,9 +367,9 @@ export default function HeroUpload() {
       </div>
 
       {/* Call-to-Action Section */}
-      <div className="py-20 bg-blue-50 dark:bg-gray-900">
+      <div className="py-20 bg-surface">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center space-x-2 bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-full px-4 py-2 mb-6">
+          <div className="inline-flex items-center space-x-2 bg-surface/80 backdrop-blur-sm border border-border/50 rounded-full px-4 py-2 mb-6">
             <Sparkles className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-medium text-text">Apply to Multiple Jobs</span>
           </div>
@@ -383,17 +383,17 @@ export default function HeroUpload() {
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
               <div className="text-2xl font-bold text-blue-600 mb-2">10x</div>
-              <div className="text-sm text-gray-600">Faster Application Process</div>
+              <div className="text-sm text-muted">Faster Application Process</div>
             </div>
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
               <div className="text-2xl font-bold text-purple-600 mb-2">95%</div>
-              <div className="text-sm text-gray-600">ATS Compatibility Rate</div>
+              <div className="text-sm text-muted">ATS Compatibility Rate</div>
             </div>
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-gray-700/50">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
               <div className="text-2xl font-bold text-green-600 mb-2">3x</div>
-              <div className="text-sm text-gray-600">More Interview Callbacks</div>
+              <div className="text-sm text-muted">More Interview Callbacks</div>
             </div>
           </div>
           
