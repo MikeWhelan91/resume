@@ -26,13 +26,13 @@ export default async function handler(req, res) {
     console.error('Prisma client is not available');
     return res.status(500).json({ 
       error: 'Database connection not available',
-      // Provide fallback data for development
-      generationsUsed: 0,
-      downloadsUsed: 0,
+      // Fail-secure: assume limits are exhausted when DB is down
+      generationsUsed: 2,
+      downloadsUsed: 2,
       generationsLimit: 2,
       downloadsLimit: 2,
-      canGenerate: true,
-      canDownload: true,
+      canGenerate: false,
+      canDownload: false,
       lastUsed: null
     });
   }
@@ -66,14 +66,14 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Error fetching trial usage:', error);
-      // Return fallback data if database is unavailable
+      // Return fail-secure data if database is unavailable
       return res.status(200).json({
-        generationsUsed: 0,
-        downloadsUsed: 0,
+        generationsUsed: 2,
+        downloadsUsed: 2,
         generationsLimit: 2,
         downloadsLimit: 2,
-        canGenerate: true,
-        canDownload: true,
+        canGenerate: false,
+        canDownload: false,
         lastUsed: null
       });
     }

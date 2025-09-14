@@ -4,6 +4,37 @@ import { Crown, CreditCard, Calendar, AlertCircle, ExternalLink, Check, X, Clock
 export default function SubscriptionManager({ entitlement, onUpdate }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+
+  useEffect(() => {
+    fetchSubscriptionInfo();
+  }, [entitlement]);
+
+  const fetchSubscriptionInfo = async () => {
+    if (!entitlement || entitlement.plan === 'free') return;
+    
+    try {
+      const response = await fetch('/api/stripe/subscription-info');
+      if (response.ok) {
+        const data = await response.json();
+        setSubscriptionInfo(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscription info:', error);
+    }
+  };
+
+  const formatCancellationDate = (canceledAt) => {
+    if (!canceledAt) return null;
+    const date = new Date(canceledAt);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   const getPlanDetails = (plan) => {
     const plans = {
@@ -182,6 +213,28 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
           <p className="text-sm text-orange-800">
             {formatExpiryDate(entitlement.expiresAt)}
           </p>
+        </div>
+      )}
+
+      {/* Subscription Cancellation Info */}
+      {subscriptionInfo?.canceledAt && entitlement.status === 'canceled' && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="flex items-center space-x-2 mb-2">
+            <X className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-medium text-red-900 dark:text-red-100">Subscription Canceled</span>
+          </div>
+          <p className="text-sm text-red-800 dark:text-red-200">
+            Canceled on {formatCancellationDate(subscriptionInfo.canceledAt)}
+          </p>
+          {subscriptionInfo.currentPeriodEnd && (
+            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+              Access expires on {new Date(subscriptionInfo.currentPeriodEnd).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          )}
         </div>
       )}
 

@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
 
   // Free plan users and trial users are restricted to default color and professional template
-  const effectiveAccent = (userPlan === 'free' || isTrialUser) ? '#10b39f' : accent;
+  const effectiveAccent = (userPlan === 'free' || isTrialUser) ? '#111827' : accent;
   const effectiveTemplate = (userPlan === 'free' || isTrialUser) ? 'professional' : template;
 
   const effectiveUserPlan = isTrialUser ? 'free' : userPlan;

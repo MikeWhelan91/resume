@@ -350,12 +350,16 @@ async function coreHandler(req, res){
         console.log('Checking trial limits for generation count:', generationCount);
         const trialCheck = await checkTrialLimit(req, 'generation');
         console.log('Trial check result:', trialCheck);
-        // We need at least 2 generations remaining since we consume 2
+        // We need at least 2 generations remaining since we consume 2 (CV + cover letter)
         if (!trialCheck.allowed || trialCheck.remaining < 2) {
           console.log('Trial limit exceeded');
+          const messageText = trialCheck.remaining === 0 
+            ? `You've used both of your free trial generations. Sign up for unlimited access!`
+            : `Trial generates both CV and cover letter together, requiring 2 generations. You have ${trialCheck.remaining} remaining but need 2. Sign up for unlimited access!`;
+          
           return res.status(429).json({ 
             error: 'Trial limit reached', 
-            message: `Trial allows ${trialCheck.limit} generations total. You have ${trialCheck.remaining} remaining. Sign up for unlimited access!`,
+            message: messageText,
             code: 'TRIAL_GENERATION_LIMIT'
           });
         }

@@ -5,6 +5,7 @@ import { limitCoverLetter } from '../lib/renderUtils';
 import ResumeTemplate from '../components/ResumeTemplate';
 import SeoHead from '../components/SeoHead';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useError } from '../contexts/ErrorContext';
 import TrialSignupModal from '../components/ui/TrialSignupModal';
 import { 
   FileText, 
@@ -19,7 +20,7 @@ import {
   Target
 } from 'lucide-react';
 
-const ACCENTS = ['#10b39f','#2563eb','#7c3aed','#f97316','#ef4444','#111827'];
+const ACCENTS = ['#111827','#10b39f','#2563eb','#7c3aed','#f97316','#ef4444'];
 
 const TEMPLATES = [
   { id: 'professional', name: 'Professional' },
@@ -34,6 +35,7 @@ export default function ResultsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { getTerminology } = useLanguage();
+  const { showError, showSuccess } = useError();
   const terms = getTerminology();
   const [accent, setAccent] = useState(ACCENTS[0]);
   const [template, setTemplate] = useState(TEMPLATES[0].id);
@@ -207,7 +209,7 @@ export default function ResultsPage() {
 
   const downloadCV = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -269,9 +271,9 @@ export default function ResultsPage() {
       if (error.message && error.message.includes('429')) {
         showUpgradeAlert('You have reached your limit. Upgrade to Pro for unlimited downloads.');
       } else if (error.message && error.message.includes('Network response was not ok')) {
-        alert('Failed to generate PDF file. Please try again.');
+        showError('Failed to generate PDF file. Please try again.');
       } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       } else {
         // For other errors (likely mobile browser quirks), just log them
         console.warn('Download may have succeeded despite error:', error);
@@ -281,7 +283,7 @@ export default function ResultsPage() {
 
   const downloadCoverLetter = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -298,7 +300,7 @@ export default function ResultsPage() {
 
   const downloadResumeDocx = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -313,9 +315,9 @@ export default function ResultsPage() {
       
       // Only show error alerts for actual server/network failures (not mobile browser quirks)  
       if (error.message && error.message.includes('Network response was not ok')) {
-        alert('Failed to generate resume file. Please try again.');
+        showError('Failed to generate resume file. Please try again.');
       } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       } else {
         console.warn('Download may have succeeded despite error:', error);
       }
@@ -324,7 +326,7 @@ export default function ResultsPage() {
 
   const downloadCoverLetterDocx = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -338,9 +340,9 @@ export default function ResultsPage() {
       
       // Only show error alerts for actual server/network failures (not mobile browser quirks)
       if (error.message && error.message.includes('Network response was not ok')) {
-        alert('Failed to generate cover letter file. Please try again.');
+        showError('Failed to generate cover letter file. Please try again.');
       } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       } else {
         console.warn('Download may have succeeded despite error:', error);
       }
@@ -366,7 +368,7 @@ export default function ResultsPage() {
 
   const optimizeForATS = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
@@ -409,11 +411,11 @@ export default function ResultsPage() {
         }
       }
       
-      alert(`${terms.Resume} optimized for ATS systems! Your ${terms.resume} has been enhanced with ATS-friendly formatting and keywords.`);
+      showSuccess(`${terms.Resume} optimized for ATS systems! Your ${terms.resume} has been enhanced with ATS-friendly formatting and keywords.`);
       
     } catch (error) {
       console.error('ATS optimization error:', error);
-      alert(`Failed to optimize ${terms.resume}. Please try again.`);
+      showError(`Failed to optimize ${terms.resume}. Please try again.`);
     } finally {
       setIsGenerating(false);
     }
@@ -421,12 +423,12 @@ export default function ResultsPage() {
 
   const generateTailoredContent = async () => {
     if (!userData) {
-      alert(`No data available. Please generate a ${terms.resume} first.`);
+      showError(`No data available. Please generate a ${terms.resume} first.`);
       return;
     }
 
     if (!jobDescription.trim()) {
-      alert('Please enter a job description.');
+      showError('Please enter a job description.');
       return;
     }
 
@@ -616,8 +618,8 @@ export default function ResultsPage() {
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '300px', maxHeight: '400px'}}>
-          <div style={{ padding: `${25 * scale}px`, fontSize: `${12 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
+          <div style={{ padding: `${25 * scale}px`, fontSize: `${9 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
             {userData ? (
               <>
                 <div style={{ marginBottom: `${15 * scale}px`, textAlign: 'right' }}>

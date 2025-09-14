@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, Lock } from 'lucide-react';
 import ResumeWizard from '../components/ResumeWizard';
 import SeoHead from '../components/SeoHead';
 
@@ -13,6 +13,8 @@ export default function WizardPage(){
   const [hasLatestResume, setHasLatestResume] = useState(false);
   const [loadingLatest, setLoadingLatest] = useState(false);
   const [showRecentCVSection, setShowRecentCVSection] = useState(true);
+  const [authCheck, setAuthCheck] = useState(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(()=>{
     // Check localStorage first
@@ -24,7 +26,24 @@ export default function WizardPage(){
     if (session?.user) {
       checkForLatestResume();
     }
+    
+    // Check if user can access the wizard
+    checkAuthStatus();
   },[session]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth-check');
+      const data = await response.json();
+      setAuthCheck(data);
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      // If check fails, assume no access for safety
+      setAuthCheck({ authenticated: false, canAccess: false, reason: 'Unable to verify access' });
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const checkForLatestResume = async () => {
     try {
@@ -86,7 +105,93 @@ export default function WizardPage(){
     router.push('/results');
   }
 
-  if(initial === undefined) return null;
+  // Show loading state while checking
+  if(checking || initial === undefined) return null;
+
+  // Show access denied if user cannot access wizard
+  if (authCheck && !authCheck.canAccess) {
+    return (
+      <>
+        <SeoHead
+          title="Resume Wizard – TailoredCV.app"
+          description="Step-by-step resume builder with real-time template rendering and one-click PDF downloads."
+          canonical="https://tailoredcv.app/wizard"
+          robots="noindex,nofollow"
+        />
+        
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+            <Lock className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-red-900 mb-2">
+              Access Not Available
+            </h2>
+            <p className="text-red-700 mb-6">
+              {authCheck.reason || 'You do not have access to the resume wizard.'}
+            </p>
+            
+            {authCheck.authenticated ? (
+              // Authenticated user - show upgrade options
+              <div className="space-y-4">
+                <p className="text-sm text-red-600">
+                  {authCheck.plan && authCheck.credits 
+                    ? `Current plan: ${authCheck.plan} (${authCheck.credits.remaining}/${authCheck.credits.limit} credits remaining)`
+                    : 'Your current plan does not include access to resume generation.'
+                  }
+                </p>
+                <div className="space-x-4">
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    className="btn btn-primary"
+                  >
+                    Upgrade Plan
+                  </button>
+                  <button
+                    onClick={() => router.push('/account')}
+                    className="btn btn-ghost"
+                  >
+                    View Account
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Anonymous user - show sign up or login options
+              <div className="space-y-4">
+                <p className="text-sm text-red-600">
+                  {authCheck.generationsRemaining !== undefined 
+                    ? `You have used all ${authCheck.generationsLimit || 2} free trials.`
+                    : 'Trial access has been exhausted.'
+                  }
+                </p>
+                <div className="space-x-4">
+                  <button
+                    onClick={() => router.push('/auth/signup')}
+                    className="btn btn-primary"
+                  >
+                    Sign Up for Free
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth/signin')}
+                    className="btn btn-ghost"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-6 pt-6 border-t border-red-200">
+              <button
+                onClick={() => router.push('/')}
+                className="text-red-600 hover:text-red-800 text-sm"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

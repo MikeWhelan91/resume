@@ -1,12 +1,47 @@
 import Stripe from 'stripe'
 import { buffer } from 'micro'
 import { prisma } from '../../../lib/prisma.js'
+import { calculateResumeExpiryDate } from '../../../lib/credit-system.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 })
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+// Helper function to update resume expiry dates when user upgrades
+async function updateResumeExpiryForUpgrade(userId, newPlan) {
+  try {
+    // Get user's current entitlement to calculate new expiry
+    const entitlement = await prisma.entitlement.findUnique({
+      where: { userId }
+    })
+
+    if (!entitlement) return
+
+    // Create a temporary entitlement object with the new plan for calculation
+    const tempEntitlement = { ...entitlement, plan: newPlan }
+    const newExpiryDate = calculateResumeExpiryDate(tempEntitlement)
+
+    // Update all existing saved resumes to have the new expiry date
+    await prisma.savedResume.updateMany({
+      where: {
+        userId,
+        OR: [
+          { expiresAt: null }, // Never expires (shouldn't happen but be safe)
+          { expiresAt: { gt: new Date() } } // Not yet expired
+        ]
+      },
+      data: {
+        expiresAt: newExpiryDate
+      }
+    })
+
+    console.log(`Updated resume expiry for user ${userId} with new plan ${newPlan}`)
+  } catch (error) {
+    console.error('Error updating resume expiry:', error)
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -122,6 +157,11 @@ async function handleCheckoutCompleted(session) {
     }
   })
 
+  // Update resume expiry dates if upgrading to pro plan
+  if (plan.startsWith('pro_')) {
+    await updateResumeExpiryForUpgrade(userId, plan)
+  }
+
   console.log(`Entitlement activated for user ${userId} with plan ${plan}${expiresAt ? ` (expires ${expiresAt})` : ''}`)
 }
 
@@ -166,6 +206,9 @@ async function handleSubscriptionCreated(subscription) {
       }
     }
   })
+
+  // Update resume expiry dates when creating pro subscription
+  await updateResumeExpiryForUpgrade(user.id, plan)
 }
 
 async function handleSubscriptionUpdated(subscription) {
@@ -182,10 +225,19 @@ async function handleSubscriptionUpdated(subscription) {
 
   const status = mapStripeStatusToEntitlementStatus(subscription.status)
   const isActive = status === 'active'
+  
+  // Determine plan from subscription
+  const priceId = subscription.items.data[0]?.price.id
+  let plan = 'pro_monthly'
+  
+  if (priceId === process.env.STRIPE_PRICE_PRO_ANNUAL) {
+    plan = 'pro_annual'
+  }
 
   await prisma.entitlement.upsert({
     where: { userId: user.id },
     update: {
+      plan: isActive ? plan : 'free', // Revert to free if not active
       status,
       features: {
         docx: isActive,
@@ -195,7 +247,7 @@ async function handleSubscriptionUpdated(subscription) {
     },
     create: {
       userId: user.id,
-      plan: 'pro_monthly',
+      plan,
       status,
       features: {
         docx: isActive,
@@ -204,6 +256,11 @@ async function handleSubscriptionUpdated(subscription) {
       }
     }
   })
+
+  // Update resume expiry dates if this is an active pro subscription
+  if (isActive && plan.startsWith('pro_')) {
+    await updateResumeExpiryForUpgrade(user.id, plan)
+  }
 }
 
 async function handleSubscriptionDeleted(subscription) {

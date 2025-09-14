@@ -513,7 +513,7 @@ export default function ResumeTemplate({ userData, template, accent, isPDF = fal
   // Free users can only use Professional template and default color
   const isProUser = userPlan && userPlan !== 'free';
   const effectiveTemplate = isProUser ? template : 'professional';
-  const effectiveAccent = isProUser ? accent : '#10b39f'; // Default to first color for free users
+  const effectiveAccent = isProUser ? accent : '#111827'; // Default to black for free users
   
   switch (effectiveTemplate) {
     case 'modern':

@@ -4,7 +4,7 @@ import { X, ArrowRight, ArrowLeft, CheckCircle, Sparkles } from 'lucide-react';
 const defaultTourSteps = [
   {
     id: 'welcome',
-    title: 'Welcome to TailoredCV! 👋',
+    title: 'Welcome to TailoredCV!',
     description: 'Create job-specific resumes and cover letters that beat ATS systems and land interviews.',
     target: null, // Full screen overlay
     position: 'center'

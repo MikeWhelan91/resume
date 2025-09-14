@@ -11,13 +11,55 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('en-US'); // Default to US English
+  const [language, setLanguage] = useState('en-UK'); // Default to UK English
 
-  // Load language preference from localStorage on mount
+  // Load language preference from localStorage or detect from region
   useEffect(() => {
     const saved = localStorage.getItem('language-preference');
     if (saved && (saved === 'en-US' || saved === 'en-UK')) {
       setLanguage(saved);
+    } else {
+      // Auto-detect region for first-time visitors
+      const detectRegion = async () => {
+        try {
+          // Try to get timezone first
+          const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
+          // American timezones
+          const americanTimezones = [
+            'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+            'America/Phoenix', 'America/Anchorage', 'Pacific/Honolulu', 'America/Detroit',
+            'America/Indianapolis', 'America/Louisville', 'America/Kentucky/Louisville',
+            'America/Kentucky/Monticello', 'America/North_Dakota/Beulah', 'America/North_Dakota/Center',
+            'America/North_Dakota/New_Salem', 'America/Menominee', 'America/Indiana/Vincennes',
+            'America/Indiana/Petersburg', 'America/Indiana/Tell_City', 'America/Indiana/Knox',
+            'America/Indiana/Winamac', 'America/Indiana/Marengo', 'America/Indiana/Vevay'
+          ];
+          
+          if (americanTimezones.some(tz => timezone.includes(tz.split('/')[1]))) {
+            setLanguage('en-US');
+            localStorage.setItem('language-preference', 'en-US');
+            return;
+          }
+          
+          // Try navigator.language as backup
+          const locale = navigator.language || navigator.languages?.[0];
+          if (locale && locale.startsWith('en-US')) {
+            setLanguage('en-US');
+            localStorage.setItem('language-preference', 'en-US');
+          } else {
+            // Default to UK English for all other regions
+            setLanguage('en-UK');
+            localStorage.setItem('language-preference', 'en-UK');
+          }
+        } catch (error) {
+          // Fallback to UK English if detection fails
+          setLanguage('en-UK');
+          localStorage.setItem('language-preference', 'en-UK');
+        }
+      };
+      
+      detectRegion();
     }
   }, []);
 

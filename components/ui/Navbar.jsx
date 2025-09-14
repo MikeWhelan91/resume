@@ -1,21 +1,26 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe, Lock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useError } from '../../contexts/ErrorContext';
 import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { getTerminology, toggleLanguage, getLanguageDisplay } = useLanguage();
+  const { showError } = useError();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userPlan, setUserPlan] = useState('free');
   const [entitlement, setEntitlement] = useState(null);
   const [dayPassUsage, setDayPassUsage] = useState(null);
   const [downloadUsage, setDownloadUsage] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [authCheck, setAuthCheck] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const terms = getTerminology();
 
   // Fetch user entitlement data
@@ -23,11 +28,12 @@ export default function Navbar() {
     const fetchUserData = async () => {
       if (session?.user?.id) {
         try {
-          // Fetch entitlement, usage, and day pass data in parallel
-          const [entitlementResponse, dayPassResponse, downloadResponse] = await Promise.all([
+          // Fetch entitlement, usage, and subscription data in parallel
+          const [entitlementResponse, dayPassResponse, downloadResponse, subscriptionResponse] = await Promise.all([
             fetch('/api/entitlements'),
             fetch('/api/day-pass-usage'),
-            fetch('/api/download-usage')
+            fetch('/api/download-usage'),
+            fetch('/api/stripe/subscription-info')
           ]);
           
           if (entitlementResponse.ok) {
@@ -52,6 +58,11 @@ export default function Navbar() {
             const downloadData = await downloadResponse.json();
             setDownloadUsage(downloadData);
           }
+          
+          if (subscriptionResponse.ok) {
+            const subscriptionData = await subscriptionResponse.json();
+            setSubscriptionInfo(subscriptionData);
+          }
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
@@ -59,6 +70,25 @@ export default function Navbar() {
     };
 
     fetchUserData();
+  }, [session]);
+
+  // Check auth status for access control
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/auth-check');
+        const data = await response.json();
+        setAuthCheck(data);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        // If check fails, assume no access for safety
+        setAuthCheck({ authenticated: false, canAccess: false, reason: 'Unable to verify access' });
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuthStatus();
   }, [session]);
 
   const getPlanDisplayName = (plan, entitlement) => {
@@ -82,6 +112,15 @@ export default function Navbar() {
   const getPlanIcon = (plan) => {
     if (plan === 'free') return <User className="w-4 h-4" />;
     return <Crown className="w-4 h-4" />;
+  };
+
+  const formatCancellationDate = (canceledAt) => {
+    if (!canceledAt) return null;
+    const date = new Date(canceledAt);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric'
+    });
   };
 
   const getUsageStats = () => {
@@ -140,17 +179,42 @@ export default function Navbar() {
           const errorData = await response.json().catch(() => ({}));
           
           if (errorData.code === 'PORTAL_NOT_CONFIGURED') {
-            alert(`${errorData.message}\n\nFor billing assistance, please contact: ${errorData.supportEmail || 'support@tailoredcv.app'}`);
+            showError(`${errorData.message}\n\nFor billing assistance, please contact: ${errorData.supportEmail || 'support@tailoredcv.app'}`);
           } else {
-            alert(errorData.message || 'Unable to open billing portal. Please try again or contact support.');
+            showError(errorData.message || 'Unable to open billing portal. Please try again or contact support.');
           }
         }
       } catch (error) {
         console.error('Error opening billing portal:', error);
-        alert('Unable to open billing portal. Please try again or contact support.');
+        showError('Unable to open billing portal. Please try again or contact support.');
       }
     }
   };
+
+  const handleWizardClick = (e) => {
+    if (authCheck && !authCheck.canAccess) {
+      e.preventDefault();
+      if (authCheck.authenticated) {
+        showError(authCheck.reason || 'You do not have access to create new resumes. Please upgrade your plan.', 'Access Denied');
+      } else {
+        showError(authCheck.reason || 'You have used all your free trials. Please sign up to create unlimited resumes!', 'Trial Limit Reached');
+      }
+      return;
+    }
+  };
+
+  const getTooltipText = () => {
+    if (!authCheck) return null;
+    if (authCheck.canAccess) return null;
+    
+    if (authCheck.authenticated) {
+      return authCheck.reason || 'Upgrade required to create resumes';
+    } else {
+      return authCheck.reason || 'Sign up to create resumes';
+    }
+  };
+
+  const canAccessWizard = authCheck?.canAccess !== false;
 
   // Removed popup-based functions - now using dedicated pages
 
@@ -180,13 +244,20 @@ export default function Navbar() {
               <Home className="w-4 h-4" />
               Home
             </Link>
-            <Link 
-              href="/wizard" 
-              className={`nav-link ${router.pathname === '/wizard' ? 'active' : ''}`}
-            >
-              <FileText className="w-4 h-4" />
-              Create {terms.Resume}
-            </Link>
+            <div className="relative">
+              <Link 
+                href={canAccessWizard ? "/wizard" : "#"}
+                className={`nav-link ${router.pathname === '/wizard' ? 'active' : ''} ${
+                  !canAccessWizard ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                onClick={handleWizardClick}
+                title={getTooltipText()}
+              >
+                {!canAccessWizard && <Lock className="w-3 h-3 mr-1" />}
+                <FileText className="w-4 h-4" />
+                Create {terms.Resume}
+              </Link>
+            </div>
             {session && (
               <Link 
                 href="/my-resumes" 
@@ -231,19 +302,31 @@ export default function Navbar() {
                       className="fixed inset-0 z-10"
                       onClick={() => setIsDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-xl border border-border py-2 z-20">
+                    <div className="absolute right-0 mt-2 w-64 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-xl border border-border py-2 z-20">
                       {/* User Info */}
                       <div className="px-4 py-3 border-b border-border">
                         <div className="flex items-center space-x-2 mb-2">
                           {getPlanIcon(userPlan)}
                           <span className="font-medium text-text">{getPlanDisplayName(userPlan, entitlement)}</span>
-                          {userPlan !== 'free' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {userPlan !== 'free' && entitlement?.status === 'active' && !subscriptionInfo?.canceledAt && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-100">
                               Active
+                            </span>
+                          )}
+                          {subscriptionInfo?.canceledAt && entitlement?.status === 'canceled' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-100">
+                              Canceled
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-muted truncate">{session.user.email}</p>
+                        
+                        {/* Cancellation Info */}
+                        {subscriptionInfo?.canceledAt && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                            Canceled on {formatCancellationDate(subscriptionInfo.canceledAt)}
+                          </p>
+                        )}
                         
                         {/* Usage Stats */}
                         {(() => {
@@ -344,16 +427,9 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="btn btn-secondary btn-sm focus-ring"
-                >
-                  Sign Up
-                </Link>
-                <Link 
-                  href="/wizard" 
                   className="btn btn-primary btn-sm focus-ring"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Get Started
+                  Sign Up
                 </Link>
               </div>
             )}
@@ -401,10 +477,17 @@ export default function Navbar() {
                   Home
                 </Link>
                 <Link 
-                  href="/wizard" 
-                  className={`mobile-nav-link ${router.pathname === '/wizard' ? 'active' : ''}`}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  href={canAccessWizard ? "/wizard" : "#"}
+                  className={`mobile-nav-link ${router.pathname === '/wizard' ? 'active' : ''} ${
+                    !canAccessWizard ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  onClick={(e) => {
+                    handleWizardClick(e);
+                    if (canAccessWizard) setIsMobileMenuOpen(false);
+                  }}
+                  title={getTooltipText()}
                 >
+                  {!canAccessWizard && <Lock className="w-3 h-3 mr-1" />}
                   <FileText className="w-4 h-4" />
                   Create {terms.Resume}
                 </Link>
@@ -501,18 +584,10 @@ export default function Navbar() {
                       </Link>
                       <Link
                         href="/auth/signup"
-                        className="w-full btn btn-secondary btn-sm"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Sign Up
-                      </Link>
-                      <Link 
-                        href="/wizard" 
                         className="w-full btn btn-primary btn-sm"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Get Started
+                        Sign Up
                       </Link>
                     </div>
                   )}

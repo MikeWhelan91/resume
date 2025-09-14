@@ -61,7 +61,7 @@ export default function FirstTimeUserGuide() {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome to TailoredCV! 👋
+              Welcome to TailoredCV!
             </h2>
             <p className="text-muted">
               Transform your job applications with AI-powered resume and cover letter optimization

@@ -1872,7 +1872,7 @@ export default async function handler(req, res) {
 
     // Free users can only use Professional template and default color
     const effectiveTemplate = userPlan === 'free' ? 'professional' : template;
-    const effectiveAccent = userPlan === 'free' ? '#10b39f' : accent;
+    const effectiveAccent = userPlan === 'free' ? '#111827' : accent;
 
     let documentChildren;
     

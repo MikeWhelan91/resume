@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Upload, Sparkles, ArrowRight, Zap, Shield, Star, Clock, Info, X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useError } from '../../contexts/ErrorContext';
 import { InfoTooltip, HelpTooltip } from './TooltipPortal';
 import OnboardingTourFixed from './OnboardingTourFixed';
 import FirstTimeUserGuide from './FirstTimeUserGuide';
@@ -12,30 +13,30 @@ export default function HeroUpload() {
   const router = useRouter();
   const { data: session } = useSession();
   const { getTerminology } = useLanguage();
+  const { showError } = useError();
   const terms = getTerminology();
   const fileRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [hasLatestResume, setHasLatestResume] = useState(false);
   const [checkingResume, setCheckingResume] = useState(false);
-  const [showNewUserHelp, setShowNewUserHelp] = useState(false);
   const [showTourTrigger, setShowTourTrigger] = useState(false);
   const [hasJustUploaded, setHasJustUploaded] = useState(false);
+  const [trialUsage, setTrialUsage] = useState(null);
+  const [trialUsageLoading, setTrialUsageLoading] = useState(true);
+  const [authCheck, setAuthCheck] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     if (session?.user) {
       checkForLatestResume();
     } else {
-      // Show help for new users after a short delay
-      const timer = setTimeout(() => {
-        const hasSeenHelp = localStorage.getItem('hero_help_shown') === 'true';
-        if (!hasSeenHelp) {
-          setShowNewUserHelp(true);
-          localStorage.setItem('hero_help_shown', 'true');
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
+      // Fetch trial usage for anonymous users
+      fetchTrialUsage();
     }
+    
+    // Check authentication and access status
+    checkAuthStatus();
     
     // Check if we should show the tour trigger
     const checkTourTrigger = () => {
@@ -77,11 +78,11 @@ export default function HeroUpload() {
         setLoadingMessage('Perfect! Taking you to the wizard...');
         setTimeout(() => router.push('/wizard'), 500);
       } else {
-        alert(`Failed to load your most recent ${terms.resume}. Please try again.`);
+        showError(`Failed to load your most recent ${terms.resume}. Please try again.`);
       }
     } catch (error) {
       console.error('Error loading latest resume:', error);
-      alert(`Failed to load your most recent ${terms.resume}. Please try again.`);
+      showError(`Failed to load your most recent ${terms.resume}. Please try again.`);
     } finally {
       setCheckingResume(false);
       setLoadingMessage('');
@@ -91,6 +92,23 @@ export default function HeroUpload() {
   async function handleFile(e){
     const f = e.target.files?.[0];
     if(!f) return;
+    
+    // Check if user can generate new resumes before processing file
+    if (!canGenerate()) {
+      if (authCheck) {
+        if (authCheck.authenticated) {
+          showError(authCheck.reason || 'You do not have access to upload resumes. Please upgrade your plan.', 'Access Denied');
+        } else {
+          showError(authCheck.reason || 'You have used all your free trials. Please sign up to upload unlimited resumes!', 'Trial Limit Reached');
+        }
+      } else {
+        showError('You cannot upload resumes at this time. Please try again later.', 'Access Denied');
+      }
+      // Reset file input
+      e.target.value = '';
+      return;
+    }
+    
     setLoading(true);
     setHasJustUploaded(true); // Mark that user has uploaded
     setLoadingMessage('Uploading file...');
@@ -106,17 +124,77 @@ export default function HeroUpload() {
         setLoadingMessage('Perfect! Taking you to the wizard...');
         setTimeout(() => router.push('/wizard'), 500); // Small delay for user feedback
       } else {
-        alert(data.error || `Failed to process ${terms.resume}`);
+        showError(data.error || `Failed to process ${terms.resume}`, 'Upload Failed');
+        setHasJustUploaded(false); // Reset so user can try different paths
       }
     } catch(err) {
-      alert(`Failed to process ${terms.resume}. Please try again.`);
+      showError(`Failed to process ${terms.resume}. Please try again.`, 'Upload Error');
+      setHasJustUploaded(false); // Reset so user can try different paths
     } finally{ 
       setLoading(false); 
       setLoadingMessage('');
     }
   }
 
+  async function fetchTrialUsage() {
+    try {
+      setTrialUsageLoading(true);
+      const response = await fetch('/api/trial-usage');
+      if (response.ok) {
+        const data = await response.json();
+        setTrialUsage(data);
+      }
+    } catch (error) {
+      console.error('Error fetching trial usage:', error);
+    } finally {
+      setTrialUsageLoading(false);
+    }
+  }
+
+  async function checkAuthStatus() {
+    try {
+      const response = await fetch('/api/auth-check');
+      const data = await response.json();
+      setAuthCheck(data);
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      // If check fails, assume no access for safety
+      setAuthCheck({ authenticated: false, canAccess: false, reason: 'Unable to verify access' });
+    } finally {
+      setCheckingAuth(false);
+    }
+  }
+
+  const canGenerate = () => {
+    // Use authCheck if available, otherwise fall back to old logic for backward compatibility
+    if (authCheck) {
+      return authCheck.canAccess;
+    }
+    
+    // Fallback logic (old behavior)
+    if (session?.user) return true; // Logged in users can always generate
+    if (!session && trialUsage) {
+      return trialUsage.canGenerate;
+    }
+    return false;
+  };
+
   function handleCreateNew(){
+    // Check if user can generate new resumes
+    if (!canGenerate()) {
+      if (authCheck) {
+        if (authCheck.authenticated) {
+          showError(authCheck.reason || 'You do not have access to create new resumes. Please upgrade your plan.', 'Access Denied');
+        } else {
+          showError(authCheck.reason || 'You have used all your free trials. Please sign up to create unlimited resumes!', 'Trial Limit Reached');
+        }
+      } else {
+        // Fallback message
+        showError('You cannot create new resumes at this time. Please try again later.', 'Access Denied');
+      }
+      return;
+    }
+    
     // Clear any existing draft and go directly to wizard
     localStorage.removeItem('resumeWizardDraft');
     router.push('/wizard');
@@ -184,13 +262,40 @@ export default function HeroUpload() {
                   
                   {/* Clickable upload interface */}
                   <div 
-                    className="border-2 border-dashed border-border dark:border-border-strong rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all duration-250 group"
-                    onClick={() => fileRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-8 transition-all duration-250 flex items-center justify-center min-h-[120px] ${
+                      canGenerate() 
+                        ? "border-border dark:border-border-strong cursor-pointer hover:border-primary hover:bg-primary/5 group" 
+                        : "border-gray-300 dark:border-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800 opacity-60"
+                    }`}
+                    onClick={() => canGenerate() && fileRef.current?.click()}
                   >
-                    <Upload className="w-10 h-10 text-muted group-hover:text-primary mx-auto mb-6 transition-colors duration-250" />
-                    <div className="space-y-2">
-                      <div className="text-base font-medium text-text group-hover:text-primary transition-colors duration-250">Drop your {terms.Resume} here</div>
-                      <div className="text-sm text-muted group-hover:text-primary/80 transition-colors duration-250">PDF, DOCX, or TXT • Up to 10MB</div>
+                    <div className="flex items-center space-x-6">
+                      <div className="space-y-2">
+                        <div className={`text-base font-medium transition-colors duration-250 ${
+                          canGenerate() 
+                            ? "text-text group-hover:text-primary" 
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}>
+                          {canGenerate() ? `Drop your ${terms.Resume} here` : `Upload ${authCheck?.authenticated ? 'Disabled' : 'Limited'}`}
+                        </div>
+                        <div className={`text-sm transition-colors duration-250 ${
+                          canGenerate() 
+                            ? "text-muted group-hover:text-primary/80" 
+                            : "text-gray-400 dark:text-gray-500"
+                        }`}>
+                          {canGenerate() 
+                            ? "PDF, DOCX, or TXT • Up to 10MB"
+                            : authCheck?.authenticated 
+                              ? "Please upgrade to upload resumes"
+                              : "Sign up for free access"
+                          }
+                        </div>
+                      </div>
+                      <Upload className={`w-10 h-10 transition-colors duration-250 flex-shrink-0 ${
+                        canGenerate() 
+                          ? "text-muted group-hover:text-primary" 
+                          : "text-gray-400 dark:text-gray-500"
+                      }`} />
                     </div>
                   </div>
                   
@@ -226,7 +331,7 @@ export default function HeroUpload() {
                     <button 
                       className="btn btn-primary btn-xl w-full max-w-sm group"
                       onClick={handleCreateNew} 
-                      disabled={loading || checkingResume}
+                      disabled={loading || checkingResume || !canGenerate()}
                     >
                       <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
                       Start Fresh
@@ -259,42 +364,6 @@ export default function HeroUpload() {
           </div>
         </div>
         
-        {/* First-time user help modal */}
-        {!session && showNewUserHelp && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface border border-border rounded-xl p-6 relative max-w-md w-full shadow-xl">
-              <button 
-                onClick={() => setShowNewUserHelp(false)}
-                className="absolute top-3 right-3 text-muted hover:text-text transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center flex-shrink-0">
-                  <Info className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold text-text mb-3">
-                    👋 New to TailoredCV? Here's how it works:
-                  </h3>
-                  <ol className="text-sm text-muted space-y-2 list-decimal list-inside mb-4">
-                    <li>Upload your existing {terms.resume} or build one from scratch</li>
-                    <li>Paste any job description you want to apply for</li>
-                    <li>Get a perfectly tailored {terms.resume} + cover letter in seconds!</li>
-                  </ol>
-                  <div className="space-y-2">
-                    <p className="text-xs text-primary">
-                      ✨ Try it free - no signup required for your first {terms.resume}!
-                    </p>
-                    <p className="text-xs text-success">
-                      📈 Sign up for 10 personalized {terms.ResumePlural} & cover letters per week + premium templates
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Features Section */}
@@ -385,15 +454,15 @@ export default function HeroUpload() {
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.1s'}}>
               <div className="text-2xl font-bold text-blue-600 mb-2">AI</div>
               <div className="text-sm text-muted">Powered Customization</div>
             </div>
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.2s'}}>
               <div className="text-2xl font-bold text-purple-600 mb-2">ATS</div>
               <div className="text-sm text-muted">Optimized Format</div>
             </div>
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20">
+            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.3s'}}>
               <div className="text-2xl font-bold text-green-600 mb-2">PDF</div>
               <div className="text-sm text-muted">Professional Output</div>
             </div>
@@ -403,7 +472,7 @@ export default function HeroUpload() {
             <button 
               className="btn btn-primary btn-lg group" 
               onClick={()=>fileRef.current?.click()} 
-              disabled={loading}
+              disabled={loading || !canGenerate()}
             >
               <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
               Start Tailoring Now
@@ -413,7 +482,7 @@ export default function HeroUpload() {
             <button 
               className="btn btn-secondary btn-lg group" 
               onClick={handleCreateNew} 
-              disabled={loading}
+              disabled={loading || !canGenerate()}
             >
               <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
               Build From Scratch
@@ -455,6 +524,7 @@ export default function HeroUpload() {
         onComplete={() => console.log('Tour completed')}
         storageKey="hero_onboarding_completed"
       />
+
     </div>
   );
 }

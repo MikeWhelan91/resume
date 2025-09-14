@@ -10,6 +10,7 @@ import EducationCard from './wizard/EducationCard';
 import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useError } from '../contexts/ErrorContext';
 import { InfoTooltip, HelpTooltip } from './ui/TooltipPortal';
 
 const emptyResume = {
@@ -68,6 +69,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const router = useRouter();
   const { data: session } = useSession();
   const { language, getTerminology } = useLanguage();
+  const { showError } = useError();
   const terms = getTerminology();
   const [step, setStep] = useState(0);
   const stepIds = ['goal', 'basics', 'skills', 'work', 'education', 'review'];
@@ -189,6 +191,37 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
 
     fetchUserData();
   }, [session]);
+
+  // Check if user can generate and redirect/show error if not
+  useEffect(() => {
+    // Only check after data is loaded
+    if (session === null && !trialUsageLoading && trialUsage) {
+      // Anonymous user with trial data loaded
+      if (!canGenerate()) {
+        showError(
+          `You've used all ${trialUsage.generationsLimit} free generations. Sign up to create unlimited resumes and cover letters!`,
+          'Trial Limit Reached'
+        );
+        setTimeout(() => router.push('/'), 3000);
+      }
+    } else if (session && entitlement) {
+      // Logged in user with entitlement loaded
+      if (!canGenerate()) {
+        if (userPlan === 'free') {
+          showError(
+            'You\'ve used all your weekly free generations. Upgrade to Pro for unlimited access!',
+            'Weekly Limit Reached'
+          );
+        } else {
+          showError(
+            'Unable to generate resumes at this time. Please try again later.',
+            'Generation Error'
+          );
+        }
+        setTimeout(() => router.push('/'), 3000);
+      }
+    }
+  }, [session, trialUsage, trialUsageLoading, entitlement, userPlan]);
 
   // Credit checking functions
   const getCreditsRemaining = () => {
@@ -339,10 +372,13 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         localStorage.setItem('resumeResult', JSON.stringify(resultData));
         onComplete && onComplete(resultData);
       } else {
-        alert("Couldn't generate that. Try again in a moment.");
+        // Show specific error message from API
+        const errorMessage = out.message || out.error || "Couldn't generate that. Try again in a moment.";
+        showError(errorMessage, 'Generation Failed');
       }
-    }catch{
-      alert("Couldn't generate that. Try again in a moment.");
+    } catch(error) {
+      console.error('Generation error:', error);
+      showError("Couldn't generate that. Try again in a moment.", 'Network Error');
     }finally{
       setIsGenerating(false);
     }
