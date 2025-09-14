@@ -29,38 +29,38 @@ const emptyResume = {
 const schemas = {
   basics: z.object({
     name: z.string().min(1, 'Name is required'),
-    title: z.string().optional(),
-    email: z.string().email('Invalid email').optional().or(z.literal('')),
-    phone: z.string().optional(),
-    location: z.string().optional(),
-    summary: z.string().optional(),
+    title: z.string().nullish().transform(val => val ?? ''),
+    email: z.string().nullish().transform(val => val ?? '').refine(val => !val || z.string().email().safeParse(val).success, 'Invalid email'),
+    phone: z.string().nullish().transform(val => val ?? ''),
+    location: z.string().nullish().transform(val => val ?? ''),
+    summary: z.string().nullish().transform(val => val ?? ''),
     links: z.array(z.object({
-      label: z.string().optional(),
-      url: z.string().url('Invalid URL').optional().or(z.literal(''))
-    }))
+      label: z.string().nullish().transform(val => val ?? ''),
+      url: z.string().nullish().transform(val => val ?? '').refine(val => !val || z.string().url().safeParse(val).success, 'Invalid URL')
+    })).optional().default([])
   }),
-  skills: z.object({ skills: z.array(z.string()) }),
+  skills: z.object({ skills: z.array(z.string()).optional().default([]) }),
   work: z.object({
     experience: z.array(z.object({
       company: z.string().min(1, 'Company required'),
       title: z.string().min(1, 'Job title required'),
-      location: z.string().optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
-      present: z.boolean().optional(),
-      bullets: z.array(z.string()).optional()
-    }))
+      location: z.string().nullish().transform(val => val ?? ''),
+      start: z.string().nullish().transform(val => val ?? ''),
+      end: z.string().nullish().transform(val => val ?? ''),
+      present: z.boolean().optional().default(false),
+      bullets: z.array(z.string()).optional().default([])
+    })).optional().default([])
   }),
   education: z.object({
     education: z.array(z.object({
       school: z.string().min(1, 'School required'),
-      degree: z.string().optional(),
-      grade: z.string().optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
-      present: z.boolean().optional(),
-      bullets: z.array(z.string()).optional()
-    }))
+      degree: z.string().nullish().transform(val => val ?? ''),
+      grade: z.string().nullish().transform(val => val ?? ''),
+      start: z.string().nullish().transform(val => val ?? ''),
+      end: z.string().nullish().transform(val => val ?? ''),
+      present: z.boolean().optional().default(false),
+      bullets: z.array(z.string()).optional().default([])
+    })).optional().default([])
   })
 };
 

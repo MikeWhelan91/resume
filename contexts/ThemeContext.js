@@ -11,7 +11,7 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('system');
+  const [theme, setTheme] = useState('light');
   const [resolvedTheme, setResolvedTheme] = useState('light');
 
   useEffect(() => {
