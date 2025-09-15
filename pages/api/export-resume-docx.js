@@ -119,20 +119,25 @@ function createProfessionalTemplate(userData, accent) {
       })
     );
 
-    // Display skills as individual items with spacing to simulate tags
-    const skillsText = userData.resumeData.skills.join('   ');
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: skillsText,
-            size: Math.round(8 * scale * 2),
-            font: "Arial"
-          })
-        ],
-        spacing: { after: Math.round(12 * scale * 20) }
-      })
-    );
+    // Display skills with better spacing to simulate tags
+    userData.resumeData.skills.forEach((skill, index) => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: skill,
+              size: Math.round(8 * scale * 2),
+              font: "Arial"
+            })
+          ],
+          spacing: { after: Math.round(2 * scale * 20) },
+          shading: {
+            fill: "F0F0F0"
+          },
+          indent: { left: Math.round(10 * scale * 20), right: Math.round(10 * scale * 20) }
+        })
+      );
+    });
   }
 
   // Professional Experience
@@ -257,24 +262,30 @@ function createModernTemplate(userData, accent) {
   const scale = 1.4; // Use 1.4x scaling for optimal DOCX readability
   const children = [];
 
-  // Header with colored background (simulating gradient effect)
+  // Header with light blue background to simulate gradient
   children.push(
     new Paragraph({
       children: [
         new TextRun({
           text: userData.resumeData?.name || userData.name || 'Your Name',
           bold: true,
-          size: Math.round(18 * scale * 2),
+          size: Math.round(16 * scale * 2),
           color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-          font: "Segoe UI"
+          font: "Helvetica"
         })
       ],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: Math.round(8 * scale * 20), after: Math.round(4 * scale * 20) },
+      alignment: AlignmentType.LEFT,
+      spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) },
       shading: {
-        fill: "F0F5FF"
+        fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}20`
       },
-      indent: { left: Math.round(-200 * scale), right: Math.round(-200 * scale) }
+      indent: { left: Math.round(12 * scale * 20), right: Math.round(12 * scale * 20) },
+      border: {
+        top: { style: BorderStyle.NONE },
+        bottom: { style: BorderStyle.NONE },
+        left: { style: BorderStyle.NONE },
+        right: { style: BorderStyle.NONE }
+      }
     })
   );
 
@@ -286,28 +297,29 @@ function createModernTemplate(userData, accent) {
           text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} • ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
           size: Math.round(9 * scale * 2),
           color: "666666",
-          font: "Segoe UI"
+          font: "Helvetica"
         })
       ],
-      alignment: AlignmentType.CENTER,
+      alignment: AlignmentType.LEFT,
       spacing: { after: Math.round(12 * scale * 20) },
       shading: {
-        fill: "F0F5FF"
+        fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}15`
       },
-      indent: { left: Math.round(-200 * scale), right: Math.round(-200 * scale) }
+      indent: { left: Math.round(12 * scale * 20), right: Math.round(12 * scale * 20) }
     })
   );
 
-  // About section with background color effect (using indentation and border)
+  // About section with left border accent
   if (userData.resumeData?.summary) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: "ABOUT",
+            text: "About",
             bold: true,
             size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Helvetica"
           })
         ],
         spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
@@ -319,13 +331,14 @@ function createModernTemplate(userData, accent) {
         children: [
           new TextRun({
             text: userData.resumeData.summary,
-            size: Math.round(9 * scale * 2)
+            size: Math.round(9 * scale * 2),
+            font: "Helvetica"
           })
         ],
         spacing: { after: Math.round(12 * scale * 20) },
-        indent: { left: Math.round(200 * scale), right: Math.round(200 * scale) },
+        indent: { left: Math.round(8 * scale * 20), right: Math.round(8 * scale * 20) },
         shading: {
-          fill: "F8F9FA"
+          fill: "FAFAFA"
         },
         border: {
           left: {
@@ -335,21 +348,21 @@ function createModernTemplate(userData, accent) {
             style: BorderStyle.SINGLE
           },
           top: {
-            color: "F0F0F0",
+            color: "E0E0E0",
             space: 1,
-            size: 6,
+            size: 4,
             style: BorderStyle.SINGLE
           },
           bottom: {
-            color: "F0F0F0",
+            color: "E0E0E0",
             space: 1,
-            size: 6,
+            size: 4,
             style: BorderStyle.SINGLE
           },
           right: {
-            color: "F0F0F0",
+            color: "E0E0E0",
             space: 1,
-            size: 6,
+            size: 4,
             style: BorderStyle.SINGLE
           }
         }
@@ -368,26 +381,33 @@ function createModernTemplate(userData, accent) {
         new Paragraph({
           children: [
             new TextRun({
-              text: "SKILLS",
+              text: "Skills",
               bold: true,
               size: Math.round(11 * scale * 2),
-              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Helvetica"
             })
           ],
           spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
         })
       );
 
+      // Add skills with tag-like styling (using shading to simulate background)
       userData.resumeData.skills.slice(0, 6).forEach(skill => {
         skillsContent.push(
           new Paragraph({
             children: [
               new TextRun({
                 text: skill,
-                size: Math.round(8 * scale * 2)
+                size: Math.round(8 * scale * 2),
+                font: "Helvetica"
               })
             ],
-            spacing: { after: Math.round(2 * scale * 20) }
+            spacing: { after: Math.round(2 * scale * 20) },
+            shading: {
+              fill: "F0F0F0"
+            },
+            indent: { left: Math.round(2 * scale * 20), right: Math.round(2 * scale * 20) }
           })
         );
       });
@@ -400,10 +420,11 @@ function createModernTemplate(userData, accent) {
         new Paragraph({
           children: [
             new TextRun({
-              text: "EDUCATION",
+              text: "Education",
               bold: true,
               size: Math.round(11 * scale * 2),
-              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Helvetica"
             })
           ],
           spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
@@ -417,7 +438,8 @@ function createModernTemplate(userData, accent) {
               new TextRun({
                 text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
                 bold: true,
-                size: Math.round(9 * scale * 2)
+                size: Math.round(9 * scale * 2),
+                font: "Helvetica"
               })
             ],
             spacing: { after: Math.round(1 * scale * 20) }
@@ -430,7 +452,8 @@ function createModernTemplate(userData, accent) {
               new TextRun({
                 text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
                 size: Math.round(8 * scale * 2),
-                color: "666666"
+                color: "666666",
+                font: "Helvetica"
               })
             ],
             spacing: { after: Math.round(1 * scale * 20) }
@@ -443,10 +466,11 @@ function createModernTemplate(userData, accent) {
               new TextRun({
                 text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
                 size: Math.round(8 * scale * 2),
-                color: "666666"
+                color: "666666",
+                font: "Helvetica"
               })
             ],
-            spacing: { after: Math.round(4 * scale * 20) }
+            spacing: { after: Math.round(6 * scale * 20) }
           })
         );
       });
@@ -459,28 +483,40 @@ function createModernTemplate(userData, accent) {
           children: [
             new TableCell({
               children: skillsContent.length > 0 ? skillsContent : [new Paragraph("")],
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: 4500, type: WidthType.DXA },
               borders: {
                 top: { style: BorderStyle.NONE },
                 bottom: { style: BorderStyle.NONE },
                 left: { style: BorderStyle.NONE },
                 right: { style: BorderStyle.NONE }
+              },
+              margins: {
+                top: Math.round(8 * scale * 20),
+                bottom: Math.round(8 * scale * 20),
+                left: Math.round(8 * scale * 20),
+                right: Math.round(4 * scale * 20)
               }
             }),
             new TableCell({
               children: educationContent.length > 0 ? educationContent : [new Paragraph("")],
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: 4500, type: WidthType.DXA },
               borders: {
                 top: { style: BorderStyle.NONE },
                 bottom: { style: BorderStyle.NONE },
                 left: { style: BorderStyle.NONE },
                 right: { style: BorderStyle.NONE }
+              },
+              margins: {
+                top: Math.round(8 * scale * 20),
+                bottom: Math.round(8 * scale * 20),
+                left: Math.round(4 * scale * 20),
+                right: Math.round(8 * scale * 20)
               }
             })
           ]
         })
       ],
-      width: { size: 100, type: WidthType.PERCENTAGE }
+      width: { size: 9000, type: WidthType.DXA }
     });
 
     children.push(skillsEducationTable);
@@ -492,10 +528,11 @@ function createModernTemplate(userData, accent) {
       new Paragraph({
         children: [
           new TextRun({
-            text: "EXPERIENCE",
+            text: "Experience",
             bold: true,
             size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Helvetica"
           })
         ],
         spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
@@ -503,7 +540,11 @@ function createModernTemplate(userData, accent) {
     );
 
     limitExperience(userData.resumeData.experience).forEach(exp => {
-      children.push(
+      // Create experience container with border and background
+      const experienceContent = [];
+
+      // Title
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -514,11 +555,12 @@ function createModernTemplate(userData, accent) {
               font: "Helvetica"
             })
           ],
-          spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) }
+          spacing: { after: Math.round(3 * scale * 20) }
         })
       );
 
-      children.push(
+      // Company
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -532,7 +574,8 @@ function createModernTemplate(userData, accent) {
         })
       );
 
-      children.push(
+      // Date with background styling
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -542,13 +585,18 @@ function createModernTemplate(userData, accent) {
               font: "Helvetica"
             })
           ],
-          spacing: { after: Math.round(4 * scale * 20) }
+          spacing: { after: Math.round(4 * scale * 20) },
+          shading: {
+            fill: "F0F0F0"
+          },
+          indent: { left: Math.round(4 * scale * 20), right: Math.round(4 * scale * 20) }
         })
       );
 
+      // Bullets
       if (exp.bullets && exp.bullets.length > 0) {
         exp.bullets.forEach(bullet => {
-          children.push(
+          experienceContent.push(
             new Paragraph({
               children: [
                 new TextRun({
@@ -559,11 +607,51 @@ function createModernTemplate(userData, accent) {
                 })
               ],
               spacing: { after: Math.round(2 * scale * 20) },
-              indent: { left: Math.round(300 * scale) }
+              indent: { left: Math.round(8 * scale * 20) }
             })
           );
         });
       }
+
+      // Create table for experience container to simulate bordered box
+      const experienceTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: experienceContent,
+                width: { size: 9000, type: WidthType.DXA },
+                borders: {
+                  top: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(6 * scale * 20),
+                  bottom: Math.round(6 * scale * 20),
+                  left: Math.round(6 * scale * 20),
+                  right: Math.round(6 * scale * 20)
+                },
+                shading: {
+                  fill: "FCFCFC"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 9000, type: WidthType.DXA }
+      });
+
+      children.push(experienceTable);
+
+      // Add spacing between experience items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(10 * scale * 20) }
+        })
+      );
     });
   }
 
@@ -575,7 +663,7 @@ function createCreativeTemplate(userData, accent) {
   const scale = 1.4; // Use 1.4x scaling for optimal DOCX readability
   const children = [];
 
-  // Header with creative styling
+  // Header with creative center alignment and decorative line
   children.push(
     new Paragraph({
       children: [
@@ -584,23 +672,23 @@ function createCreativeTemplate(userData, accent) {
           bold: true,
           size: Math.round(18 * scale * 2),
           color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-          font: "Book Antiqua"
+          font: "Georgia"
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(6 * scale * 20) }
+      spacing: { before: Math.round(8 * scale * 20), after: Math.round(4 * scale * 20) }
     })
   );
 
-  // Decorative line under name
+  // Decorative line (using underscores to simulate line)
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~",
-          size: Math.round(8 * scale * 2),
+          text: "————————————————————————————————————————————————",
+          size: Math.round(6 * scale * 2),
           color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-          font: "Book Antiqua"
+          font: "Georgia"
         })
       ],
       alignment: AlignmentType.CENTER,
@@ -608,6 +696,7 @@ function createCreativeTemplate(userData, accent) {
     })
   );
 
+  // Contact info - centered and italic
   children.push(
     new Paragraph({
       children: [
@@ -615,15 +704,16 @@ function createCreativeTemplate(userData, accent) {
           text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} • ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
           size: Math.round(9 * scale * 2),
           color: "666666",
-          italics: true
+          italics: true,
+          font: "Georgia"
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(12 * scale * 20) }
+      spacing: { after: Math.round(15 * scale * 20) }
     })
   );
 
-  // Summary
+  // Profile/Summary with centered styling and border
   if (userData.resumeData?.summary) {
     children.push(
       new Paragraph({
@@ -647,7 +737,9 @@ function createCreativeTemplate(userData, accent) {
         children: [
           new TextRun({
             text: userData.resumeData.summary,
-            size: Math.round(9 * scale * 2)
+            size: Math.round(9 * scale * 2),
+            italics: true,
+            font: "Georgia"
           })
         ],
         alignment: AlignmentType.CENTER,
@@ -656,30 +748,32 @@ function createCreativeTemplate(userData, accent) {
           fill: "FAFAFA"
         },
         border: {
-          top: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-          bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-          left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-          right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
+          top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, size: 4, style: BorderStyle.SINGLE },
+          bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, size: 4, style: BorderStyle.SINGLE },
+          left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, size: 4, style: BorderStyle.SINGLE },
+          right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, size: 4, style: BorderStyle.SINGLE }
         },
-        indent: { left: Math.round(200 * scale), right: Math.round(200 * scale) }
+        indent: { left: Math.round(150 * scale), right: Math.round(150 * scale) }
       })
     );
   }
 
-  // Experience
+  // Experience with centered styling and individual bordered containers
   if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: "EXPERIENCE",
+            text: "Experience",
             bold: true,
+            italics: true,
             size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Georgia"
           })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
       })
     );
 
@@ -688,19 +782,23 @@ function createCreativeTemplate(userData, accent) {
       new Paragraph({
         children: [
           new TextRun({
-            text: "____",
-            size: Math.round(8 * scale * 2),
+            text: "——————————————————————————————————",
+            size: Math.round(6 * scale * 2),
             color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
             font: "Georgia"
           })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(6 * scale * 20) }
+        spacing: { after: Math.round(8 * scale * 20) }
       })
     );
 
     limitExperience(userData.resumeData.experience).forEach(exp => {
-      children.push(
+      // Create experience container with centered content and border
+      const experienceContent = [];
+
+      // Title
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -712,20 +810,12 @@ function createCreativeTemplate(userData, accent) {
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { before: Math.round(10 * scale * 20), after: Math.round(2 * scale * 20) },
-          shading: {
-            fill: "FAFAFA"
-          },
-          border: {
-            top: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-            bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
-          }
+          spacing: { after: Math.round(2 * scale * 20) }
         })
       );
 
-      children.push(
+      // Company
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -737,18 +827,12 @@ function createCreativeTemplate(userData, accent) {
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: Math.round(2 * scale * 20) },
-          shading: {
-            fill: "FAFAFA"
-          },
-          border: {
-            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
-          }
+          spacing: { after: Math.round(2 * scale * 20) }
         })
       );
 
-      children.push(
+      // Date
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -759,20 +843,14 @@ function createCreativeTemplate(userData, accent) {
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: Math.round(4 * scale * 20) },
-          shading: {
-            fill: "FAFAFA"
-          },
-          border: {
-            left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-            right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
-          }
+          spacing: { after: Math.round(4 * scale * 20) }
         })
       );
 
+      // Bullets (left-aligned within the container)
       if (exp.bullets && exp.bullets.length > 0) {
-        exp.bullets.forEach((bullet, index) => {
-          children.push(
+        exp.bullets.forEach(bullet => {
+          experienceContent.push(
             new Paragraph({
               children: [
                 new TextRun({
@@ -783,21 +861,52 @@ function createCreativeTemplate(userData, accent) {
                 })
               ],
               spacing: { after: Math.round(2 * scale * 20) },
-              indent: { left: Math.round(360 * scale), right: Math.round(360 * scale) },
-              shading: {
-                fill: "FAFAFA"
-              },
-              border: {
-                left: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-                right: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE },
-                ...(index === exp.bullets.length - 1 && {
-                  bottom: { color: "E0E0E0", size: 6, style: BorderStyle.SINGLE }
-                })
-              }
+              indent: { left: Math.round(15 * scale * 20) }
             })
           );
         });
       }
+
+      // Create table for experience container to simulate bordered box
+      const experienceTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: experienceContent,
+                width: { size: 8000, type: WidthType.DXA },
+                borders: {
+                  top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(8 * scale * 20),
+                  bottom: Math.round(8 * scale * 20),
+                  left: Math.round(8 * scale * 20),
+                  right: Math.round(8 * scale * 20)
+                },
+                shading: {
+                  fill: "FAFAFA"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 8000, type: WidthType.DXA },
+        alignment: AlignmentType.CENTER
+      });
+
+      children.push(experienceTable);
+
+      // Add spacing between experience items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(15 * scale * 20) }
+        })
+      );
     });
   }
 
@@ -984,49 +1093,37 @@ function createMinimalTemplate(userData, accent) {
   const scale = 1.4;
   const children = [];
 
-  // Name (large, clean styling)
+  // Name with minimal, light typography
   children.push(
     new Paragraph({
       children: [
         new TextRun({
           text: userData.resumeData?.name || userData.name || 'Your Name',
-          size: Math.round(20 * scale * 2),
+          size: Math.round(18 * scale * 2),
           color: "000000",
-          font: "Calibri Light"
+          font: "system-ui"
         })
       ],
-      spacing: { after: Math.round(6 * scale * 20) }
+      spacing: { after: Math.round(4 * scale * 20) }
     })
   );
 
-  // Contact info with clean separator
+  // Contact info with bullet separator
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: userData.resumeData?.email || userData.email || 'your.email@example.com',
-          size: Math.round(10 * scale * 2),
+          text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} • ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
+          size: Math.round(9 * scale * 2),
           color: "666666",
-          font: "Calibri"
-        }),
-        new TextRun({
-          text: "  •  ",
-          size: Math.round(10 * scale * 2),
-          color: "CCCCCC",
-          font: "Calibri"
-        }),
-        new TextRun({
-          text: userData.resumeData?.phone || userData.phone || 'Your Phone',
-          size: Math.round(10 * scale * 2),
-          color: "666666",
-          font: "Calibri"
+          font: "system-ui"
         })
       ],
       spacing: { after: Math.round(20 * scale * 20) }
     })
   );
 
-  // Summary
+  // Summary without header, clean paragraph
   if (userData.resumeData?.summary) {
     children.push(
       new Paragraph({
@@ -1035,26 +1132,25 @@ function createMinimalTemplate(userData, accent) {
             text: userData.resumeData.summary,
             size: Math.round(10 * scale * 2),
             color: "333333",
-            font: "Arial"
+            font: "system-ui"
           })
         ],
-        spacing: { after: Math.round(16 * scale * 20) },
-        alignment: AlignmentType.JUSTIFIED
+        spacing: { after: Math.round(16 * scale * 20) }
       })
     );
   }
 
-  // Experience
+  // Experience with clean header and minimal styling
   if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: "EXPERIENCE",
+            text: "Experience",
             bold: true,
             size: Math.round(12 * scale * 2),
             color: "000000",
-            font: "Arial"
+            font: "system-ui"
           })
         ],
         spacing: { before: Math.round(16 * scale * 20), after: Math.round(8 * scale * 20) }
@@ -1062,6 +1158,7 @@ function createMinimalTemplate(userData, accent) {
     );
 
     limitExperience(userData.resumeData.experience).forEach(exp => {
+      // Title and date on same line with space between
       children.push(
         new Paragraph({
           children: [
@@ -1070,19 +1167,20 @@ function createMinimalTemplate(userData, accent) {
               bold: true,
               size: Math.round(11 * scale * 2),
               color: "000000",
-              font: "Arial"
+              font: "system-ui"
             }),
             new TextRun({
-              text: `    ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
+              text: `                      ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
               size: Math.round(9 * scale * 2),
               color: "666666",
-              font: "Arial"
+              font: "system-ui"
             })
           ],
           spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
         })
       );
 
+      // Company with accent color
       children.push(
         new Paragraph({
           children: [
@@ -1090,13 +1188,14 @@ function createMinimalTemplate(userData, accent) {
               text: safeProp(exp, 'company'),
               size: Math.round(10 * scale * 2),
               color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-              font: "Arial"
+              font: "system-ui"
             })
           ],
           spacing: { after: Math.round(4 * scale * 20) }
         })
       );
 
+      // Bullets with accent color
       if (exp.bullets && exp.bullets.length > 0) {
         exp.bullets.forEach(bullet => {
           children.push(
@@ -1106,11 +1205,11 @@ function createMinimalTemplate(userData, accent) {
                   text: `• ${bullet}`,
                   size: Math.round(9 * scale * 2),
                   color: "444444",
-                  font: "Arial"
+                  font: "system-ui"
                 })
               ],
               spacing: { after: Math.round(2 * scale * 20) },
-              indent: { left: Math.round(200 * scale) }
+              indent: { left: Math.round(8 * scale * 20) }
             })
           );
         });
@@ -1118,111 +1217,155 @@ function createMinimalTemplate(userData, accent) {
     });
   }
 
-  // Skills section with clean layout
-  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "SKILLS",
-            bold: true,
-            size: Math.round(11 * scale * 2),
-            color: "000000",
-            font: "Calibri",
-            smallCaps: true
-          })
-        ],
-        spacing: { before: Math.round(16 * scale * 20), after: Math.round(6 * scale * 20) },
-        border: {
-          bottom: {
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            space: 1,
-            size: 3,
-            style: BorderStyle.SINGLE
-          }
-        }
-      })
-    );
+  // Skills and Education in side-by-side grid layout
+  if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
+      (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
 
-    // Display skills in a clean, readable format
-    const skillsText = userData.resumeData.skills.join('  •  ');
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: skillsText,
-            size: Math.round(9 * scale * 2),
-            color: "333333",
-            font: "Calibri"
-          })
-        ],
-        spacing: { after: Math.round(16 * scale * 20) }
-      })
-    );
-  }
-
-  // Education
-  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "EDUCATION",
-            bold: true,
-            size: Math.round(12 * scale * 2),
-            color: "000000",
-            font: "Arial"
-          })
-        ],
-        spacing: { before: Math.round(16 * scale * 20), after: Math.round(8 * scale * 20) }
-      })
-    );
-
-    limitEducation(userData.resumeData.education, 2).forEach(edu => {
-      children.push(
+    // Create skills content
+    const skillsContent = [];
+    if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+      skillsContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              text: "Skills",
               bold: true,
-              size: Math.round(10 * scale * 2),
+              size: Math.round(12 * scale * 2),
               color: "000000",
-              font: "Arial"
-            })
-          ],
-          spacing: { before: Math.round(8 * scale * 20), after: Math.round(2 * scale * 20) }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
-              size: Math.round(9 * scale * 2),
-              color: "666666",
-              font: "Arial"
-            })
-          ],
-          spacing: { after: Math.round(2 * scale * 20) }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
-              size: Math.round(8 * scale * 2),
-              color: "999999",
-              font: "Arial"
+              font: "system-ui"
             })
           ],
           spacing: { after: Math.round(8 * scale * 20) }
         })
       );
+
+      // Skills with subtle underline effect
+      userData.resumeData.skills.forEach(skill => {
+        skillsContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: skill,
+                size: Math.round(9 * scale * 2),
+                color: "555555",
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(4 * scale * 20) },
+            border: {
+              bottom: {
+                color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}20`,
+                space: 1,
+                size: 1,
+                style: BorderStyle.SINGLE
+              }
+            }
+          })
+        );
+      });
+    }
+
+    // Create education content
+    const educationContent = [];
+    if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+      educationContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "Education",
+              bold: true,
+              size: Math.round(12 * scale * 2),
+              color: "000000",
+              font: "system-ui"
+            })
+          ],
+          spacing: { after: Math.round(8 * scale * 20) }
+        })
+      );
+
+      limitEducation(userData.resumeData.education, 2).forEach(edu => {
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+                bold: true,
+                size: Math.round(10 * scale * 2),
+                color: "000000",
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+                size: Math.round(9 * scale * 2),
+                color: "666666",
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+                size: Math.round(8 * scale * 2),
+                color: "999999",
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(8 * scale * 20) }
+          })
+        );
+      });
+    }
+
+    // Create side-by-side table with 2fr 1fr ratio (skills taking more space)
+    const skillsEducationTable = new Table({
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: skillsContent.length > 0 ? skillsContent : [new Paragraph("")],
+              width: { size: 6000, type: WidthType.DXA }, // 2fr equivalent
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              },
+              margins: {
+                right: Math.round(20 * scale * 20)
+              }
+            }),
+            new TableCell({
+              children: educationContent.length > 0 ? educationContent : [new Paragraph("")],
+              width: { size: 3000, type: WidthType.DXA }, // 1fr equivalent
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              }
+            })
+          ]
+        })
+      ],
+      width: { size: 9000, type: WidthType.DXA }
     });
+
+    children.push(skillsEducationTable);
   }
+
 
   return children;
 }
@@ -1491,35 +1634,39 @@ function createTwoColumnTemplate(userData, accent) {
   const table = new Table({
     rows: [
       new TableRow({
+        height: {
+          value: 100,
+          rule: "atLeast"
+        },
         children: [
           new TableCell({
             children: leftColumnContent,
             width: {
-              size: 35,
-              type: WidthType.PERCENTAGE,
+              size: 3150,
+              type: WidthType.DXA,
             },
             shading: {
               fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
             },
             margins: {
-              top: Math.round(200 * scale),
-              bottom: Math.round(200 * scale),
-              left: Math.round(200 * scale),
-              right: Math.round(200 * scale)
+              top: Math.round(50 * scale),
+              bottom: Math.round(50 * scale),
+              left: Math.round(50 * scale),
+              right: Math.round(25 * scale)
             },
             verticalAlign: "top"
           }),
           new TableCell({
             children: rightColumnContent,
             width: {
-              size: 65,
-              type: WidthType.PERCENTAGE,
+              size: 5850,
+              type: WidthType.DXA,
             },
             margins: {
-              top: Math.round(200 * scale),
-              bottom: Math.round(200 * scale),
-              left: Math.round(200 * scale),
-              right: Math.round(200 * scale)
+              top: Math.round(50 * scale),
+              bottom: Math.round(50 * scale),
+              left: Math.round(25 * scale),
+              right: Math.round(50 * scale)
             },
             verticalAlign: "top"
           })
@@ -1527,8 +1674,16 @@ function createTwoColumnTemplate(userData, accent) {
       })
     ],
     width: {
-      size: 100,
-      type: WidthType.PERCENTAGE,
+      size: 9000,
+      type: WidthType.DXA,
+    },
+    borders: {
+      top: { style: BorderStyle.NONE },
+      bottom: { style: BorderStyle.NONE },
+      left: { style: BorderStyle.NONE },
+      right: { style: BorderStyle.NONE },
+      insideHorizontal: { style: BorderStyle.NONE },
+      insideVertical: { style: BorderStyle.NONE }
     }
   });
 
@@ -1542,68 +1697,48 @@ function createExecutiveTemplate(userData, accent) {
   const scale = 1.4;
   const children = [];
 
-  // Name (centered, large, executive styling)
+  // Executive header with bottom border
   children.push(
     new Paragraph({
       children: [
         new TextRun({
           text: (userData.resumeData?.name || userData.name || 'YOUR NAME').toUpperCase(),
           bold: true,
-          size: Math.round(18 * scale * 2),
+          size: Math.round(16 * scale * 2),
           color: "000000",
-          font: "Times New Roman"
+          font: "Times"
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(12 * scale * 20) }
+      spacing: { before: Math.round(8 * scale * 20), after: Math.round(6 * scale * 20) }
     })
   );
 
-  // Decorative line under name
+  // Contact info with pipe separator
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-          size: Math.round(8 * scale * 2),
-          color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-          font: "Times New Roman"
+          text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} | ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
+          size: Math.round(9 * scale * 2),
+          color: "666666",
+          font: "Times"
         })
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(8 * scale * 20) }
-    })
-  );
-
-  // Contact info (centered with professional separator)
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: userData.resumeData?.email || userData.email || 'your.email@example.com',
-          size: Math.round(10 * scale * 2),
-          color: "666666",
-          font: "Times New Roman"
-        }),
-        new TextRun({
-          text: "  |  ",
-          size: Math.round(10 * scale * 2),
+      spacing: { after: Math.round(15 * scale * 20) },
+      border: {
+        bottom: {
           color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-          font: "Times New Roman"
-        }),
-        new TextRun({
-          text: userData.resumeData?.phone || userData.phone || 'Your Phone',
-          size: Math.round(10 * scale * 2),
-          color: "666666",
-          font: "Times New Roman"
-        })
-      ],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: Math.round(25 * scale * 20) }
+          space: 1,
+          size: Math.round(3 * scale),
+          style: BorderStyle.SINGLE
+        }
+      }
     })
   );
 
-  // Executive Summary
+  // Executive Summary with top and bottom borders
   if (userData.resumeData?.summary) {
     children.push(
       new Paragraph({
@@ -1617,23 +1752,7 @@ function createExecutiveTemplate(userData, accent) {
           })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(25 * scale * 20), after: Math.round(8 * scale * 20) }
-      })
-    );
-
-    // Top border line
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            size: Math.round(6 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Times New Roman"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(8 * scale * 20) }
+        spacing: { before: Math.round(20 * scale * 20), after: Math.round(8 * scale * 20) }
       })
     );
 
@@ -1645,33 +1764,31 @@ function createExecutiveTemplate(userData, accent) {
             size: Math.round(11 * scale * 2),
             color: "000000",
             italics: true,
-            font: "Times New Roman"
+            font: "Times"
           })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(8 * scale * 20) },
-        indent: { left: Math.round(720 * scale), right: Math.round(720 * scale) }
-      })
-    );
-
-    // Bottom border line
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            size: Math.round(6 * scale * 2),
+        spacing: { after: Math.round(12 * scale * 20) },
+        border: {
+          top: {
             color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Times New Roman"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(20 * scale * 20) }
+            space: 1,
+            size: 4,
+            style: BorderStyle.SINGLE
+          },
+          bottom: {
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            space: 1,
+            size: 4,
+            style: BorderStyle.SINGLE
+          }
+        },
+        indent: { left: Math.round(200 * scale), right: Math.round(200 * scale) }
       })
     );
   }
 
-  // Professional Experience
+  // Professional Experience with individual bordered containers
   if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
     children.push(
       new Paragraph({
@@ -1685,12 +1802,16 @@ function createExecutiveTemplate(userData, accent) {
           })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(25 * scale * 20), after: Math.round(12 * scale * 20) }
+        spacing: { before: Math.round(20 * scale * 20), after: Math.round(12 * scale * 20) }
       })
     );
 
     limitExperience(userData.resumeData.experience).forEach(exp => {
-      children.push(
+      // Create experience container content
+      const experienceContent = [];
+
+      // Header with title and date on same line
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -1701,32 +1822,27 @@ function createExecutiveTemplate(userData, accent) {
               font: "Times"
             }),
             new TextRun({
-              text: `    ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
+              text: `                ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
               bold: true,
               size: Math.round(9 * scale * 2),
               color: "666666",
               font: "Times"
             })
           ],
-          spacing: { before: Math.round(15 * scale * 20), after: Math.round(6 * scale * 20) },
-          shading: {
-            fill: "FAFAFA"
-          },
+          spacing: { after: Math.round(4 * scale * 20) },
           border: {
-            top: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
             bottom: {
               color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
               space: 1,
-              size: 3,
+              size: 2,
               style: BorderStyle.SINGLE
-            },
-            left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
-            right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
+            }
           }
         })
       );
 
-      children.push(
+      // Company
+      experienceContent.push(
         new Paragraph({
           children: [
             new TextRun({
@@ -1738,20 +1854,14 @@ function createExecutiveTemplate(userData, accent) {
               font: "Times"
             })
           ],
-          spacing: { after: Math.round(6 * scale * 20) },
-          shading: {
-            fill: "FAFAFA"
-          },
-          border: {
-            left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
-            right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
-          }
+          spacing: { after: Math.round(6 * scale * 20) }
         })
       );
 
+      // Bullets
       if (exp.bullets && exp.bullets.length > 0) {
-        exp.bullets.forEach((bullet, index) => {
-          children.push(
+        exp.bullets.forEach(bullet => {
+          experienceContent.push(
             new Paragraph({
               children: [
                 new TextRun({
@@ -1762,132 +1872,70 @@ function createExecutiveTemplate(userData, accent) {
                 })
               ],
               spacing: { after: Math.round(3 * scale * 20) },
-              indent: { left: Math.round(360 * scale) },
-              alignment: AlignmentType.JUSTIFIED,
-              shading: {
-                fill: "FAFAFA"
-              },
-              border: {
-                left: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
-                right: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE },
-                ...(index === exp.bullets.length - 1 && {
-                  bottom: { color: "E0E0E0", space: 1, size: 6, style: BorderStyle.SINGLE }
-                })
-              }
+              indent: { left: Math.round(15 * scale * 20) },
+              alignment: AlignmentType.JUSTIFIED
             })
           );
         });
       }
+
+      // Create table for experience container
+      const experienceTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: experienceContent,
+                width: { size: 9000, type: WidthType.DXA },
+                borders: {
+                  top: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(12 * scale * 20),
+                  bottom: Math.round(12 * scale * 20),
+                  left: Math.round(12 * scale * 20),
+                  right: Math.round(12 * scale * 20)
+                },
+                shading: {
+                  fill: "FAFAFA"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 9000, type: WidthType.DXA }
+      });
+
+      children.push(experienceTable);
+
+      // Add spacing between experience items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(15 * scale * 20) }
+        })
+      );
     });
   }
 
-  // Core Competencies
-  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "CORE COMPETENCIES",
-            bold: true,
-            size: Math.round(12 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Times"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(20 * scale * 20), after: Math.round(8 * scale * 20) }
-      })
-    );
+  // Core Competencies and Education Side-by-Side
+  if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
+      (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
 
-    const skillsText = userData.resumeData.skills.slice(0, 8).join(' | ');
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: skillsText,
-            size: Math.round(9 * scale * 2),
-            color: "333333",
-            font: "Times"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(20 * scale * 20) },
-        border: {
-          top: {
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            space: 1,
-            size: 6,
-            style: BorderStyle.SINGLE
-          },
-          bottom: {
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            space: 1,
-            size: 6,
-            style: BorderStyle.SINGLE
-          }
-        }
-      })
-    );
-  }
-
-  // Education
-  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "EDUCATION",
-            bold: true,
-            size: Math.round(12 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Times"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(20 * scale * 20), after: Math.round(8 * scale * 20) }
-      })
-    );
-
-    limitEducation(userData.resumeData.education, 2).forEach(edu => {
-      children.push(
+    // Create skills content
+    const skillsContent = [];
+    if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+      skillsContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              text: "CORE COMPETENCIES",
               bold: true,
-              size: Math.round(10 * scale * 2),
-              color: "000000",
-              font: "Times"
-            })
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { before: Math.round(8 * scale * 20), after: Math.round(2 * scale * 20) }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
-              bold: true,
-              size: Math.round(9 * scale * 2),
+              size: Math.round(12 * scale * 2),
               color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-              font: "Times"
-            })
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: Math.round(2 * scale * 20) }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
-              size: Math.round(8 * scale * 2),
-              color: "666666",
               font: "Times"
             })
           ],
@@ -1895,8 +1943,180 @@ function createExecutiveTemplate(userData, accent) {
           spacing: { after: Math.round(8 * scale * 20) }
         })
       );
+
+      // Create skills in a 2-column grid format within the cell
+      const skillsGrid = [];
+      const skills = userData.resumeData.skills.slice(0, 8);
+      for (let i = 0; i < skills.length; i += 2) {
+        const leftSkill = skills[i];
+        const rightSkill = skills[i + 1] || '';
+
+        skillsContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${leftSkill}${rightSkill ? '                    ' + rightSkill : ''}`,
+                size: Math.round(9 * scale * 2),
+                color: "333333",
+                font: "Times"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(3 * scale * 20) },
+            shading: {
+              fill: "FFFFFF"
+            },
+            border: {
+              top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE }
+            }
+          })
+        );
+      }
+    }
+
+    // Create education content
+    const educationContent = [];
+    if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+      educationContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "EDUCATION",
+              bold: true,
+              size: Math.round(12 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Times"
+            })
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: Math.round(8 * scale * 20) }
+        })
+      );
+
+      limitEducation(userData.resumeData.education, 2).forEach(edu => {
+        // Education item container
+        const eduContent = [];
+        eduContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+                bold: true,
+                size: Math.round(10 * scale * 2),
+                color: "000000",
+                font: "Times"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        eduContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+                size: Math.round(9 * scale * 2),
+                color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+                font: "Times"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        eduContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+                size: Math.round(8 * scale * 2),
+                color: "666666",
+                font: "Times"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(6 * scale * 20) }
+          })
+        );
+
+        // Add education item with border
+        educationContent.push(
+          new Paragraph({
+            children: eduContent.map(p => p.children).flat(),
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(8 * scale * 20) },
+            shading: {
+              fill: "FFFFFF"
+            },
+            border: {
+              top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE },
+              right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 2, style: BorderStyle.SINGLE }
+            }
+          })
+        );
+      });
+    }
+
+    // Create side-by-side table
+    const skillsEducationTable = new Table({
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: skillsContent.length > 0 ? skillsContent : [new Paragraph("")],
+              width: { size: 4500, type: WidthType.DXA },
+              borders: {
+                top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE }
+              },
+              margins: {
+                top: Math.round(12 * scale * 20),
+                bottom: Math.round(12 * scale * 20),
+                left: Math.round(12 * scale * 20),
+                right: Math.round(12 * scale * 20)
+              },
+              shading: {
+                fill: "F8F9FA"
+              }
+            }),
+            new TableCell({
+              children: educationContent.length > 0 ? educationContent : [new Paragraph("")],
+              width: { size: 4500, type: WidthType.DXA },
+              borders: {
+                top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE },
+                right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 6, style: BorderStyle.SINGLE }
+              },
+              margins: {
+                top: Math.round(12 * scale * 20),
+                bottom: Math.round(12 * scale * 20),
+                left: Math.round(12 * scale * 20),
+                right: Math.round(12 * scale * 20)
+              },
+              shading: {
+                fill: "F8F9FA"
+              }
+            })
+          ]
+        })
+      ],
+      width: { size: 9000, type: WidthType.DXA }
     });
+
+    children.push(skillsEducationTable);
   }
+
 
   return children;
 }

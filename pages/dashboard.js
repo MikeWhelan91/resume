@@ -179,7 +179,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 
             {/* Total Resumes */}
             <div className="bg-surface rounded-lg border border-border p-6">
@@ -215,39 +215,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Most Recent ATS Score */}
-            <div className="bg-surface rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted">Most Recent ATS Score</p>
-                  <p className="text-2xl font-bold text-text">
-                    {stats?.mostRecentAtsScore ? `${stats.mostRecentAtsScore}%` : 'N/A'}
-                  </p>
-                </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <Target className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                {stats?.mostRecentAtsScore ? (
-                  <>
-                    <Trophy className="w-4 h-4 text-green-500 mr-1" />
-                    <span className={`text-sm ${
-                      stats.mostRecentAtsScore >= 80 ? 'text-green-600' :
-                      stats.mostRecentAtsScore >= 60 ? 'text-orange-600' : 'text-red-600'
-                    }`}>
-                      {stats.mostRecentAtsScore >= 80 ? 'Excellent' :
-                       stats.mostRecentAtsScore >= 60 ? 'Good' : 'Needs Work'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Clock className="w-4 h-4 text-blue-500 mr-1" />
-                    <span className="text-sm text-blue-600">Generate a {terms.resume} to see score</span>
-                  </>
-                )}
-              </div>
-            </div>
 
             {/* Plan Status */}
             <div className="bg-surface rounded-lg border border-border p-6">
@@ -332,9 +299,9 @@ export default function Dashboard() {
                           )}
                           <Link
                             href={`/wizard?resume=${resume.id}`}
-                            className="btn btn-ghost btn-sm"
+                            className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
                           >
-                            <Eye className="w-4 h-4" />
+                            Edit
                           </Link>
                         </div>
                       </div>
