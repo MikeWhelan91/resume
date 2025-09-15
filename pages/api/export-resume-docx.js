@@ -357,93 +357,133 @@ function createModernTemplate(userData, accent) {
     );
   }
 
-  // Skills
-  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "SKILLS",
-            bold: true,
-            size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
-          })
-        ],
-        spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
-      })
-    );
+  // Skills and Education Side-by-Side (using table to match PDF layout)
+  if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
+      (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
 
-    userData.resumeData.skills.slice(0, 6).forEach(skill => {
-      children.push(
+    // Create skills column content
+    const skillsContent = [];
+    if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+      skillsContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: skill,
-              size: Math.round(8 * scale * 2)
-            })
-          ],
-          spacing: { after: Math.round(2 * scale * 20) }
-        })
-      );
-    });
-  }
-
-  // Education
-  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "EDUCATION",
-            bold: true,
-            size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
-          })
-        ],
-        spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
-      })
-    );
-
-    limitEducation(userData.resumeData.education, 2).forEach(edu => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              text: "SKILLS",
               bold: true,
-              size: Math.round(9 * scale * 2)
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
             })
           ],
-          spacing: { after: Math.round(1 * scale * 20) }
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
         })
       );
 
-      children.push(
+      userData.resumeData.skills.slice(0, 6).forEach(skill => {
+        skillsContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: skill,
+                size: Math.round(8 * scale * 2)
+              })
+            ],
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+      });
+    }
+
+    // Create education column content
+    const educationContent = [];
+    if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+      educationContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
-              size: Math.round(8 * scale * 2),
-              color: "666666"
+              text: "EDUCATION",
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`
             })
           ],
-          spacing: { after: Math.round(1 * scale * 20) }
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
         })
       );
 
-      children.push(
-        new Paragraph({
+      limitEducation(userData.resumeData.education, 2).forEach(edu => {
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+                bold: true,
+                size: Math.round(9 * scale * 2)
+              })
+            ],
+            spacing: { after: Math.round(1 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+                size: Math.round(8 * scale * 2),
+                color: "666666"
+              })
+            ],
+            spacing: { after: Math.round(1 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+                size: Math.round(8 * scale * 2),
+                color: "666666"
+              })
+            ],
+            spacing: { after: Math.round(4 * scale * 20) }
+          })
+        );
+      });
+    }
+
+    // Create two-column table to match PDF layout
+    const skillsEducationTable = new Table({
+      rows: [
+        new TableRow({
           children: [
-            new TextRun({
-              text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
-              size: Math.round(8 * scale * 2),
-              color: "666666"
+            new TableCell({
+              children: skillsContent.length > 0 ? skillsContent : [new Paragraph("")],
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              }
+            }),
+            new TableCell({
+              children: educationContent.length > 0 ? educationContent : [new Paragraph("")],
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              }
             })
-          ],
-          spacing: { after: Math.round(4 * scale * 20) }
+          ]
         })
-      );
+      ],
+      width: { size: 100, type: WidthType.PERCENTAGE }
     });
+
+    children.push(skillsEducationTable);
   }
 
   // Experience
@@ -761,141 +801,179 @@ function createCreativeTemplate(userData, accent) {
     });
   }
 
-  // Skills (centered with decorative styling)
-  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "Skills",
-            bold: true,
-            italics: true,
-            size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Georgia"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
-      })
-    );
+  // Skills and Education Side-by-Side (using table to match PDF layout)
+  if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
+      (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
 
-    // Decorative line under Skills header
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "____",
-            size: Math.round(8 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Georgia"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(6 * scale * 20) }
-      })
-    );
-
-    const skillsText = userData.resumeData.skills.slice(0, 6).join(' • ');
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: skillsText,
-            bold: true,
-            size: Math.round(8 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Georgia"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(12 * scale * 20) }
-      })
-    );
-  }
-
-  // Education
-  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "Education",
-            bold: true,
-            italics: true,
-            size: Math.round(11 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Georgia"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
-      })
-    );
-
-    // Decorative line under Education header
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "____",
-            size: Math.round(8 * scale * 2),
-            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
-            font: "Georgia"
-          })
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: Math.round(6 * scale * 20) }
-      })
-    );
-
-    limitEducation(userData.resumeData.education, 1).forEach(edu => {
-      children.push(
+    // Create skills column content
+    const skillsContent = [];
+    if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+      skillsContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              text: "Skills",
               bold: true,
-              size: Math.round(9 * scale * 2),
-              font: "Georgia"
-            })
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { before: Math.round(4 * scale * 20), after: Math.round(2 * scale * 20) }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
-              size: Math.round(8 * scale * 2),
-              color: "666666",
               italics: true,
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
               font: "Georgia"
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: Math.round(2 * scale * 20) }
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
         })
       );
 
-      children.push(
+      skillsContent.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+              text: "____",
               size: Math.round(8 * scale * 2),
-              color: "666666",
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
               font: "Georgia"
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: Math.round(4 * scale * 20) }
+          spacing: { after: Math.round(6 * scale * 20) }
         })
       );
+
+      const skillsText = userData.resumeData.skills.slice(0, 6).join(' • ');
+      skillsContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: skillsText,
+              bold: true,
+              size: Math.round(8 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Georgia"
+            })
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: Math.round(12 * scale * 20) }
+        })
+      );
+    }
+
+    // Create education column content
+    const educationContent = [];
+    if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+      educationContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "Education",
+              bold: true,
+              italics: true,
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Georgia"
+            })
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      educationContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "____",
+              size: Math.round(8 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Georgia"
+            })
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: Math.round(6 * scale * 20) }
+        })
+      );
+
+      limitEducation(userData.resumeData.education, 1).forEach(edu => {
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+                bold: true,
+                size: Math.round(9 * scale * 2),
+                font: "Georgia"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: Math.round(4 * scale * 20), after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+                size: Math.round(8 * scale * 2),
+                color: "666666",
+                italics: true,
+                font: "Georgia"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+                size: Math.round(8 * scale * 2),
+                color: "666666",
+                font: "Georgia"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(4 * scale * 20) }
+          })
+        );
+      });
+    }
+
+    // Create two-column table to match PDF layout
+    const skillsEducationTable = new Table({
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: skillsContent.length > 0 ? skillsContent : [new Paragraph("")],
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              }
+            }),
+            new TableCell({
+              children: educationContent.length > 0 ? educationContent : [new Paragraph("")],
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.NONE },
+                bottom: { style: BorderStyle.NONE },
+                left: { style: BorderStyle.NONE },
+                right: { style: BorderStyle.NONE }
+              }
+            })
+          ]
+        })
+      ],
+      width: { size: 100, type: WidthType.PERCENTAGE }
     });
+
+    children.push(skillsEducationTable);
   }
 
   return children;
