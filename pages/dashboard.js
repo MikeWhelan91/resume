@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
   BarChart3,
   FileText,
@@ -18,13 +19,17 @@ import {
   Activity,
   Zap,
   Trophy,
-  Eye
+  Eye,
+  Upload,
+  CloudUpload
 } from 'lucide-react';
 import SeoHead from '../components/SeoHead';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { getTerminology } = useLanguage();
+  const terms = getTerminology();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     stats: null,
@@ -32,6 +37,7 @@ export default function Dashboard() {
     entitlement: null,
     usage: null
   });
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -96,6 +102,42 @@ export default function Dashboard() {
     return 'text-green-600';
   };
 
+  const handleFileUpload = (file) => {
+    if (file && file.type === 'application/pdf') {
+      // Store the file and redirect to wizard with upload flag
+      const fileUrl = URL.createObjectURL(file);
+      router.push(`/wizard?upload=true&fileName=${encodeURIComponent(file.name)}`);
+    } else {
+      alert('Please upload a PDF file.');
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleFileInputChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -131,7 +173,7 @@ export default function Dashboard() {
               </div>
               <Link href="/wizard" className="btn btn-primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Resume
+                Create {terms.Resume}
               </Link>
             </div>
           </div>
@@ -143,7 +185,7 @@ export default function Dashboard() {
             <div className="bg-surface rounded-lg border border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted">Total Resumes</p>
+                  <p className="text-sm font-medium text-muted">Total {terms.ResumePlural}</p>
                   <p className="text-2xl font-bold text-text">{stats?.totalResumes || 0}</p>
                 </div>
                 <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -173,20 +215,37 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Most Recent ATS Score */}
             <div className="bg-surface rounded-lg border border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted">Recent Activity</p>
-                  <p className="text-2xl font-bold text-text">{stats?.resumesThisWeek || 0}</p>
+                  <p className="text-sm font-medium text-muted">Most Recent ATS Score</p>
+                  <p className="text-2xl font-bold text-text">
+                    {stats?.mostRecentAtsScore ? `${stats.mostRecentAtsScore}%` : 'N/A'}
+                  </p>
                 </div>
                 <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <Activity className="w-6 h-6 text-purple-600" />
+                  <Target className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
               <div className="mt-4 flex items-center">
-                <Clock className="w-4 h-4 text-blue-500 mr-1" />
-                <span className="text-sm text-blue-600">This week</span>
+                {stats?.mostRecentAtsScore ? (
+                  <>
+                    <Trophy className="w-4 h-4 text-green-500 mr-1" />
+                    <span className={`text-sm ${
+                      stats.mostRecentAtsScore >= 80 ? 'text-green-600' :
+                      stats.mostRecentAtsScore >= 60 ? 'text-orange-600' : 'text-red-600'
+                    }`}>
+                      {stats.mostRecentAtsScore >= 80 ? 'Excellent' :
+                       stats.mostRecentAtsScore >= 60 ? 'Good' : 'Needs Work'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-blue-500 mr-1" />
+                    <span className="text-sm text-blue-600">Generate a {terms.resume} to see score</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -244,9 +303,9 @@ export default function Dashboard() {
                 {recentResumes.length === 0 ? (
                   <div className="text-center py-8">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-muted">No resumes yet</p>
+                    <p className="text-muted">No {terms.resumePlural} yet</p>
                     <Link href="/wizard" className="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
-                      Create your first resume →
+                      Create your first {terms.resume} →
                     </Link>
                   </div>
                 ) : (
@@ -261,7 +320,7 @@ export default function Dashboard() {
                             <FileText className="w-4 h-4 text-blue-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-text">{resume.name || 'Untitled Resume'}</p>
+                            <p className="font-medium text-text">{resume.name || `Untitled ${terms.Resume}`}</p>
                             <p className="text-sm text-muted">Created {formatDate(resume.createdAt)}</p>
                           </div>
                         </div>
@@ -292,6 +351,36 @@ export default function Dashboard() {
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Upload CV Area */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    className={`relative p-4 bg-bg rounded-lg border-2 border-dashed transition-colors group cursor-pointer ${
+                      dragOver
+                        ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'border-border hover:border-indigo-200 dark:hover:border-indigo-800'
+                    }`}
+                    onClick={() => document.getElementById('file-upload').click()}
+                  >
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                    />
+                    <div className="flex items-center">
+                      <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg mr-4">
+                        <CloudUpload className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-text">Upload {terms.Resume}</p>
+                        <p className="text-sm text-muted">Drag & drop or click to browse</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <Link
                     href="/wizard"
                     className="flex items-center p-4 bg-bg rounded-lg border border-border hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors group"
@@ -300,8 +389,8 @@ export default function Dashboard() {
                       <Plus className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-text">Create New Resume</p>
-                      <p className="text-sm text-muted">Start from scratch or upload existing</p>
+                      <p className="font-medium text-text">Create New {terms.Resume}</p>
+                      <p className="text-sm text-muted">Start from scratch</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted group-hover:text-indigo-600" />
                   </Link>
@@ -314,8 +403,8 @@ export default function Dashboard() {
                       <FileText className="w-6 h-6 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-text">View All Resumes</p>
-                      <p className="text-sm text-muted">Manage your saved resumes</p>
+                      <p className="font-medium text-text">View All {terms.ResumePlural}</p>
+                      <p className="text-sm text-muted">Manage your saved {terms.resumePlural}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted group-hover:text-green-600" />
                   </Link>
@@ -430,7 +519,7 @@ export default function Dashboard() {
                   <ul className="space-y-2 text-sm mb-4">
                     <li className="flex items-center">
                       <Zap className="w-4 h-4 mr-2" />
-                      Unlimited resume generations
+                      Unlimited {terms.resume} generations
                     </li>
                     <li className="flex items-center">
                       <Download className="w-4 h-4 mr-2" />
@@ -458,7 +547,7 @@ export default function Dashboard() {
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">💡 Pro Tip</h3>
                 <p className="text-sm text-blue-700 dark:text-blue-200">
-                  Use the ATS optimizer to improve your resume's compatibility with applicant tracking systems and increase your chances of getting noticed.
+                  Use the ATS optimizer to improve your {terms.resume}'s compatibility with applicant tracking systems and increase your chances of getting noticed.
                 </p>
               </div>
 

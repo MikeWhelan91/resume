@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const [
       totalResumes,
       resumesThisMonth,
-      resumesThisWeek
+      mostRecentResume
     ] = await Promise.all([
       // Total resumes
       prisma.savedResume.count({
@@ -37,28 +37,29 @@ export default async function handler(req, res) {
         }
       }),
 
-      // Resumes created this week
-      prisma.savedResume.count({
-        where: {
-          userId,
-          createdAt: {
-            gte: new Date(new Date().setDate(new Date().getDate() - 7))
-          }
-        }
+      // Get most recent resume to check for ATS score
+      prisma.savedResume.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        select: { data: true, createdAt: true }
       })
     ])
 
-    // ATS scores are currently only shown during generation (not stored in DB)
-    // This will show null until we add atsScore field to SavedResume model
-    const avgAtsResult = { _avg: { atsScore: null } }
+    // Try to get ATS score from most recent resume data
+    let mostRecentAtsScore = null;
+    if (mostRecentResume?.data && typeof mostRecentResume.data === 'object') {
+      // Check if ATS analysis is stored in the resume data
+      if (mostRecentResume.data.atsAnalysis?.overallScore) {
+        mostRecentAtsScore = mostRecentResume.data.atsAnalysis.overallScore;
+      }
+    }
 
     const stats = {
       totalResumes,
       resumesThisMonth,
       totalDownloads: totalResumes * 2, // Estimate 2 downloads per resume
-      downloadsThisWeek: resumesThisWeek * 2, // Estimate
-      avgAtsScore: avgAtsResult._avg.atsScore ?
-        Math.round(avgAtsResult._avg.atsScore) : null
+      downloadsThisWeek: resumesThisMonth * 2, // Estimate based on monthly resumes
+      mostRecentAtsScore: mostRecentAtsScore
     }
 
     return res.status(200).json(stats)

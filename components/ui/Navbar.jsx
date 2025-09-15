@@ -237,13 +237,15 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-1">
-            <Link
-              href="/"
-              className={`nav-link ${router.pathname === '/' ? 'active' : ''}`}
-            >
-              <Home className="w-4 h-4" />
-              Home
-            </Link>
+            {!session && (
+              <Link
+                href="/"
+                className={`nav-link ${router.pathname === '/' ? 'active' : ''}`}
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
+            )}
             {session && (
               <Link
                 href="/dashboard"
@@ -477,14 +479,16 @@ export default function Navbar() {
             <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-surface border border-border shadow-xl rounded-b-lg">
               <div className="px-4 py-6 space-y-4">
                 {/* Navigation Links */}
-                <Link
-                  href="/"
-                  className={`mobile-nav-link ${router.pathname === '/' ? 'active' : ''}`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Home className="w-4 h-4" />
-                  Home
-                </Link>
+                {!session && (
+                  <Link
+                    href="/"
+                    className={`mobile-nav-link ${router.pathname === '/' ? 'active' : ''}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Home className="w-4 h-4" />
+                    Home
+                  </Link>
+                )}
                 {session && (
                   <Link
                     href="/dashboard"

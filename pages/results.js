@@ -605,32 +605,36 @@ export default function ResultsPage() {
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
-          <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
-        </div>
-
-        {/* Download buttons inside CV preview */}
-        <div className="space-y-3 mt-4">
-          <h4 className="text-sm font-semibold text-text">Download Resume</h4>
-          <div className="space-y-2">
-            <select
-              value={resumeFormat}
-              onChange={(e) => setResumeFormat(e.target.value)}
-              className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
-            >
-              <option value="pdf">PDF</option>
-              <option value="docx">DOCX (Word)</option>
-            </select>
-            <button
-              className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => resumeFormat === 'pdf' ? downloadCV() : downloadResumeDocx()}
-              disabled={!canDownload()}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Resume ({resumeFormat.toUpperCase()})
-            </button>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', height: '400px', overflow: 'auto'}}>
+          <div style={{ transform: 'scale(0.6)', transformOrigin: 'top left', width: '166.67%' }}>
+            <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
           </div>
         </div>
+
+        {/* Download buttons inside CV preview - only show when both documents */}
+        {userGoal === 'both' && (
+          <div className="space-y-3 mt-4">
+            <h4 className="text-sm font-semibold text-text">Download Resume</h4>
+            <div className="space-y-2">
+              <select
+                value={resumeFormat}
+                onChange={(e) => setResumeFormat(e.target.value)}
+                className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+              >
+                <option value="pdf">PDF</option>
+                <option value="docx">DOCX (Word)</option>
+              </select>
+              <button
+                className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => resumeFormat === 'pdf' ? downloadCV() : downloadResumeDocx()}
+                disabled={!canDownload()}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Resume ({resumeFormat.toUpperCase()})
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
 
@@ -647,25 +651,25 @@ export default function ResultsPage() {
             <span>PDF Ready</span>
           </div>
         </div>
-        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
-          <div style={{ padding: `${25 * scale}px`, fontSize: `${9 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.5' }}>
+        <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', height: '400px', overflow: 'auto'}}>
+          <div style={{ padding: `${25 * scale}px`, fontSize: `${7 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
             {userData ? (
               <>
-                <div style={{ marginBottom: `${15 * scale}px`, textAlign: 'right' }}>
-                  <p style={{ fontSize: `${11 * scale}px`, color: '#666' }}>
+                <div style={{ marginBottom: `${12 * scale}px`, textAlign: 'right' }}>
+                  <p style={{ fontSize: `${8 * scale}px`, color: '#666' }}>
                     {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   </p>
                 </div>
 
-                <div style={{ marginBottom: `${15 * scale}px` }}>
+                <div style={{ marginBottom: `${12 * scale}px` }}>
                   {userData.coverLetter ? (
                     limitCoverLetter(userData.coverLetter).map((paragraph, i) => (
-                      <p key={i} style={{ fontSize: `${11 * scale}px`, marginBottom: `${8 * scale}px`, textAlign: 'justify' }}>
+                      <p key={i} style={{ fontSize: `${8 * scale}px`, marginBottom: `${6 * scale}px`, textAlign: 'justify' }}>
                         {paragraph.trim()}
                       </p>
                     ))
                   ) : (
-                    <p style={{ fontSize: `${11 * scale}px`, textAlign: 'justify' }}>
+                    <p style={{ fontSize: `${8 * scale}px`, textAlign: 'justify' }}>
                       Dear Hiring Manager,<br/><br/>
                       I am writing to express my interest in the position at your company. With my background and experience, I believe I would be a valuable addition to your team.<br/><br/>
                       Thank you for considering my application. I look forward to hearing from you.
@@ -673,43 +677,45 @@ export default function ResultsPage() {
                   )}
                 </div>
 
-                <div style={{ marginTop: `${20 * scale}px` }}>
-                  <p style={{ fontSize: `${11 * scale}px` }}>Sincerely,</p>
-                  <p style={{ fontSize: `${11 * scale}px`, marginTop: `${15 * scale}px`, fontWeight: 'bold' }}>
+                <div style={{ marginTop: `${15 * scale}px` }}>
+                  <p style={{ fontSize: `${8 * scale}px` }}>Sincerely,</p>
+                  <p style={{ fontSize: `${8 * scale}px`, marginTop: `${10 * scale}px`, fontWeight: 'bold' }}>
                     {userData.resumeData?.name || userData.name || 'Your Name'}
                   </p>
                 </div>
               </>
             ) : (
-              <div style={{ textAlign: 'center', color: '#666', marginTop: `${100 * scale}px`, fontSize: `${12 * scale}px` }}>
+              <div style={{ textAlign: 'center', color: '#666', marginTop: `${80 * scale}px`, fontSize: `${9 * scale}px` }}>
                 {`No data available. Please generate a ${terms.resume} first.`}
               </div>
             )}
           </div>
         </div>
 
-        {/* Download buttons inside Cover Letter preview */}
-        <div className="space-y-3 mt-4">
-          <h4 className="text-sm font-semibold text-text">Download Cover Letter</h4>
-          <div className="space-y-2">
-            <select
-              value={coverLetterFormat}
-              onChange={(e) => setCoverLetterFormat(e.target.value)}
-              className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
-            >
-              <option value="pdf">PDF</option>
-              <option value="docx">DOCX (Word)</option>
-            </select>
-            <button
-              className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => coverLetterFormat === 'pdf' ? downloadCoverLetter() : downloadCoverLetterDocx()}
-              disabled={!canDownload()}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Cover Letter ({coverLetterFormat.toUpperCase()})
-            </button>
+        {/* Download buttons inside Cover Letter preview - only show when both documents */}
+        {userGoal === 'both' && (
+          <div className="space-y-3 mt-4">
+            <h4 className="text-sm font-semibold text-text">Download Cover Letter</h4>
+            <div className="space-y-2">
+              <select
+                value={coverLetterFormat}
+                onChange={(e) => setCoverLetterFormat(e.target.value)}
+                className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+              >
+                <option value="pdf">PDF</option>
+                <option value="docx">DOCX (Word)</option>
+              </select>
+              <button
+                className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => coverLetterFormat === 'pdf' ? downloadCoverLetter() : downloadCoverLetterDocx()}
+                disabled={!canDownload()}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Cover Letter ({coverLetterFormat.toUpperCase()})
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -749,16 +755,18 @@ export default function ResultsPage() {
       
       {/* Simple Header */}
       <div className="bg-surface text-text border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="inline-flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full px-4 py-2 mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-text">Your Tailored Results</h1>
+              <p className="text-muted mt-1">Download, customize, and apply with confidence.</p>
+            </div>
+            <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
               <Sparkles className="w-4 h-4 text-green-600 dark:text-green-400" />
               <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                Documents Ready
+                Ready
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-text mb-2">Your Documents Are Ready</h1>
-            <p className="text-muted">Download, customize, and apply with confidence.</p>
           </div>
         </div>
       </div>
@@ -883,7 +891,9 @@ export default function ResultsPage() {
                     </span>
                   </div>
                   <h3 className="text-sm font-bold text-text mb-1">
-                    Ready to tailor another {terms.Resume} and Cover Letter?
+                    {userGoal === 'cv' ? `Ready to tailor another ${terms.Resume}?` :
+                     userGoal === 'cover-letter' ? 'Ready to tailor another Cover Letter?' :
+                     `Ready to tailor another ${terms.Resume} and Cover Letter?`}
                   </h3>
                   <p className="text-xs text-muted">
                     Add another job description below!
@@ -1011,6 +1021,47 @@ export default function ResultsPage() {
               {(userGoal === 'cv' || userGoal === 'both') && renderCVPreview()}
               {(userGoal === 'cover-letter' || userGoal === 'both') && renderCoverLetterPreview()}
             </div>
+
+            {/* Download Section for Single Document Views */}
+            {userGoal !== 'both' && (
+              <div className="mt-8">
+                <div className="max-w-2xl mx-auto">
+                  <div className="bg-surface rounded-lg border border-border p-6">
+                    <h3 className="text-lg font-semibold text-text mb-4 flex items-center">
+                      <Download className="w-5 h-5 mr-2 text-indigo-600" />
+                      Download Your {userGoal === 'cv' ? terms.Resume : 'Cover Letter'}
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-muted">File Format</label>
+                        <select
+                          value={userGoal === 'cv' ? resumeFormat : coverLetterFormat}
+                          onChange={(e) => userGoal === 'cv' ? setResumeFormat(e.target.value) : setCoverLetterFormat(e.target.value)}
+                          className="w-full bg-surface text-text border border-border rounded-lg px-4 py-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+                        >
+                          <option value="pdf">PDF</option>
+                          <option value="docx">DOCX (Word)</option>
+                        </select>
+                      </div>
+                      <button
+                        className={`w-full btn btn-primary btn-lg ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                          if (userGoal === 'cv') {
+                            resumeFormat === 'pdf' ? downloadCV() : downloadResumeDocx();
+                          } else {
+                            coverLetterFormat === 'pdf' ? downloadCoverLetter() : downloadCoverLetterDocx();
+                          }
+                        }}
+                        disabled={!canDownload()}
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                        Download {userGoal === 'cv' ? terms.Resume : 'Cover Letter'} ({(userGoal === 'cv' ? resumeFormat : coverLetterFormat).toUpperCase()})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ATS Score Display Under Everything */}
             {atsAnalysis && (userGoal === 'cv' || userGoal === 'both') && (
