@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/router';
 import { useSession, signIn } from 'next-auth/react';
 import SkillsInput from './wizard/SkillsInput';
 import ExperienceCard from './wizard/ExperienceCard';
+import ProjectCard from './wizard/ProjectCard';
 import EducationCard from './wizard/EducationCard';
 // Templates removed - using simple preview only
 import { AnimatePresence } from 'framer-motion';
@@ -12,6 +13,7 @@ import StepNav from './ui/StepNav';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useError } from '../contexts/ErrorContext';
 import { InfoTooltip, HelpTooltip } from './ui/TooltipPortal';
+import { Upload } from 'lucide-react';
 
 const emptyResume = {
   name: '',
@@ -23,6 +25,7 @@ const emptyResume = {
   links: [],
   skills: [],
   experience: [],
+  projects: [],
   education: []
 };
 
@@ -37,7 +40,7 @@ const schemas = {
     summary: z.string().nullish().transform(val => val ?? ''),
     links: z.array(z.object({
       label: z.string().nullish().transform(val => val ?? ''),
-      url: z.string().nullish().transform(val => val ?? '').refine(val => !val || z.string().url().safeParse(val).success, 'Invalid URL')
+      url: z.string().optional().default('')
     })).optional().default([])
   }),
   skills: z.object({ skills: z.array(z.string()).optional().default([]) }),
@@ -49,6 +52,18 @@ const schemas = {
       start: z.string().nullish().transform(val => val ?? ''),
       end: z.string().nullish().transform(val => val ?? ''),
       present: z.boolean().optional().default(false),
+      bullets: z.array(z.string()).optional().default([])
+    })).optional().default([])
+  }),
+  projects: z.object({
+    projects: z.array(z.object({
+      name: z.string().optional().default(''),
+      description: z.string().nullish().transform(val => val ?? ''),
+      start: z.string().nullish().transform(val => val ?? ''),
+      end: z.string().nullish().transform(val => val ?? ''),
+      present: z.boolean().optional().default(false),
+      url: z.string().optional().default(''),
+      demo: z.string().optional().default(''),
       bullets: z.array(z.string()).optional().default([])
     })).optional().default([])
   }),
@@ -72,8 +87,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const { showError } = useError();
   const terms = getTerminology();
   const [step, setStep] = useState(0);
-  const stepIds = ['goal', 'basics', 'skills', 'work', 'education', 'review'];
-  const stepLabels = ['Goal', 'Basics','Skills','Experience','Education','Review'];
+  const stepIds = ['goal', 'basics', 'skills', 'work', 'projects', 'education', 'review'];
+  const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects','Education','Review'];
   const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
@@ -90,6 +105,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [trialUsage, setTrialUsage] = useState(null);
   const [trialUsageLoading, setTrialUsageLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
 
   // Force 'both' option for signed-out users
   useEffect(() => {
@@ -302,6 +319,74 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
     const eds = getValues('education');
     setValue('education', [...eds.slice(0,i+1), { ...eds[i] }, ...eds.slice(i+1)]);
   }
+
+  function addProject() {
+    const projects = getValues('projects');
+    setValue('projects', [...projects, { name:'', description:'', start:'', end:'', present:false, url:'', demo:'', bullets:[] }]);
+  }
+  function updateProject(i, val) {
+    const projects = getValues('projects');
+    projects[i] = val; setValue('projects', projects);
+  }
+  function removeProject(i) {
+    const projects = getValues('projects').filter((_, idx) => idx !== i);
+    setValue('projects', projects);
+  }
+  function duplicateProject(i) {
+    const projects = getValues('projects');
+    setValue('projects', [...projects.slice(0,i+1), { ...projects[i] }, ...projects.slice(i+1)]);
+  }
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if user can upload (reuse existing logic)
+    if (!canGenerate()) {
+      showError('You do not have access to upload resumes. Please upgrade your plan.', 'Access Denied');
+      e.target.value = '';
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const response = await fetch('/api/parse-resume', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Merge the uploaded data with current form values
+        const uploadedData = data.resumeData || {};
+
+        // Update the form with the uploaded data
+        Object.keys(uploadedData).forEach(key => {
+          if (uploadedData[key] !== undefined && uploadedData[key] !== null && uploadedData[key] !== '') {
+            setValue(key, uploadedData[key]);
+          }
+        });
+
+        // Save to localStorage
+        try {
+          localStorage.setItem(autosaveKey, JSON.stringify(getValues()));
+        } catch {}
+
+      } else {
+        showError(data.error || 'Failed to process resume', 'Upload Failed');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      showError('Failed to process resume. Please try again.', 'Upload Error');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   // Simple preview component
   const TemplatePreview = ({ data }) => (
@@ -516,7 +601,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
             <header className="text-center space-y-3">
               <div className="flex items-center justify-center gap-2">
                 <h2 className="text-2xl font-bold text-text">Basic Information</h2>
-                <HelpTooltip 
+                <HelpTooltip
                   content={
                     <div className="space-y-2">
                       <p>Fill in your personal and contact details. This information will appear at the top of your resume.</p>
@@ -528,6 +613,56 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
               </div>
               <p className="text-muted">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
             </header>
+
+            {/* Upload Box */}
+            <div className="bg-surface/60 border border-border/50 rounded-lg p-4">
+              <div className="text-center">
+                <h3 className="text-sm font-medium text-text mb-2">
+                  Import Resume
+                </h3>
+                <p className="text-xs text-muted mb-3">
+                  Upload your existing resume to automatically fill in your information
+                </p>
+
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || !canGenerate()}
+                  className={`inline-flex items-center px-4 py-2 border border-dashed rounded-lg text-sm transition-all duration-200 ${
+                    uploading || !canGenerate()
+                      ? 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'
+                      : 'border-primary bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary-hover cursor-pointer'
+                  }`}
+                >
+                  {uploading ? (
+                    <>
+                      <div className="loading-spinner w-4 h-4 mr-2"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      {!canGenerate() ? 'Upload Disabled' : 'Upload Resume'}
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-muted mt-2">
+                  {!canGenerate()
+                    ? 'Please upgrade to upload resumes'
+                    : 'Supports PDF, DOCX, and TXT files'
+                  }
+                </p>
+              </div>
+            </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-1 col-span-2">
                 <label className="text-sm font-bold text-muted">Name*</label>
@@ -600,6 +735,34 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 4 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <h2 className="text-2xl font-bold text-text">Projects</h2>
+                <HelpTooltip
+                  content={
+                    <div className="space-y-2">
+                      <p>Showcase your personal projects, open source contributions, and side work. This is especially important for developers, designers, and creative professionals.</p>
+                      <p><strong>Pro tip:</strong> Include GitHub links, live demos, and specific technologies used.</p>
+                      <p className="text-blue-200 text-sm">💡 Focus on projects that demonstrate skills relevant to your target role!</p>
+                    </div>
+                  }
+                />
+              </div>
+              <p className="text-muted">Showcase your personal projects, open source work, and side projects that demonstrate your skills.</p>
+            </header>
+            <div className="space-y-4">
+              <AnimatePresence>
+                {values.projects.map((project, i) => (
+                  <ProjectCard key={i} value={project} index={i} onChange={v => updateProject(i, v)} onRemove={() => removeProject(i)} onDuplicate={() => duplicateProject(i)} />
+                ))}
+              </AnimatePresence>
+              <button type="button" onClick={addProject} className="btn btn-ghost btn-sm text-blue-600">+ Add project</button>
+            </div>
+          </section>
+        )}
+
+        {step === 5 && (
+          <section className="space-y-8">
+            <header className="text-center space-y-3">
               <h2 className="text-2xl font-bold text-text">Education</h2>
               <p className="text-muted">Your academic background and qualifications.</p>
             </header>
@@ -614,7 +777,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
           </section>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
               <h2 className="text-2xl font-bold text-text">Job Description</h2>

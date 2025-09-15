@@ -322,15 +322,15 @@ export default function HeroUpload() {
                   </div>
                 </div>
 
-                {/* Start Fresh Button - moved here */}
-                <div className="mt-6 flex flex-col items-center space-y-3">
-                  <InfoTooltip 
+                {/* Action Buttons */}
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <InfoTooltip
                     content="Build your resume from scratch using our step-by-step wizard."
                     position="bottom"
                   >
-                    <button 
-                      className="btn btn-primary btn-xl w-full max-w-sm group"
-                      onClick={handleCreateNew} 
+                    <button
+                      className="btn btn-primary btn-xl w-full sm:w-auto group"
+                      onClick={handleCreateNew}
                       disabled={loading || checkingResume || !canGenerate()}
                     >
                       <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
@@ -340,12 +340,12 @@ export default function HeroUpload() {
 
                   {/* Recent resume option for logged-in users - hide during upload and after upload */}
                   {session?.user && hasLatestResume && !loading && !hasJustUploaded && (
-                    <InfoTooltip 
+                    <InfoTooltip
                       content="Continue editing your previously saved resume."
                       position="bottom"
                     >
-                      <button 
-                        className="btn btn-outline btn-md group"
+                      <button
+                        className="btn btn-outline btn-xl w-full sm:w-auto group"
                         onClick={loadLatestResume}
                         disabled={loading || checkingResume}
                       >
@@ -366,76 +366,6 @@ export default function HeroUpload() {
         
       </div>
 
-      {/* Features Section */}
-      <div className="py-20 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-text mb-4">From Job Description to Perfect Match</h2>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
-              Transform any job posting into a winning application in three simple steps
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 text-text" data-tour="process-steps">
-            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
-              <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <Upload className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-text mb-3">1. Upload Your {terms.Resume}</h3>
-              <p className="text-muted">
-                Upload your existing {terms.resume} or build one from scratch using our smart wizard.
-              </p>
-              <InfoTooltip 
-                content="We support PDF, DOCX, and TXT files. Our AI will automatically extract all your information including work experience, education, and skills."
-                position="bottom"
-                size="lg"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ What formats are supported?
-                </span>
-              </InfoTooltip>
-            </div>
-            
-            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
-              <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <Zap className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-text mb-3">2. Paste Job Description</h3>
-              <p className="text-muted">
-                Copy any job posting and our AI instantly analyses the requirements to tailor your {terms.resume} and cover letter.
-              </p>
-              <InfoTooltip 
-                content="Our AI analyzes keywords, required skills, and company culture from the job posting to customize your documents perfectly. The more detailed the job description, the better the results!"
-                position="bottom"
-                size="xl"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ How does AI tailoring work?
-                </span>
-              </InfoTooltip>
-            </div>
-            
-            <div className="card bg-surface/60 backdrop-blur-sm border border-border/20 rounded-xl text-center p-8 group">
-              <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-text mb-3">3. Tailor Documents</h3>
-              <p className="text-muted">
-                Download perfectly tailored {terms.resume} and cover letter optimised for that specific job – repeat for every application!
-              </p>
-              <InfoTooltip 
-                content="Each tailored version highlights relevant experience, adjusts keywords for ATS compatibility, and includes a custom cover letter. Apply to multiple jobs with confidence!"
-                position="bottom"
-                size="xl"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ What makes it ATS-friendly?
-                </span>
-              </InfoTooltip>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Call-to-Action Section */}
       <div className="py-20 bg-surface">
@@ -457,14 +387,41 @@ export default function HeroUpload() {
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.1s'}}>
               <div className="text-2xl font-bold text-blue-600 mb-2">AI</div>
               <div className="text-sm text-muted">Powered Customization</div>
+              <InfoTooltip
+                content="Our AI analyzes keywords, required skills, and company culture from the job posting to customize your documents perfectly. The more detailed the job description, the better the results!"
+                position="bottom"
+                size="xl"
+              >
+                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
+                  ℹ️ How does AI tailoring work?
+                </span>
+              </InfoTooltip>
             </div>
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.2s'}}>
               <div className="text-2xl font-bold text-purple-600 mb-2">ATS</div>
               <div className="text-sm text-muted">Optimized Format</div>
+              <InfoTooltip
+                content="Each tailored version highlights relevant experience, adjusts keywords for ATS compatibility, and includes a custom cover letter. Apply to multiple jobs with confidence!"
+                position="bottom"
+                size="xl"
+              >
+                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
+                  ℹ️ What makes it ATS-friendly?
+                </span>
+              </InfoTooltip>
             </div>
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.3s'}}>
               <div className="text-2xl font-bold text-green-600 mb-2">PDF</div>
               <div className="text-sm text-muted">Professional Output</div>
+              <InfoTooltip
+                content="We support PDF, DOCX, and TXT files. Our AI will automatically extract all your information including work experience, education, and skills."
+                position="bottom"
+                size="lg"
+              >
+                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
+                  ℹ️ What formats are supported?
+                </span>
+              </InfoTooltip>
             </div>
           </div>
           

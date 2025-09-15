@@ -1,16 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   /* Professional Color System - Light Mode */
-  --tc-bg: 255 255 255;           /* Pure white background */
-  --tc-surface: 250 251 252;      /* Subtle off-white for cards */
+  --tc-bg: 248 250 252;           /* Soft blue-gray background */
+  --tc-surface: 255 255 255;      /* Clean white for cards */
   --tc-surface-elevated: 255 255 255; /* Elevated surface */
   --tc-text: 15 23 42;            /* Slate-900 - deep, readable text */
   --tc-text-secondary: 51 65 85;   /* Slate-700 - secondary text */
   --tc-muted: 100 116 139;         /* Slate-500 - muted text */
-  --tc-heading: 17 50 120;         /* Word-style heading blue (#113078) */
+  --tc-heading: 37 99 235;         /* Blue headings for consistency */
   --tc-border: 226 232 240;        /* Slate-200 - subtle borders */
   --tc-border-strong: 203 213 225; /* Slate-300 - stronger borders */
   
@@ -34,7 +36,7 @@
 
   /* Professional Typography */
   --tc-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --tc-font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --tc-font-display: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --tc-h1: 42;
   --tc-h2: 36;
   --tc-h3: 30;
@@ -95,11 +97,11 @@
   --tc-border-strong: 63 63 70;   /* Zinc-700 - stronger borders */
   
   /* Professional Blue Primary System - Dark Optimized */
-  --tc-primary: 59 130 246;       /* Blue-500 - more vibrant for dark */
-  --tc-primary-hover: 37 99 235;  /* Blue-600 - hover state */
-  --tc-primary-light: 30 58 138;  /* Blue-900 - dark backgrounds */
+  --tc-primary: 96 165 250;       /* Blue-400 - bright blue for dark mode */
+  --tc-primary-hover: 59 130 246; /* Blue-500 - hover state */
+  --tc-primary-light: 30 64 175;  /* Blue-800 - dark backgrounds */
   --tc-primary-contrast: 255 255 255; /* White text on primary */
-  
+
   /* Professional Success/Error States - Dark Optimized */
   --tc-success: 34 197 94;        /* Green-500 */
   --tc-success-light: 20 83 45;   /* Green-800 */
@@ -107,8 +109,8 @@
   --tc-warning-light: 146 64 14;  /* Amber-800 */
   --tc-error: 239 68 68;          /* Red-500 */
   --tc-error-light: 153 27 27;    /* Red-800 */
-  
-  --tc-accent: 59 130 246;        /* Same as primary */
+
+  --tc-accent: 96 165 250;        /* Blue-400 for dark mode consistency */
   --tc-accent-contrast: 255 255 255;
   --tc-elev: 0 0 0;               /* Pure black shadows in dark mode */
 
@@ -134,12 +136,18 @@
 }
 
 .resume-skill-tag {
-  background-color: rgb(240, 240, 240); /* #f0f0f0 - readable in light mode */
+  background-color: rgba(245, 158, 11, 0.1); /* Light amber background */
+  color: rgb(217, 119, 6); /* Warm amber text */
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px; /* Rounded corners */
+  font-weight: 500; /* Medium weight */
+  transition: all 0.2s ease;
 }
 
 .dark .resume-skill-tag {
-  background-color: rgb(55, 65, 81); /* gray-700 for dark mode */
-  color: rgb(243, 244, 246); /* gray-100 for dark mode text */
+  background-color: rgba(251, 191, 36, 0.1); /* Dark mode amber background */
+  color: rgb(251, 191, 36); /* Light amber text for dark mode */
+  border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .resume-summary-bg {
@@ -181,7 +189,7 @@ body {
 
 /* Focus States */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-900;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-zinc-900;
 }
 
 @layer components {
@@ -537,9 +545,9 @@ html,body{ background: rgb(var(--tc-bg)); color: rgb(var(--tc-text)); }
   padding:10px 14px; border-radius:999px; font-size:14px; line-height:1; cursor:pointer;
 }
 .btn:hover{ border-color: rgb(var(--tc-border)); filter: brightness(.98); }
-.btn-primary{ background: rgb(var(--tc-accent)); color: rgb(var(--tc-accent-contrast)); border-color: rgb(var(--tc-accent)); }
-.btn-primary:hover{ filter:brightness(.95); }
-.btn-ghost{ background:transparent; border:0; color:var(--muted); }
+.btn-primary{ background: rgb(var(--tc-primary)); color: rgb(var(--tc-primary-contrast)); border-color: rgb(var(--tc-primary)); }
+.btn-primary:hover{ background: rgb(var(--tc-primary-hover)); border-color: rgb(var(--tc-primary-hover)); }
+.btn-ghost{ background:transparent; border:0; color: rgb(var(--tc-muted)); }
 
 .select{ border:1px solid rgb(var(--tc-border)); border-radius:10px; padding:8px 10px; font-size:14px; background: rgb(var(--tc-surface)); color: rgb(var(--tc-text)); }
 

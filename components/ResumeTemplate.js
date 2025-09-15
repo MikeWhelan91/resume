@@ -12,12 +12,22 @@ const formatDate = (date) => {
   return date.toString().trim();
 };
 
+const formatProjectDate = (start, end, present) => {
+  const startStr = start && start !== 'null' && start !== 'undefined' ? start.toString().trim() : '';
+  const endStr = present ? 'Present' : (end && end !== 'null' && end !== 'undefined' ? end.toString().trim() : '');
+
+  if (!startStr && !endStr) return '';
+  if (!startStr) return endStr;
+  if (!endStr) return startStr;
+  return `${startStr} - ${endStr}`;
+};
+
 const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
   <div style={{ padding: `${15 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
     {userData ? (
       <>
-        <div style={{ borderBottom: `${2 * scale}px solid ${accent}`, paddingBottom: `${8 * scale}px`, marginBottom: `${12 * scale}px` }}>
-          <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
+        <div style={{ borderBottom: `${2 * scale}px solid ${accent}`, paddingBottom: `${8 * scale}px`, marginBottom: `${16 * scale}px`, borderRadius: `${8 * scale}px ${8 * scale}px 0 0` }}>
+          <h1 style={{ fontSize: `${18 * scale}px`, marginBottom: `${4 * scale}px`, color: accent, fontWeight: '600', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
           <p className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>
@@ -27,37 +37,76 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
 
         {userData.resumeData?.summary && (
-          <div style={{ marginBottom: `${12 * scale}px` }}>
-            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Summary</h2>
-            <p style={{ fontSize: `${9 * scale}px`, textAlign: 'justify' }}>{userData.resumeData.summary}</p>
+          <div style={{ marginBottom: `${16 * scale}px` }}>
+            <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Professional Summary</h2>
+            <p style={{ fontSize: `${10 * scale}px`, textAlign: 'justify', lineHeight: '1.6', color: '#374151' }}>{userData.resumeData.summary}</p>
           </div>
         )}
 
         {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
-          <div style={{ marginBottom: `${12 * scale}px` }}>
-            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Core Competencies</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${4 * scale}px` }}>
+          <div style={{ marginBottom: `${16 * scale}px` }}>
+            <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Core Competencies</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${6 * scale}px` }}>
               {userData.resumeData.skills.map((skill, i) => (
-                <span key={i} className="resume-skill-tag" style={{ fontSize: `${8 * scale}px`, padding: `${2 * scale}px ${6 * scale}px`, borderRadius: `${3 * scale}px` }}>{skill}</span>
+                <span key={i} className="resume-skill-tag" style={{ fontSize: `${9 * scale}px`, padding: `${4 * scale}px ${8 * scale}px`, borderRadius: `${8 * scale}px` }}>{skill}</span>
               ))}
             </div>
           </div>
         )}
 
         {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
-          <div className="section-content may-break-page" style={{ marginBottom: `${12 * scale}px` }}>
-            <h2 className="section-header may-break-page" style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Professional Experience</h2>
+          <div className="section-content may-break-page" style={{ marginBottom: `${16 * scale}px` }}>
+            <h2 className="section-header may-break-page" style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Professional Experience</h2>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px` }}>
+              <div key={i} className="experience-item" style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, backgroundColor: '#fafafa', borderRadius: `${8 * scale}px`, border: '1px solid #e5e7eb' }}>
                 <div>
-                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold' }}>{safeProp(exp, 'title')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>{safeProp(exp, 'company')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
+                  <div style={{ fontSize: `${11 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif' }}>{safeProp(exp, 'title')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${10 * scale}px`, fontWeight: '500', marginTop: `${2 * scale}px` }}>{safeProp(exp, 'company')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px`, marginTop: `${2 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
                 {exp.bullets && exp.bullets.length > 0 && (
-                  <div className="bullet-list">
+                  <div className="bullet-list" style={{ marginTop: `${6 * scale}px` }}>
                     {exp.bullets.map((bullet, j) => (
-                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>▪ {bullet}</div>
+                      <div key={j} style={{ fontSize: `${9 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${3 * scale}px`, color: '#374151', lineHeight: '1.5' }}>▪ {bullet}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+          <div className="section-content may-break-page" style={{ marginBottom: `${16 * scale}px` }}>
+            <h2 className="section-header may-break-page" style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Projects</h2>
+            {userData.resumeData.projects.slice(0, 3).map((project, i) => (
+              <div key={i} className="project-item" style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, backgroundColor: '#f9fafb', borderRadius: `${8 * scale}px`, border: `1px solid #e5e7eb` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: `${4 * scale}px` }}>
+                  <div>
+                    <h3 style={{ fontSize: `${11 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif', margin: 0, marginBottom: `${2 * scale}px` }}>
+                      {project.url ? (
+                        <a href={project.url} style={{ color: accent, textDecoration: 'none' }}>{project.name}</a>
+                      ) : (
+                        project.name
+                      )}
+                    </h3>
+                    {formatProjectDate(project.start, project.end, project.present) && (
+                      <div style={{ fontSize: `${8 * scale}px`, color: '#6b7280', fontWeight: '500' }}>
+                        {formatProjectDate(project.start, project.end, project.present)}
+                      </div>
+                    )}
+                  </div>
+                  {project.demo && (
+                    <a href={project.demo} style={{ fontSize: `${8 * scale}px`, color: accent, textDecoration: 'none', fontWeight: '500' }}>Live Demo</a>
+                  )}
+                </div>
+                {project.description && (
+                  <p style={{ fontSize: `${9 * scale}px`, color: '#374151', marginBottom: `${6 * scale}px`, lineHeight: '1.5' }}>{project.description}</p>
+                )}
+                {project.bullets && project.bullets.length > 0 && (
+                  <div className="bullet-list" style={{ marginTop: `${6 * scale}px` }}>
+                    {project.bullets.map((bullet, bIndex) => (
+                      <div key={bIndex} style={{ fontSize: `${9 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${3 * scale}px`, color: '#374151', lineHeight: '1.5' }}>▪ {bullet}</div>
                     ))}
                   </div>
                 )}
@@ -68,13 +117,13 @@ const ProfessionalTemplate = ({ userData, accent, scale = 1 }) => (
 
         {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
           <div className="section-content may-break-page">
-            <h2 className="section-header may-break-page" style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold', textTransform: 'uppercase' }}>Education</h2>
+            <h2 className="section-header may-break-page" style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Education</h2>
             {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
-              <div key={i} className="education-item" style={{ marginBottom: `${4 * scale}px` }}>
+              <div key={i} className="education-item" style={{ marginBottom: `${8 * scale}px`, padding: `${6 * scale}px`, backgroundColor: '#f9fafb', borderRadius: `${6 * scale}px` }}>
                 <div>
-                  <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px`, fontWeight: '500', marginTop: `${2 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               </div>
             ))}
@@ -93,8 +142,8 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
   <div style={{ padding: `${15 * scale}px`, fontSize: `${10 * scale}px`, fontFamily: 'Helvetica, sans-serif', lineHeight: '1.4' }}>
     {userData ? (
       <>
-        <div style={{ background: `linear-gradient(135deg, ${accent}20, ${accent}10)`, padding: `${12 * scale}px`, marginBottom: `${12 * scale}px`, borderRadius: `${8 * scale}px` }}>
-          <h1 style={{ fontSize: `${16 * scale}px`, marginBottom: `${2 * scale}px`, color: accent, fontWeight: 'bold' }}>
+        <div style={{ background: `linear-gradient(135deg, ${accent}15, ${accent}08)`, padding: `${16 * scale}px`, marginBottom: `${16 * scale}px`, borderRadius: `${12 * scale}px`, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h1 style={{ fontSize: `${18 * scale}px`, marginBottom: `${4 * scale}px`, color: accent, fontWeight: '600', fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
             {userData.resumeData?.name || userData.name || 'Your Name'}
           </h1>
           <p className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>
@@ -104,30 +153,71 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
         </div>
 
         {userData.resumeData?.summary && (
-          <div className="resume-summary-bg" style={{ marginBottom: `${12 * scale}px`, padding: `${8 * scale}px`, borderLeft: `${4 * scale}px solid ${accent}`, borderRadius: `${4 * scale}px` }}>
-            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>About</h2>
-            <p style={{ fontSize: `${9 * scale}px` }}>{userData.resumeData.summary}</p>
+          <div className="resume-summary-bg" style={{ marginBottom: `${16 * scale}px`, padding: `${12 * scale}px`, borderLeft: `${4 * scale}px solid ${accent}`, borderRadius: `${8 * scale}px`, backgroundColor: '#fafafa' }}>
+            <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>About</h2>
+            <p style={{ fontSize: `${10 * scale}px`, lineHeight: '1.6', color: '#374151' }}>{userData.resumeData.summary}</p>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${12 * scale}px`, marginBottom: `${12 * scale}px` }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${16 * scale}px`, marginBottom: `${16 * scale}px` }}>
           {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
             <div>
-              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Skills</h2>
-              {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
-                <div key={i} className="resume-skill-tag" style={{ fontSize: `${8 * scale}px`, marginBottom: `${2 * scale}px`, padding: `${2 * scale}px` }}>{skill}</div>
+              <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Skills</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${4 * scale}px` }}>
+                {userData.resumeData.skills.slice(0, 6).map((skill, i) => (
+                  <span key={i} className="resume-skill-tag" style={{ fontSize: `${8 * scale}px`, padding: `${3 * scale}px ${6 * scale}px`, borderRadius: `${8 * scale}px` }}>{skill}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Projects</h2>
+              {userData.resumeData.projects.slice(0, 2).map((project, i) => (
+                <div key={i} style={{ marginBottom: `${10 * scale}px`, padding: `${8 * scale}px`, backgroundColor: '#f9fafb', borderRadius: `${8 * scale}px`, border: `1px solid #e5e7eb` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: `${4 * scale}px` }}>
+                    <div>
+                      <h3 style={{ fontSize: `${11 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif', margin: 0, marginBottom: `${2 * scale}px` }}>
+                        {project.url ? (
+                          <a href={project.url} style={{ color: accent, textDecoration: 'none' }}>{project.name}</a>
+                        ) : (
+                          project.name
+                        )}
+                      </h3>
+                      {formatProjectDate(project.start, project.end, project.present) && (
+                        <div style={{ fontSize: `${8 * scale}px`, color: '#6b7280', fontWeight: '500' }}>
+                          {formatProjectDate(project.start, project.end, project.present)}
+                        </div>
+                      )}
+                    </div>
+                    {project.demo && (
+                      <a href={project.demo} style={{ fontSize: `${8 * scale}px`, color: accent, textDecoration: 'none', fontWeight: '500' }}>Demo</a>
+                    )}
+                  </div>
+                  {project.description && (
+                    <p style={{ fontSize: `${9 * scale}px`, color: '#374151', marginBottom: `${6 * scale}px`, lineHeight: '1.5' }}>{project.description}</p>
+                  )}
+                  {project.bullets && project.bullets.length > 0 && (
+                    <div className="bullet-list" style={{ marginTop: `${6 * scale}px` }}>
+                      {project.bullets.map((bullet, bIndex) => (
+                        <div key={bIndex} style={{ fontSize: `${9 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${3 * scale}px`, color: '#374151', lineHeight: '1.5' }}>→ {bullet}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
 
           {userData.resumeData?.education && userData.resumeData.education.length > 0 && (
             <div>
-              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Education</h2>
+              <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Education</h2>
               {limitEducation(userData.resumeData.education, 2).map((edu, i) => (
-                <div key={i} style={{ marginBottom: `${6 * scale}px` }}>
-                  <div style={{ fontSize: `${9 * scale}px`, fontWeight: 'bold' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
+                <div key={i} style={{ marginBottom: `${8 * scale}px`, padding: `${6 * scale}px`, backgroundColor: '#f9fafb', borderRadius: `${6 * scale}px` }}>
+                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif' }}>{safeProp(edu, 'area') || safeProp(edu, 'degree')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px`, fontWeight: '500', marginTop: `${2 * scale}px` }}>{safeProp(edu, 'institution') || safeProp(edu, 'school')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>{formatDate(edu.start)} - {formatDate(edu.end)}</div>
                 </div>
               ))}
             </div>
@@ -136,18 +226,18 @@ const ModernTemplate = ({ userData, accent, scale = 1 }) => (
 
         {userData.resumeData?.experience && userData.resumeData.experience.length > 0 && (
           <div>
-            <h2 style={{ fontSize: `${11 * scale}px`, color: accent, marginBottom: `${4 * scale}px`, fontWeight: 'bold' }}>Experience</h2>
+            <h2 style={{ fontSize: `${12 * scale}px`, color: accent, marginBottom: `${6 * scale}px`, fontWeight: '600', fontFamily: 'Poppins, sans-serif' }}>Experience</h2>
             {limitExperience(userData.resumeData.experience).map((exp, i) => (
-              <div key={i} className="experience-item" style={{ marginBottom: `${10 * scale}px`, padding: `${6 * scale}px`, border: `${1 * scale}px solid #e0e0e0`, borderRadius: `${4 * scale}px` }}>
-                <div style={{ marginBottom: `${3 * scale}px` }}>
-                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent }}>{safeProp(exp, 'title')}</div>
-                  <div className="resume-muted" style={{ fontSize: `${9 * scale}px` }}>{safeProp(exp, 'company')}</div>
-                  <div style={{ fontSize: `${8 * scale}px`, color: '#666', backgroundColor: '#f0f0f0', padding: `${1 * scale}px ${4 * scale}px`, borderRadius: `${2 * scale}px`, display: 'inline-block', marginTop: `${2 * scale}px` }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
+              <div key={i} className="experience-item" style={{ marginBottom: `${12 * scale}px`, padding: `${10 * scale}px`, border: `1px solid #e5e7eb`, borderRadius: `${8 * scale}px`, backgroundColor: '#fafafa', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                <div style={{ marginBottom: `${4 * scale}px` }}>
+                  <div style={{ fontSize: `${11 * scale}px`, fontWeight: '600', color: accent, fontFamily: 'Poppins, sans-serif' }}>{safeProp(exp, 'title')}</div>
+                  <div className="resume-muted" style={{ fontSize: `${10 * scale}px`, fontWeight: '500', marginTop: `${2 * scale}px` }}>{safeProp(exp, 'company')}</div>
+                  <div style={{ fontSize: `${9 * scale}px`, color: '#666', backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: `${2 * scale}px ${6 * scale}px`, borderRadius: `${6 * scale}px`, display: 'inline-block', marginTop: `${3 * scale}px`, border: '1px solid rgba(245, 158, 11, 0.2)' }}>{formatDate(exp.start)} - {formatDate(exp.end)}</div>
                 </div>
                 {exp.bullets && exp.bullets.length > 0 && (
-                  <div className="bullet-list">
+                  <div className="bullet-list" style={{ marginTop: `${6 * scale}px` }}>
                     {exp.bullets.map((bullet, j) => (
-                      <div key={j} style={{ fontSize: `${8 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${2 * scale}px` }}>→ {bullet}</div>
+                      <div key={j} style={{ fontSize: `${9 * scale}px`, marginLeft: `${8 * scale}px`, marginTop: `${3 * scale}px`, color: '#374151', lineHeight: '1.5' }}>→ {bullet}</div>
                     ))}
                   </div>
                 )}
@@ -201,6 +291,44 @@ const CreativeTemplate = ({ userData, accent, scale = 1 }) => (
                   <div className="bullet-list" style={{ textAlign: 'left', maxWidth: '80%', margin: '0 auto' }}>
                     {exp.bullets.map((bullet, j) => (
                       <div key={j} style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px`, color: '#555', paddingLeft: `${15 * scale}px`, position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '0', color: accent, fontWeight: 'bold' }}>•</span>
+                        {bullet}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+          <div style={{ marginBottom: `${12 * scale}px` }}>
+            <div style={{ textAlign: 'center', marginBottom: `${8 * scale}px` }}>
+              <h2 style={{ fontSize: `${11 * scale}px`, color: accent, fontWeight: 'bold', fontStyle: 'italic', margin: '0' }}>Projects</h2>
+              <div style={{ height: `${1 * scale}px`, width: `${30 * scale}px`, backgroundColor: accent, margin: `${2 * scale}px auto` }}></div>
+            </div>
+            {userData.resumeData.projects.slice(0, 2).map((project, i) => (
+              <div key={i} className="project-item" style={{ marginBottom: `${12 * scale}px`, textAlign: 'center', padding: `${8 * scale}px`, border: `1px solid ${accent}20`, borderRadius: `${8 * scale}px`, backgroundColor: '#fafafa' }}>
+                <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', color: accent, marginBottom: `${3 * scale}px` }}>
+                  {project.url ? (
+                    <a href={project.url} style={{ color: accent, textDecoration: 'none', fontStyle: 'italic' }}>{project.name}</a>
+                  ) : (
+                    <span style={{ fontStyle: 'italic' }}>{project.name}</span>
+                  )}
+                </div>
+                {formatProjectDate(project.start, project.end, project.present) && (
+                  <div style={{ fontSize: `${8 * scale}px`, color: '#6b7280', fontWeight: '500', marginBottom: `${3 * scale}px` }}>
+                    {formatProjectDate(project.start, project.end, project.present)}
+                  </div>
+                )}
+                {project.description && (
+                  <p style={{ fontSize: `${8 * scale}px`, color: '#555', marginBottom: `${4 * scale}px`, fontStyle: 'italic', maxWidth: '90%', margin: `0 auto ${4 * scale}px auto` }}>{project.description}</p>
+                )}
+                {project.bullets && project.bullets.length > 0 && (
+                  <div style={{ textAlign: 'left', maxWidth: '85%', margin: '0 auto' }}>
+                    {project.bullets.map((bullet, bIndex) => (
+                      <div key={bIndex} style={{ fontSize: `${8 * scale}px`, marginTop: `${2 * scale}px`, color: '#555', paddingLeft: `${12 * scale}px`, position: 'relative' }}>
                         <span style={{ position: 'absolute', left: '0', color: accent, fontWeight: 'bold' }}>•</span>
                         {bullet}
                       </div>
@@ -303,6 +431,48 @@ const MinimalTemplate = ({ userData, accent, scale = 1 }) => (
           </div>
         )}
 
+        {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+          <div style={{ marginBottom: `${16 * scale}px` }}>
+            <h2 style={{ fontSize: `${12 * scale}px`, fontWeight: '600', color: '#000', margin: `0 0 ${8 * scale}px 0`, textTransform: 'uppercase', letterSpacing: '1px' }}>Projects</h2>
+            {userData.resumeData.projects.slice(0, 2).map((project, i) => (
+              <div key={i} className="project-item" style={{ marginBottom: `${12 * scale}px` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: `${2 * scale}px` }}>
+                  <div>
+                    <div style={{ fontSize: `${11 * scale}px`, fontWeight: '600', color: '#000' }}>
+                      {project.url ? (
+                        <a href={project.url} style={{ color: accent, textDecoration: 'none' }}>{project.name}</a>
+                      ) : (
+                        project.name
+                      )}
+                    </div>
+                    {formatProjectDate(project.start, project.end, project.present) && (
+                      <div style={{ fontSize: `${8 * scale}px`, color: '#6b7280', fontWeight: '500', marginTop: `${2 * scale}px` }}>
+                        {formatProjectDate(project.start, project.end, project.present)}
+                      </div>
+                    )}
+                  </div>
+                  {project.demo && (
+                    <a href={project.demo} style={{ fontSize: `${9 * scale}px`, color: accent, textDecoration: 'none' }}>Demo</a>
+                  )}
+                </div>
+                {project.description && (
+                  <p style={{ fontSize: `${10 * scale}px`, color: '#444', marginBottom: `${4 * scale}px`, lineHeight: '1.5' }}>{project.description}</p>
+                )}
+                {project.bullets && project.bullets.length > 0 && (
+                  <div>
+                    {project.bullets.map((bullet, bIndex) => (
+                      <div key={bIndex} style={{ fontSize: `${9 * scale}px`, color: '#444', marginBottom: `${2 * scale}px`, paddingLeft: `${8 * scale}px`, position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '0', color: accent }}>•</span>
+                        {bullet}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: `${20 * scale}px` }}>
           {userData.resumeData?.skills && userData.resumeData.skills.length > 0 && (
             <div>
@@ -361,6 +531,38 @@ const TwoColumnTemplate = ({ userData, accent, scale = 1 }) => (
                   <div key={i} style={{ fontSize: `${9 * scale}px`, padding: `${4 * scale}px 0`, borderBottom: '1px solid rgba(255,255,255,0.2)' }}>{skill}</div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+            <div style={{ marginBottom: `${20 * scale}px` }}>
+              <h2 style={{ fontSize: `${12 * scale}px`, fontWeight: 'bold', margin: `0 0 ${8 * scale}px 0`, textTransform: 'uppercase' }}>Projects</h2>
+              {userData.resumeData.projects.slice(0, 2).map((project, i) => (
+                <div key={i} style={{ marginBottom: `${12 * scale}px`, paddingBottom: `${8 * scale}px`, borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                  <div style={{ fontSize: `${10 * scale}px`, fontWeight: 'bold', marginBottom: `${3 * scale}px` }}>
+                    {project.url ? (
+                      <a href={project.url} style={{ color: 'white', textDecoration: 'none' }}>{project.name}</a>
+                    ) : (
+                      project.name
+                    )}
+                  </div>
+                  {formatProjectDate(project.start, project.end, project.present) && (
+                    <div style={{ fontSize: `${8 * scale}px`, opacity: 0.8, marginBottom: `${3 * scale}px` }}>
+                      {formatProjectDate(project.start, project.end, project.present)}
+                    </div>
+                  )}
+                  {project.description && (
+                    <p style={{ fontSize: `${8 * scale}px`, opacity: 0.9, marginBottom: `${4 * scale}px`, lineHeight: '1.4' }}>{project.description}</p>
+                  )}
+                  {project.bullets && project.bullets.length > 0 && (
+                    <div>
+                      {project.bullets.map((bullet, bIndex) => (
+                        <div key={bIndex} style={{ fontSize: `${8 * scale}px`, opacity: 0.8, lineHeight: '1.3', marginBottom: `${2 * scale}px` }}>▸ {bullet}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
@@ -470,6 +672,48 @@ const ExecutiveTemplate = ({ userData, accent, scale = 1 }) => (
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {userData.resumeData?.projects && userData.resumeData.projects.length > 0 && (
+          <div style={{ marginBottom: `${20 * scale}px` }}>
+            <h2 style={{ fontSize: `${14 * scale}px`, color: accent, fontWeight: 'bold', margin: `0 0 ${12 * scale}px 0`, textAlign: 'center', letterSpacing: '1px' }}>KEY PROJECTS</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${15 * scale}px` }}>
+              {userData.resumeData.projects.slice(0, 2).map((project, i) => (
+                <div key={i} className="project-item" style={{ padding: `${12 * scale}px`, border: `2px solid ${accent}`, backgroundColor: '#f8f9fa' }}>
+                  <div style={{ textAlign: 'center', marginBottom: `${8 * scale}px` }}>
+                    <h3 style={{ fontSize: `${11 * scale}px`, fontWeight: 'bold', color: '#000', margin: `0 0 ${4 * scale}px 0`, textTransform: 'uppercase' }}>
+                      {project.url ? (
+                        <a href={project.url} style={{ color: accent, textDecoration: 'none' }}>{project.name}</a>
+                      ) : (
+                        project.name
+                      )}
+                    </h3>
+                    {formatProjectDate(project.start, project.end, project.present) && (
+                      <div style={{ fontSize: `${8 * scale}px`, color: '#6b7280', fontWeight: '500', marginBottom: `${3 * scale}px` }}>
+                        {formatProjectDate(project.start, project.end, project.present)}
+                      </div>
+                    )}
+                    {project.demo && (
+                      <a href={project.demo} style={{ fontSize: `${8 * scale}px`, color: accent, textDecoration: 'none', fontWeight: 'bold' }}>VIEW DEMO</a>
+                    )}
+                  </div>
+                  {project.description && (
+                    <p style={{ fontSize: `${9 * scale}px`, color: '#333', marginBottom: `${6 * scale}px`, textAlign: 'center', fontStyle: 'italic', lineHeight: '1.4' }}>{project.description}</p>
+                  )}
+                  {project.bullets && project.bullets.length > 0 && (
+                    <div style={{ textAlign: 'left' }}>
+                      {project.bullets.map((bullet, bIndex) => (
+                        <div key={bIndex} style={{ fontSize: `${8 * scale}px`, color: '#333', marginBottom: `${2 * scale}px`, paddingLeft: `${12 * scale}px`, position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '0', color: accent, fontWeight: 'bold', fontSize: `${10 * scale}px` }}>►</span>
+                          {bullet}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

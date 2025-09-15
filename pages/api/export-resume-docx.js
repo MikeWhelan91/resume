@@ -16,6 +16,16 @@ const formatDate = (date) => {
   return date.toString().trim();
 };
 
+const formatProjectDate = (start, end, present) => {
+  const startStr = start && start !== 'null' && start !== 'undefined' ? start.toString().trim() : '';
+  const endStr = present ? 'Present' : (end && end !== 'null' && end !== 'undefined' ? end.toString().trim() : '');
+
+  if (!startStr && !endStr) return '';
+  if (!startStr) return endStr;
+  if (!endStr) return startStr;
+  return `${startStr} - ${endStr}`;
+};
+
 // Convert hex color to RGB object
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -189,6 +199,101 @@ function createProfessionalTemplate(userData, accent) {
       // Bullet points
       if (exp.bullets && exp.bullets.length > 0) {
         exp.bullets.forEach(bullet => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `▪ ${bullet}`,
+                  size: Math.round(8 * scale * 2),
+                  font: "Arial"
+                })
+              ],
+              spacing: { after: Math.round(2 * scale * 20) },
+              indent: { left: Math.round(300 * scale) }
+            })
+          );
+        });
+      }
+    });
+  }
+
+  // Projects
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "PROJECTS",
+            bold: true,
+            size: Math.round(11 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Arial"
+          })
+        ],
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Project name with URL if available
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name'),
+        bold: true,
+        size: Math.round(10 * scale * 2),
+        font: "Arial"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+        projectNameRun.color = `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`;
+      }
+
+      children.push(
+        new Paragraph({
+          children: [projectNameRun],
+          spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "Arial"
+              })
+            ],
+            spacing: { after: Math.round(3 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(8 * scale * 2),
+                color: "666666",
+                font: "Arial"
+              })
+            ],
+            spacing: { after: Math.round(3 * scale * 20) }
+          })
+        );
+      }
+
+      // Project bullets
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
           children.push(
             new Paragraph({
               children: [
@@ -910,6 +1015,307 @@ function createCreativeTemplate(userData, accent) {
     });
   }
 
+  // Projects
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Projects",
+            bold: true,
+            size: Math.round(11 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Helvetica"
+          })
+        ],
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(4 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Create project container with border and background (matching experience style)
+      const projectContent = [];
+
+      // Project name with URL if available
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name'),
+        bold: true,
+        size: Math.round(10 * scale * 2),
+        color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+        font: "Helvetica"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+      }
+
+      projectContent.push(
+        new Paragraph({
+          children: [projectNameRun],
+          spacing: { after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "Helvetica"
+              })
+            ],
+            spacing: { after: Math.round(3 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(9 * scale * 2),
+                color: "666666",
+                font: "Helvetica"
+              })
+            ],
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+      }
+
+      // Project bullets
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
+          projectContent.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `→ ${bullet}`,
+                  size: Math.round(8 * scale * 2),
+                  color: "555555",
+                  font: "Helvetica"
+                })
+              ],
+              spacing: { after: Math.round(2 * scale * 20) },
+              indent: { left: Math.round(8 * scale * 20) }
+            })
+          );
+        });
+      }
+
+      // Create table for project container to simulate bordered box (matching experience style)
+      const projectTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: projectContent,
+                width: { size: 9000, type: WidthType.DXA },
+                borders: {
+                  top: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(6 * scale * 20),
+                  bottom: Math.round(6 * scale * 20),
+                  left: Math.round(6 * scale * 20),
+                  right: Math.round(6 * scale * 20)
+                },
+                shading: {
+                  fill: "FCFCFC"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 9000, type: WidthType.DXA }
+      });
+
+      children.push(projectTable);
+
+      // Add spacing between project items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(10 * scale * 20) }
+        })
+      );
+    });
+  }
+
+  // Projects
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Projects",
+            bold: true,
+            italics: true,
+            size: Math.round(11 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Georgia"
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
+      })
+    );
+
+    // Decorative line under Projects header
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "——————————————————————————————————",
+            size: Math.round(6 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Georgia"
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: Math.round(8 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Create project container with centered content and border
+      const projectContent = [];
+
+      // Project name with URL if available
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name'),
+        bold: true,
+        size: Math.round(11 * scale * 2),
+        color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+        font: "Georgia"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+      }
+
+      projectContent.push(
+        new Paragraph({
+          children: [projectNameRun],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "Georgia"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(3 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(9 * scale * 2),
+                color: "666666",
+                italics: true,
+                font: "Georgia"
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: Math.round(2 * scale * 20) }
+          })
+        );
+      }
+
+      // Project bullets (left-aligned within the container)
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
+          projectContent.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• ${bullet}`,
+                  size: Math.round(8 * scale * 2),
+                  color: "555555",
+                  font: "Georgia"
+                })
+              ],
+              spacing: { after: Math.round(2 * scale * 20) },
+              indent: { left: Math.round(15 * scale * 20) }
+            })
+          );
+        });
+      }
+
+      // Create table for project container to simulate bordered box
+      const projectTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: projectContent,
+                width: { size: 8000, type: WidthType.DXA },
+                borders: {
+                  top: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`, space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(8 * scale * 20),
+                  bottom: Math.round(8 * scale * 20),
+                  left: Math.round(8 * scale * 20),
+                  right: Math.round(8 * scale * 20)
+                },
+                shading: {
+                  fill: "FAFAFA"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 8000, type: WidthType.DXA },
+        alignment: AlignmentType.CENTER
+      });
+
+      children.push(projectTable);
+
+      // Add spacing between project items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(15 * scale * 20) }
+        })
+      );
+    });
+  }
+
   // Skills and Education Side-by-Side (using table to match PDF layout)
   if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
       (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
@@ -1198,6 +1604,103 @@ function createMinimalTemplate(userData, accent) {
       // Bullets with accent color
       if (exp.bullets && exp.bullets.length > 0) {
         exp.bullets.forEach(bullet => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• ${bullet}`,
+                  size: Math.round(9 * scale * 2),
+                  color: "444444",
+                  font: "system-ui"
+                })
+              ],
+              spacing: { after: Math.round(2 * scale * 20) },
+              indent: { left: Math.round(8 * scale * 20) }
+            })
+          );
+        });
+      }
+    });
+  }
+
+  // Projects with clean minimal styling
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Projects",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "000000",
+            font: "system-ui"
+          })
+        ],
+        spacing: { before: Math.round(16 * scale * 20), after: Math.round(8 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Project name and URL on same line
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name'),
+        bold: true,
+        size: Math.round(11 * scale * 2),
+        color: "000000",
+        font: "system-ui"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+        projectNameRun.color = `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`;
+      }
+
+      children.push(
+        new Paragraph({
+          children: [projectNameRun],
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(3 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(10 * scale * 2),
+                color: "333333",
+                font: "system-ui"
+              })
+            ],
+            spacing: { after: Math.round(4 * scale * 20) }
+          })
+        );
+      }
+
+      // Project bullets with accent color bullets
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
           children.push(
             new Paragraph({
               children: [
@@ -1630,6 +2133,104 @@ function createTwoColumnTemplate(userData, accent) {
     });
   }
 
+  // Projects in right column
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    rightColumnContent.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "PROJECTS",
+            bold: true,
+            size: Math.round(14 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Arial"
+          })
+        ],
+        spacing: { before: Math.round(10 * scale * 20), after: Math.round(12 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Project name with URL if available
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name'),
+        bold: true,
+        size: Math.round(12 * scale * 2),
+        color: "000000",
+        font: "Arial"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+        projectNameRun.color = `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`;
+      }
+
+      rightColumnContent.push(
+        new Paragraph({
+          children: [projectNameRun],
+          spacing: { before: Math.round(12 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        rightColumnContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "Arial"
+              })
+            ],
+            spacing: { after: Math.round(4 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        rightColumnContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(10 * scale * 2),
+                color: "333333",
+                font: "Arial"
+              })
+            ],
+            spacing: { after: Math.round(4 * scale * 20) },
+            alignment: AlignmentType.JUSTIFIED
+          })
+        );
+      }
+
+      // Project bullets
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
+          rightColumnContent.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `▸ ${bullet}`,
+                  size: Math.round(9 * scale * 2),
+                  color: "444444",
+                  font: "Arial"
+                })
+              ],
+              spacing: { after: Math.round(3 * scale * 20) },
+              indent: { left: Math.round(200 * scale) }
+            })
+          );
+        });
+      }
+    });
+  }
+
   // Create the two-column table
   const table = new Table({
     rows: [
@@ -1912,6 +2513,157 @@ function createExecutiveTemplate(userData, accent) {
       children.push(experienceTable);
 
       // Add spacing between experience items
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 1 })],
+          spacing: { after: Math.round(15 * scale * 20) }
+        })
+      );
+    });
+  }
+
+  // Projects with Executive styling
+  if (userData.resumeData?.projects && userData.resumeData.projects.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "PROJECTS",
+            bold: true,
+            size: Math.round(14 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Times"
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(20 * scale * 20), after: Math.round(12 * scale * 20) }
+      })
+    );
+
+    userData.resumeData.projects.slice(0, 2).forEach(project => {
+      // Create project container content
+      const projectContent = [];
+
+      // Project name with URL if available
+      const projectNameRun = new TextRun({
+        text: safeProp(project, 'name').toUpperCase(),
+        bold: true,
+        size: Math.round(12 * scale * 2),
+        color: "000000",
+        font: "Times"
+      });
+
+      if (project.url) {
+        projectNameRun.hyperlink = project.url;
+        projectNameRun.color = `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`;
+      }
+
+      projectContent.push(
+        new Paragraph({
+          children: [projectNameRun],
+          spacing: { after: Math.round(2 * scale * 20) },
+          border: {
+            bottom: {
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              space: 1,
+              size: 2,
+              style: BorderStyle.SINGLE
+            }
+          }
+        })
+      );
+
+      // Project dates
+      const projectDates = formatProjectDate(project.start, project.end, project.present);
+      if (projectDates) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: projectDates,
+                size: Math.round(8 * scale * 2),
+                color: "6b7280",
+                italics: true,
+                font: "Times"
+              })
+            ],
+            spacing: { after: Math.round(6 * scale * 20) }
+          })
+        );
+      }
+
+      // Project description
+      if (project.description) {
+        projectContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.description,
+                size: Math.round(11 * scale * 2),
+                color: "000000",
+                italics: true,
+                font: "Times"
+              })
+            ],
+            spacing: { after: Math.round(6 * scale * 20) }
+          })
+        );
+      }
+
+      // Project bullets
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
+          projectContent.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `► ${bullet}`,
+                  size: Math.round(9 * scale * 2),
+                  color: "333333",
+                  font: "Times"
+                })
+              ],
+              spacing: { after: Math.round(3 * scale * 20) },
+              indent: { left: Math.round(15 * scale * 20) },
+              alignment: AlignmentType.JUSTIFIED
+            })
+          );
+        });
+      }
+
+      // Create table for project container
+      const projectTable = new Table({
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                children: projectContent,
+                width: { size: 9000, type: WidthType.DXA },
+                borders: {
+                  top: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  bottom: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  left: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE },
+                  right: { color: "E0E0E0", space: 1, size: 4, style: BorderStyle.SINGLE }
+                },
+                margins: {
+                  top: Math.round(12 * scale * 20),
+                  bottom: Math.round(12 * scale * 20),
+                  left: Math.round(12 * scale * 20),
+                  right: Math.round(12 * scale * 20)
+                },
+                shading: {
+                  fill: "FAFAFA"
+                }
+              })
+            ]
+          })
+        ],
+        width: { size: 9000, type: WidthType.DXA }
+      });
+
+      children.push(projectTable);
+
+      // Add spacing between project items
       children.push(
         new Paragraph({
           children: [new TextRun({ text: "", size: 1 })],

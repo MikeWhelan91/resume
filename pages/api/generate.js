@@ -570,7 +570,8 @@ async function coreHandler(req, res){
 - 3-5 bullets per role (no duties)
 - Skills ONLY from: ${allowedSkillsCSV}
 - ⚠️ NEVER fabricate metrics/achievements
-- Standard headers: Experience, Education, Skills
+- Standard headers: Experience, Projects, Education, Skills
+- 🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). Extract technologies from project bullets and add to skills section automatically
 - For JOB_ONLY skills (${jobOnlySkillsCSV}): Don't mention unless explicitly in original
 - LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
 
@@ -583,6 +584,7 @@ async function coreHandler(req, res){
 📝 RULES:
 - 4 paragraphs: Hook → Value → Fit → Close
 - Only skills from: ${allowedSkillsCSV}
+- 🔧 PROJECTS: Reference relevant projects to demonstrate skills and experience
 - 🚨 ABSOLUTE TRUTHFULNESS: NEVER fabricate experience, achievements, skills, or qualifications not explicitly in ${langTerms.resume}
 - 🚨 NO INFLATION: Don't upgrade job titles, responsibilities, or seniority levels
 - 🚨 NO METRICS: Don't add statistics, percentages, or quantified results not in original
@@ -598,9 +600,10 @@ async function coreHandler(req, res){
 
 🎯 Create ATS ${langTerms.resume} + ${tone} cover letter from original ${langTerms.resume} only.
 
-📋 ${langTerms.resume.toUpperCase()}: Power verbs (${langTerms.verbs}), 3-5 bullets/role, standard headers
-📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone
+📋 ${langTerms.resume.toUpperCase()}: Power verbs (${langTerms.verbs}), 3-5 bullets/role, standard headers (Experience, Projects, Education, Skills)
+📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone. Reference relevant projects to demonstrate skills
 ⚠️ SKILLS: Only use ${allowedSkillsCSV}
+🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). Extract technologies from project bullets and add to skills section automatically
 ⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
 🚨 ZERO FABRICATION TOLERANCE: 
 - NEVER add metrics, statistics, percentages, or quantified results not in original

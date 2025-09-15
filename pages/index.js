@@ -8,14 +8,7 @@ export default function Home(){
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    // Redirect authenticated users to dashboard
-    if (status === 'authenticated' && session) {
-      router.push('/dashboard');
-    }
-  }, [session, status, router]);
-
-  // Show loading state during redirect
+  // Show loading state while checking auth
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -24,15 +17,11 @@ export default function Home(){
     );
   }
 
-  // Show homepage for unauthenticated users
-  if (status === 'unauthenticated') {
-    return (
-      <>
-        <SeoHead canonical="https://tailoredcv.app/" />
-        <HeroUpload />
-      </>
-    );
-  }
-
-  return null; // Redirecting to dashboard
+  // Show homepage for all users (both authenticated and unauthenticated)
+  return (
+    <>
+      <SeoHead canonical="https://tailoredcv.app/" />
+      <HeroUpload />
+    </>
+  );
 }
