@@ -17,7 +17,8 @@ import {
   FileDown,
   Lock,
   ChevronDown,
-  Target
+  Target,
+  RefreshCw
 } from 'lucide-react';
 
 const ACCENTS = ['#6b7280','#10b39f','#2563eb','#7c3aed','#f97316','#ef4444'];
@@ -761,7 +762,7 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left sidebar controls */}
@@ -775,33 +776,71 @@ export default function ResultsPage() {
               </div>
           
               {(userGoal === 'cv' || userGoal === 'both') && (
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-muted">Template Style</label>
-                  <div className="relative">
-                    <select
-                      value={template}
-                      onChange={(e) => setTemplate(e.target.value)}
-                      className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
-                    >
-                      {TEMPLATES.map(t => {
-                        const isProTemplate = t.id !== 'professional';
-                        const isLocked = isProTemplate && userPlan === 'free';
+                <div className="space-y-4">
+                  {/* Template Style and Theme Color on same line */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Template Style */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted">Template Style</label>
+                      <div className="relative">
+                        <select
+                          value={template}
+                          onChange={(e) => setTemplate(e.target.value)}
+                          className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+                        >
+                          {TEMPLATES.map(t => {
+                            const isProTemplate = t.id !== 'professional';
+                            const isLocked = isProTemplate && userPlan === 'free';
 
-                        return (
-                          <option
-                            key={t.id}
-                            value={t.id}
-                            disabled={isLocked}
-                          >
-                            {t.name}{isLocked ? ' (Pro Only)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted">
-                      <ChevronDown className="w-4 h-4" />
+                            return (
+                              <option
+                                key={t.id}
+                                value={t.id}
+                                disabled={isLocked}
+                              >
+                                {t.name}{isLocked ? ' (Pro Only)' : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Theme Color */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted flex items-center gap-2">
+                        Theme Color
+                        {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <div className="relative">
+                          <input
+                            type="color"
+                            value={accent}
+                            onChange={(e) => userPlan !== 'free' && setAccent(e.target.value)}
+                            disabled={userPlan === 'free'}
+                            className={`w-10 h-8 rounded border border-border cursor-pointer ${
+                              userPlan === 'free' ? 'cursor-not-allowed opacity-50' : 'hover:border-accent'
+                            }`}
+                            style={{ backgroundColor: accent }}
+                          />
+                          {userPlan === 'free' && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded">
+                              <Lock className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-text font-medium">{accent}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Pro plan messages */}
                   {userPlan === 'free' && (
                     <>
                       <div className="text-xs text-muted bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
@@ -811,44 +850,6 @@ export default function ResultsPage() {
                         <strong>Weekly Credits:</strong> {getCreditsRemaining() || 0} remaining. Credits reset every Monday at midnight Dublin time.
                       </div>
                     </>
-                  )}
-                </div>
-              )}
-
-              {/* Theme Colors - Only for CV/Resume users */}
-              {(userGoal === 'cv' || userGoal === 'both') && (
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-muted flex items-center gap-2">
-                    Theme Color
-                    {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
-                  </label>
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={accent}
-                        onChange={(e) => userPlan !== 'free' && setAccent(e.target.value)}
-                        disabled={userPlan === 'free'}
-                        className={`w-12 h-10 rounded-lg border border-border cursor-pointer ${
-                          userPlan === 'free' ? 'cursor-not-allowed opacity-50' : 'hover:border-accent'
-                        }`}
-                        style={{ backgroundColor: accent }}
-                      />
-                      {userPlan === 'free' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
-                          <Lock className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-text font-medium">{accent}</p>
-                      <p className="text-xs text-muted">Click to customize</p>
-                    </div>
-                  </div>
-                  {userPlan === 'free' && (
-                    <div className="text-xs text-muted bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
-                      <strong>Free Plan:</strong> Color customization locked. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for custom colors.
-                    </div>
                   )}
                 </div>
               )}
@@ -871,6 +872,24 @@ export default function ResultsPage() {
                   </p>
                 </div>
               )}
+
+              {/* New Job CTA Header */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <div className="text-center">
+                  <div className="inline-flex items-center space-x-2 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1 mb-2">
+                    <RefreshCw className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                      New Opportunity?
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-text mb-1">
+                    Ready to tailor another {terms.Resume} and Cover Letter?
+                  </h3>
+                  <p className="text-xs text-muted">
+                    Add another job description below!
+                  </p>
+                </div>
+              </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
