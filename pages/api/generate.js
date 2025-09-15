@@ -45,6 +45,109 @@ function stripCodeFence(s=""){
 }
 function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { return null; } }
 
+// ---- ATS Analysis Function ----
+async function analyzeATSScore(client, resumeData, jobDescription) {
+  if (!jobDescription || !resumeData) return null;
+
+  try {
+    // Convert resume data to text for analysis
+    const resumeText = formatResumeForAnalysis(resumeData);
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: `You are analyzing a resume that was AUTOMATICALLY GENERATED and ATS-OPTIMIZED by our system. The formatting and structure should already be perfect for ATS systems.
+
+Focus your analysis on CONTENT GAPS and MISSING ELEMENTS that the user needs to address:
+
+Return JSON:
+{
+  "overallScore": <number 70-95>,
+  "categories": {
+    "keywordMatch": {"score": <number>, "gaps": ["missing critical keywords from job"]},
+    "contentDepth": {"score": <number>, "gaps": ["missing experience details", "quantifiable achievements"]},
+    "relevance": {"score": <number>, "gaps": ["skills not demonstrated", "experience misalignment"]},
+    "completeness": {"score": <number>, "gaps": ["missing sections", "incomplete information"]}
+  },
+  "contentGaps": [
+    "Specific missing experience or skills from job requirements",
+    "Achievement areas that need quantification",
+    "Critical qualifications not highlighted"
+  ],
+  "missingKeywords": ["job-critical", "keywords", "missing"],
+  "recommendations": [
+    "Add specific experience in X",
+    "Quantify achievements in Y role",
+    "Highlight Z skills more prominently"
+  ]
+}`
+        },
+        {
+          role: "user",
+          content: `This resume was auto-generated with ATS-friendly formatting. The structure and format are already optimized.
+
+Focus on CONTENT analysis: What experience, skills, or achievements is the candidate missing for this specific job? What gaps exist between their background and job requirements?
+
+JOB DESCRIPTION:
+${jobDescription}
+
+RESUME CONTENT:
+${resumeText}
+
+What content gaps exist? What should the user add to their experience to better match this role?`
+        }
+      ]
+    });
+
+    const analysisText = response.choices[0].message.content;
+    const analysis = safeJSON(analysisText);
+
+    return analysis?.overallScore ? analysis : null;
+  } catch (error) {
+    console.error('ATS analysis error:', error);
+    return null;
+  }
+}
+
+function formatResumeForAnalysis(resumeData) {
+  let text = '';
+
+  if (resumeData.name) text += `Name: ${resumeData.name}\n`;
+  if (resumeData.email) text += `Email: ${resumeData.email}\n`;
+  if (resumeData.phone) text += `Phone: ${resumeData.phone}\n`;
+  if (resumeData.location) text += `Location: ${resumeData.location}\n`;
+
+  if (resumeData.summary) {
+    text += `\nPROFESSIONAL SUMMARY:\n${resumeData.summary}\n`;
+  }
+
+  if (resumeData.experience && resumeData.experience.length > 0) {
+    text += '\nWORK EXPERIENCE:\n';
+    resumeData.experience.forEach(exp => {
+      text += `${exp.title} at ${exp.company} (${exp.duration})\n`;
+      if (exp.description) text += `${exp.description}\n`;
+      text += '\n';
+    });
+  }
+
+  if (resumeData.skills && resumeData.skills.length > 0) {
+    text += `SKILLS:\n${resumeData.skills.join(', ')}\n\n`;
+  }
+
+  if (resumeData.education && resumeData.education.length > 0) {
+    text += 'EDUCATION:\n';
+    resumeData.education.forEach(edu => {
+      text += `${edu.degree} from ${edu.institution} (${edu.year})\n`;
+    });
+  }
+
+  return text;
+}
+
 // ---- NEW: pass 1 — inventory skills strictly from résumé ----
 async function extractAllowedSkills(client, resumeText){
   const sys = "Output ONLY JSON: {\"skills\": string[]} Extract skills mentioned IN THE RESUME TEXT ONLY. No guessing or synonyms. Ignore any job description.";
@@ -175,22 +278,34 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   
   const sys = `Output ONLY JSON: {"bullets": string[]} 
 
-🚨 CRITICAL ANTI-FABRICATION RULES - ZERO TOLERANCE:
-- NEVER invent numbers: No percentages, metrics, dollar amounts, team sizes, timeframes, or quantified results
-- NEVER add achievements: No projects, technologies, outcomes, or accomplishments not in original resume
-- NEVER create metrics: No "increased by 25%", "managed team of 8", "saved $50K" unless word-for-word in RESUME_CONTEXT
-- NEVER assume scale: No company revenue, budget sizes, departmental scope, or business metrics
-- NEVER escalate roles: Don't change "assisted with" to "led" or "participated in" to "managed"
-- NEVER add technical depth: No specific versions, advanced features, or implementation details not mentioned
-- NEVER create timeframes: No "delivered ahead of schedule", "rapid deployment", or duration claims
-- NEVER fabricate soft skills: No "excellent communication" or "strong leadership" without evidence
-- NEVER assume organizational structure: No reporting relationships, team hierarchies, or cross-functional roles
-- NEVER create business impact: No efficiency gains, process improvements, or strategic outcomes not stated
-- STRICT RULE: If original bullet has no numbers, DO NOT add any - focus on strong action verbs only
-- STRICT RULE: Only enhance clarity and power of existing truthful content
-- STRICT RULE: When uncertain, choose weaker truthful language over stronger fabricated claims
-- VERIFICATION: Each enhanced bullet must be completely defensible against original source
-- ACCOUNTABILITY: Every claim must trace back to explicit content in RESUME_CONTEXT
+🚨 ABSOLUTE TRUTHFULNESS REQUIREMENT - ZERO FABRICATION TOLERANCE:
+
+BANNED FABRICATIONS (Will result in complete rejection):
+- ANY numbers not explicitly in original: No percentages, statistics, metrics, quantities, dollars, timeframes
+- ANY achievements not stated: No accomplishments, projects, outcomes, results, impacts, improvements
+- ANY role inflation: Don't change "helped" to "led", "worked on" to "managed", "assisted" to "directed"
+- ANY technical additions: No software versions, methodologies, frameworks not explicitly mentioned
+- ANY scale assumptions: No team sizes, company metrics, budget amounts, departmental scope
+- ANY timeline fabrications: No "quickly", "efficiently", "ahead of schedule" unless stated
+- ANY responsibility expansion: No cross-functional work, leadership roles, strategic involvement not mentioned
+- ANY skill implications: Don't add skills or expertise not explicitly demonstrated
+- ANY business impact: No revenue, cost savings, growth, efficiency gains not stated
+- ANY qualification inflation: Don't upgrade certifications, education level, or experience scope
+
+MANDATORY VERIFICATION PROCESS:
+1. Every enhanced bullet must be 100% traceable to original content
+2. If original has no metrics → enhanced version has no metrics
+3. If original shows basic task → enhanced version shows same task with better words only
+4. When in doubt → use weaker but truthful language
+5. Better to under-sell truth than over-sell fiction
+
+EXAMPLE TRANSFORMATIONS (Good):
+Original: "Helped customers with questions" → Enhanced: "Assisted customers with inquiries and concerns"
+Original: "Worked on database project" → Enhanced: "Contributed to database development project"
+
+PROHIBITED TRANSFORMATIONS (Will be rejected):
+Original: "Helped customers" → NEVER: "Managed customer relationships for 500+ clients"
+Original: "Worked on project" → NEVER: "Led cross-functional team to deliver project 20% ahead of schedule"
 
 Transform BULLETS using only information from RESUME_CONTEXT:
 
@@ -253,7 +368,15 @@ async function verifyBullets(client, resumeContext, original, rewritten){
 async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
   const sys = `Output ONLY JSON: {"summary": "string"} 
 
-🚨 CRITICAL: Only use information explicitly stated in RESUME_CONTEXT. Never fabricate experience years, metrics, or achievements.
+🚨 ABSOLUTE TRUTHFULNESS REQUIREMENT:
+- NEVER add years of experience not explicitly stated in resume
+- NEVER add company names, job titles, or roles not mentioned
+- NEVER add metrics, achievements, or quantified results not in original
+- NEVER add skills, technologies, or certifications not demonstrated
+- NEVER add industry experience or domain expertise not evidenced
+- NEVER upgrade seniority level or leadership experience
+- If information is not explicitly in RESUME_CONTEXT, do not include it
+- Better to have a shorter truthful summary than a longer fabricated one
 
 Create a professional summary using information from RESUME_CONTEXT only:
 
@@ -460,7 +583,11 @@ async function coreHandler(req, res){
 📝 RULES:
 - 4 paragraphs: Hook → Value → Fit → Close
 - Only skills from: ${allowedSkillsCSV}
-- ⚠️ NEVER fabricate experience not in ${langTerms.resume}
+- 🚨 ABSOLUTE TRUTHFULNESS: NEVER fabricate experience, achievements, skills, or qualifications not explicitly in ${langTerms.resume}
+- 🚨 NO INFLATION: Don't upgrade job titles, responsibilities, or seniority levels
+- 🚨 NO METRICS: Don't add statistics, percentages, or quantified results not in original
+- 🚨 NO ASSUMPTIONS: Don't assume company size, industry impact, or team dynamics
+- 🚨 VERIFICATION: Every claim must be traceable to original resume content
 - For JOB_ONLY (${jobOnlySkillsCSV}): "eager to learn X"
 - Tone: ${tone}
 - LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
@@ -475,7 +602,14 @@ async function coreHandler(req, res){
 📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone
 ⚠️ SKILLS: Only use ${allowedSkillsCSV}
 ⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
-⚠️ CRITICAL: Never fabricate metrics, achievements, or experience not in original
+🚨 ZERO FABRICATION TOLERANCE: 
+- NEVER add metrics, statistics, percentages, or quantified results not in original
+- NEVER fabricate achievements, accomplishments, or business impact not stated  
+- NEVER inflate job titles, responsibilities, or seniority levels
+- NEVER add skills, technologies, or certifications not demonstrated
+- NEVER assume company scale, team sizes, or organizational structure
+- NEVER add experience years, industry tenure, or domain expertise not mentioned
+- Every single claim must be 100% verifiable against original resume content
 ⚠️ LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
     }
 
@@ -556,6 +690,16 @@ async function coreHandler(req, res){
     
     if (resumeNeeded) {
       payload.resumeData = rd;
+
+      // Run ATS analysis if job description is provided and resume was generated
+      if (jobDesc && jobDesc.trim().length > 50) {
+        console.log('Running ATS analysis...');
+        const atsAnalysis = await analyzeATSScore(client, rd, jobDesc);
+        if (atsAnalysis) {
+          payload.atsAnalysis = atsAnalysis;
+          console.log('ATS analysis completed:', atsAnalysis.overallScore);
+        }
+      }
     }
 
     // Track usage and consume credits/trial usage after successful generation

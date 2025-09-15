@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe, Lock } from 'lucide-react';
+import { Sparkles, FileText, Home, User, CreditCard, LogOut, ChevronDown, Crown, Settings, Globe, Lock, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useError } from '../../contexts/ErrorContext';
@@ -237,13 +237,22 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-1">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className={`nav-link ${router.pathname === '/' ? 'active' : ''}`}
             >
               <Home className="w-4 h-4" />
               Home
             </Link>
+            {session && (
+              <Link
+                href="/dashboard"
+                className={`nav-link ${router.pathname === '/dashboard' ? 'active' : ''}`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+            )}
             <div className="relative">
               <Link 
                 href={canAccessWizard ? "/wizard" : "#"}
@@ -468,14 +477,24 @@ export default function Navbar() {
             <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-surface border border-border shadow-xl rounded-b-lg">
               <div className="px-4 py-6 space-y-4">
                 {/* Navigation Links */}
-                <Link 
-                  href="/" 
+                <Link
+                  href="/"
                   className={`mobile-nav-link ${router.pathname === '/' ? 'active' : ''}`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Home className="w-4 h-4" />
                   Home
                 </Link>
+                {session && (
+                  <Link
+                    href="/dashboard"
+                    className={`mobile-nav-link ${router.pathname === '/dashboard' ? 'active' : ''}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                )}
                 <Link 
                   href={canAccessWizard ? "/wizard" : "#"}
                   className={`mobile-nav-link ${router.pathname === '/wizard' ? 'active' : ''} ${

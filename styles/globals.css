@@ -10,6 +10,7 @@
   --tc-text: 15 23 42;            /* Slate-900 - deep, readable text */
   --tc-text-secondary: 51 65 85;   /* Slate-700 - secondary text */
   --tc-muted: 100 116 139;         /* Slate-500 - muted text */
+  --tc-heading: 17 50 120;         /* Word-style heading blue (#113078) */
   --tc-border: 226 232 240;        /* Slate-200 - subtle borders */
   --tc-border-strong: 203 213 225; /* Slate-300 - stronger borders */
   
@@ -89,6 +90,7 @@
   --tc-text: 250 250 250;         /* Almost white - excellent readability */
   --tc-text-secondary: 212 212 216; /* Zinc-300 - secondary text */
   --tc-muted: 161 161 170;        /* Zinc-400 - muted text */
+  --tc-heading: 96 165 250;       /* Lighter blue for dark mode headings */
   --tc-border: 39 39 42;          /* Zinc-800 - subtle borders */
   --tc-border-strong: 63 63 70;   /* Zinc-700 - stronger borders */
   
@@ -343,9 +345,10 @@ body {
   }
 
   /* Headings & text */
-  .tc-h1 { @apply text-[42px] sm:text-[48px] font-bold tracking-tight text-text leading-tight; }
-  .tc-h2 { @apply text-3xl font-bold tracking-tight text-text; }
+  .tc-h1 { @apply text-[42px] sm:text-[48px] font-bold tracking-tight text-heading leading-tight; }
+  .tc-h2 { @apply text-3xl font-bold tracking-tight text-heading; }
   .tc-muted { @apply text-muted; }
+  .text-heading { color: rgb(var(--tc-heading)); }
 
   /* Buttons */
   .tc-btn { @apply inline-flex items-center justify-center h-11 px-5 rounded-xl font-medium transition ease-out; }
@@ -643,6 +646,11 @@ body.print-mode {
   opacity:0.5;
   cursor:default;
 }
+
+/* Text color utilities */
+.text-text { color: rgb(var(--tc-text)); }
+.text-muted { color: rgb(var(--tc-muted)); }
+.text-heading { color: rgb(var(--tc-heading)); }
 
 .pageIndicator{
   position:absolute;

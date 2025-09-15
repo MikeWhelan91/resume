@@ -27,11 +27,56 @@ const TEMPLATE_MAP = {
 };
 
 async function launchBrowser() {
-  return puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    defaultViewport: { width: 1240, height: 1754 },
-  });
+  try {
+    const isWindows = process.platform === 'win32';
+    const isDev = process.env.NODE_ENV === 'development';
+
+    const launchOptions = {
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor"
+      ],
+      defaultViewport: { width: 1240, height: 1754 },
+    };
+
+    // On Windows development, try to use system Chrome if available
+    if (isWindows && isDev) {
+      console.log('Windows development mode - trying system Chrome...');
+      // Common Chrome locations on Windows
+      const possiblePaths = [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        process.env.PUPPETEER_EXECUTABLE_PATH
+      ].filter(Boolean);
+
+      for (const path of possiblePaths) {
+        try {
+          const fs = await import('fs');
+          if (fs.existsSync(path)) {
+            console.log(`Found Chrome at: ${path}`);
+            launchOptions.executablePath = path;
+            break;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    }
+
+    console.log('Launching browser with options:', JSON.stringify(launchOptions, null, 2));
+    return await puppeteer.launch(launchOptions);
+  } catch (error) {
+    console.error('Failed to launch browser:', error);
+    throw new Error(`Browser launch failed: ${error.message}`);
+  }
 }
 
 function readIfExists(p) {
@@ -116,17 +161,32 @@ export default async function handler(req, res) {
 
     const html = renderHtml({ data, template, mode });
 
-    const browser = await launchBrowser();
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "16mm", right: "14mm", bottom: "16mm", left: "14mm" },
-      preferCSSPageSize: true,
-    });
-    await page.close();
-    await browser.close();
+    let browser;
+    let page;
+    let pdf;
+
+    try {
+      browser = await launchBrowser();
+      page = await browser.newPage();
+
+      // Set content with longer timeout
+      await page.setContent(html, {
+        waitUntil: "networkidle0",
+        timeout: 30000
+      });
+
+      pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: "16mm", right: "14mm", bottom: "16mm", left: "14mm" },
+        preferCSSPageSize: true,
+      });
+
+    } finally {
+      // Ensure cleanup happens
+      if (page) await page.close().catch(console.error);
+      if (browser) await browser.close().catch(console.error);
+    }
 
     // Consume trial usage for anonymous users after successful PDF generation
     if (isTrialUser) {
@@ -143,10 +203,19 @@ export default async function handler(req, res) {
     return res.send(Buffer.from(pdf));
   } catch (e) {
     console.error("[export-pdf] error:", e);
-    // Don't expose sensitive error details in production
-    const errorMessage = process.env.NODE_ENV === 'development' 
+    console.error("[export-pdf] stack:", e.stack);
+
+    // Detailed error for development
+    const errorMessage = process.env.NODE_ENV === 'development'
       ? String(e?.message || e)
       : 'PDF generation failed';
-    return res.status(500).json({ error: "Failed to generate PDF", detail: errorMessage });
+
+    console.error("[export-pdf] Sending error response:", { error: "Failed to generate PDF", detail: errorMessage });
+
+    return res.status(500).json({
+      error: "Failed to generate PDF",
+      detail: errorMessage,
+      timestamp: new Date().toISOString()
+    });
   }
 }

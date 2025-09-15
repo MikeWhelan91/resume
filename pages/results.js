@@ -7,20 +7,20 @@ import SeoHead from '../components/SeoHead';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useError } from '../contexts/ErrorContext';
 import TrialSignupModal from '../components/ui/TrialSignupModal';
-import { 
-  FileText, 
-  Download, 
-  ArrowLeft, 
-  Sparkles, 
-  Palette, 
-  Zap, 
-  FileDown, 
+import {
+  FileText,
+  Download,
+  ArrowLeft,
+  Sparkles,
+  Palette,
+  Zap,
+  FileDown,
   Lock,
   ChevronDown,
   Target
 } from 'lucide-react';
 
-const ACCENTS = ['#111827','#10b39f','#2563eb','#7c3aed','#f97316','#ef4444'];
+const ACCENTS = ['#6b7280','#10b39f','#2563eb','#7c3aed','#f97316','#ef4444'];
 
 const TEMPLATES = [
   { id: 'professional', name: 'Professional' },
@@ -56,6 +56,7 @@ export default function ResultsPage() {
   const [tone, setTone] = useState('professional');
   const [showTrialSignup, setShowTrialSignup] = useState(false);
   const [signupType, setSignupType] = useState('post_generation');
+  const [atsAnalysis, setAtsAnalysis] = useState(null);
 
   // Credit system helpers for authenticated users
   const getCreditsRemaining = () => {
@@ -521,6 +522,10 @@ export default function ResultsPage() {
         if (parsed.jobDescription) {
           setJobDescription(parsed.jobDescription);
         }
+        // Load ATS analysis if available from generation
+        if (parsed.atsAnalysis) {
+          setAtsAnalysis(parsed.atsAnalysis);
+        }
         console.log('Loaded user data:', parsed);
       }
       
@@ -602,6 +607,29 @@ export default function ResultsPage() {
         <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', minHeight: '400px'}}>
           <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
         </div>
+
+        {/* Download buttons inside CV preview */}
+        <div className="space-y-3 mt-4">
+          <h4 className="text-sm font-semibold text-text">Download Resume</h4>
+          <div className="space-y-2">
+            <select
+              value={resumeFormat}
+              onChange={(e) => setResumeFormat(e.target.value)}
+              className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+            >
+              <option value="pdf">PDF</option>
+              <option value="docx">DOCX (Word)</option>
+            </select>
+            <button
+              className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => resumeFormat === 'pdf' ? downloadCV() : downloadResumeDocx()}
+              disabled={!canDownload()}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Resume ({resumeFormat.toUpperCase()})
+            </button>
+          </div>
+        </div>
       </div>
     );
 
@@ -656,6 +684,29 @@ export default function ResultsPage() {
                 {`No data available. Please generate a ${terms.resume} first.`}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Download buttons inside Cover Letter preview */}
+        <div className="space-y-3 mt-4">
+          <h4 className="text-sm font-semibold text-text">Download Cover Letter</h4>
+          <div className="space-y-2">
+            <select
+              value={coverLetterFormat}
+              onChange={(e) => setCoverLetterFormat(e.target.value)}
+              className="w-full bg-surface text-text border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+            >
+              <option value="pdf">PDF</option>
+              <option value="docx">DOCX (Word)</option>
+            </select>
+            <button
+              className={`w-full btn btn-primary ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => coverLetterFormat === 'pdf' ? downloadCoverLetter() : downloadCoverLetterDocx()}
+              disabled={!canDownload()}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Cover Letter ({coverLetterFormat.toUpperCase()})
+            </button>
           </div>
         </div>
       </div>
@@ -726,35 +777,30 @@ export default function ResultsPage() {
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-muted">Template Style</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {TEMPLATES.map(t => {
-                      const isProTemplate = t.id !== 'professional';
-                      const isLocked = isProTemplate && userPlan === 'free';
-                      const isSelected = template === t.id;
-                      
-                      return (
-                        <button
-                          key={t.id}
-                          className={`relative p-3 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
-                            isSelected 
-                          ? 'border-accent bg-accent/10 text-text' 
-                          : isLocked 
-                          ? 'border-border bg-bg text-muted cursor-not-allowed' 
-                          : 'border-border bg-surface text-text hover:border-border hover:bg-bg'
-                          }`}
-                          onClick={() => !isLocked && setTemplate(t.id)}
-                          disabled={isLocked}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span>{t.name}</span>
-                            {isLocked && <Lock className="w-4 h-4" />}
-                          </div>
-                          {isProTemplate && userPlan === 'free' && (
-                            <div className="text-xs text-muted mt-1">Pro only</div>
-                          )}
-                        </button>
-                      );
-                    })}
+                  <div className="relative">
+                    <select
+                      value={template}
+                      onChange={(e) => setTemplate(e.target.value)}
+                      className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
+                    >
+                      {TEMPLATES.map(t => {
+                        const isProTemplate = t.id !== 'professional';
+                        const isLocked = isProTemplate && userPlan === 'free';
+
+                        return (
+                          <option
+                            key={t.id}
+                            value={t.id}
+                            disabled={isLocked}
+                          >
+                            {t.name}{isLocked ? ' (Pro Only)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted">
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
                   </div>
                   {userPlan === 'free' && (
                     <>
@@ -772,43 +818,36 @@ export default function ResultsPage() {
               {/* Theme Colors - Only for CV/Resume users */}
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted flex items-center gap-2">
+                  <label className="text-sm font-medium text-muted flex items-center gap-2">
                     Theme Color
                     {userPlan === 'free' && <Lock className="w-4 h-4 text-gray-400" />}
-                  </h3>
-                  <div className="grid grid-cols-6 gap-2">
-                    {ACCENTS.map((c, index) => {
-                      const isFirstColor = index === 0;
-                      const isLocked = userPlan === 'free' && !isFirstColor;
-                      const isSelected = accent === c;
-                      
-                      return (
-                        <button
-                          key={c}
-                          className={`w-8 h-8 rounded-lg shadow-sm border-2 transition-all duration-200 relative ${
-                            !isLocked ? 'hover:scale-110' : 'cursor-not-allowed opacity-50'
-                          }`}
-                          style={{
-                            backgroundColor: c, 
-                            borderColor: isSelected ? c : 'rgb(229 231 235)',
-                            boxShadow: isSelected ? `0 0 0 2px ${c}40` : 'none'
-                          }}
-                          onClick={() => !isLocked && setAccent(c)}
-                          disabled={isLocked}
-                          aria-label={`Accent ${c}`}
-                        >
-                          {isLocked && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
-                              <Lock className="w-3 h-3 text-white" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <input
+                        type="color"
+                        value={accent}
+                        onChange={(e) => userPlan !== 'free' && setAccent(e.target.value)}
+                        disabled={userPlan === 'free'}
+                        className={`w-12 h-10 rounded-lg border border-border cursor-pointer ${
+                          userPlan === 'free' ? 'cursor-not-allowed opacity-50' : 'hover:border-accent'
+                        }`}
+                        style={{ backgroundColor: accent }}
+                      />
+                      {userPlan === 'free' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
+                          <Lock className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-text font-medium">{accent}</p>
+                      <p className="text-xs text-muted">Click to customize</p>
+                    </div>
                   </div>
                   {userPlan === 'free' && (
                     <div className="text-xs text-muted bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
-                      <strong>Free Plan:</strong> Only default color available. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for all color themes.
+                      <strong>Free Plan:</strong> Color customization locked. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> for custom colors.
                     </div>
                   )}
                 </div>
@@ -888,104 +927,8 @@ export default function ResultsPage() {
                     Back to Wizard
                   </button>
                 </div>
-
-                {/* ATS Optimization Button - Pro Only - Only for CV/Resume users */}
-                {(userGoal === 'cv' || userGoal === 'both') && (
-                  <>
-                    <div className="relative">
-                      <button 
-                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
-                          isGenerating || userPlan === 'free'
-                            ? 'cursor-not-allowed opacity-50' 
-                            : ''
-                        }`}
-                        onClick={optimizeForATS}
-                        disabled={isGenerating || userPlan === 'free'}
-                      >
-                        <Target className="w-4 h-4" />
-                        <span>
-                          ATS {terms.isUK ? 'Optimise' : 'Optimize'}
-                        </span>
-                        {userPlan === 'free' && <Lock className="w-4 h-4 ml-1" />}
-                      </button>
-                    </div>
-
-                    {userPlan === 'free' && (
-                      <div className="text-xs text-muted bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2 mt-2">
-                        <strong>Pro Feature:</strong> ATS {terms.isUK ? 'Optimisation' : 'Optimization'} enhances your {terms.resume} for Applicant Tracking Systems. <span className="text-blue-600 cursor-pointer hover:underline" onClick={handleUpgradeClick}>Upgrade to Pro</span> to unlock this feature.
-                      </div>
-                    )}
-                  </>
-                )}
               </div>
 
-              <div className="space-y-3">
-                <div className={`grid gap-4 ${userGoal === 'both' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  {(userGoal === 'cv' || userGoal === 'both') && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Resume Format</label>
-                      <div className="relative">
-                        <select
-                          value={resumeFormat}
-                          onChange={(e) => setResumeFormat(e.target.value)}
-                          className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
-                        >
-                          <option value="pdf">PDF</option>
-                          <option value="docx" disabled={!canUseDocx()}>
-                            DOCX {!canUseDocx() && '(Pro only)'}
-                          </option>
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                      </div>
-                      <button 
-                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
-                          !canDownloadResumeFormat() 
-                            ? 'cursor-not-allowed opacity-50' 
-                            : ''
-                        }`}
-                        onClick={downloadResume}
-                        disabled={!canDownloadResumeFormat()}
-                      >
-                        <Download className="w-4 h-4" />
-                        Download ({resumeFormat.toUpperCase()})
-                        {resumeFormat === 'docx' && !canUseDocx() && <Lock className="w-4 h-4 ml-1" />}
-                      </button>
-                    </div>
-                  )}
-                  
-                  {(userGoal === 'cover-letter' || userGoal === 'both') && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Cover Letter Format</label>
-                      <div className="relative">
-                        <select
-                          value={coverLetterFormat}
-                          onChange={(e) => setCoverLetterFormat(e.target.value)}
-                          className="appearance-none w-full bg-surface text-text border border-border rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
-                        >
-                          <option value="pdf">PDF</option>
-                          <option value="docx" disabled={!canUseDocx()}>
-                            DOCX {!canUseDocx() && '(Pro only)'}
-                          </option>
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                      </div>
-                      <button 
-                        className={`btn btn-primary w-full flex items-center gap-2 justify-center relative ${
-                          !canDownloadCoverLetterFormat() 
-                            ? 'cursor-not-allowed opacity-50' 
-                            : ''
-                        }`}
-                        onClick={downloadCoverLetterConsolidated}
-                        disabled={!canDownloadCoverLetterFormat()}
-                      >
-                        <Download className="w-4 h-4" />
-                        Download ({coverLetterFormat.toUpperCase()})
-                        {coverLetterFormat === 'docx' && !canUseDocx() && <Lock className="w-4 h-4 ml-1" />}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
                 {session && userPlan === 'free' && (
                   <div className="mt-4 text-center">
                     <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
@@ -1033,7 +976,6 @@ export default function ResultsPage() {
                     </button>
                   </div>
                 )}
-              </div>
             </div>
           </aside>
 
@@ -1050,6 +992,101 @@ export default function ResultsPage() {
               {(userGoal === 'cv' || userGoal === 'both') && renderCVPreview()}
               {(userGoal === 'cover-letter' || userGoal === 'both') && renderCoverLetterPreview()}
             </div>
+
+            {/* ATS Score Display Under Everything */}
+            {atsAnalysis && (userGoal === 'cv' || userGoal === 'both') && (
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-text">ATS Compatibility Analysis</h3>
+                    <div className="flex items-center space-x-2">
+                      <div className={`text-3xl font-bold ${
+                        atsAnalysis.overallScore >= 80 ? 'text-green-600' :
+                        atsAnalysis.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {atsAnalysis.overallScore}%
+                      </div>
+                      <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                        atsAnalysis.overallScore >= 80 ? 'bg-green-100 text-green-800' :
+                        atsAnalysis.overallScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {atsAnalysis.overallScore >= 80 ? 'Excellent' :
+                         atsAnalysis.overallScore >= 60 ? 'Good' : 'Needs Work'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {atsAnalysis.categories && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.keywordMatch?.score || 0}%</div>
+                        <div className="text-sm text-muted">Keywords</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.contentDepth?.score || 0}%</div>
+                        <div className="text-sm text-muted">Content Depth</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.relevance?.score || 0}%</div>
+                        <div className="text-sm text-muted">Relevance</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.completeness?.score || 0}%</div>
+                        <div className="text-sm text-muted">Completeness</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* Content Gaps */}
+                    {atsAnalysis.contentGaps && atsAnalysis.contentGaps.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-3">🎯 Content Gaps to Address</h4>
+                          <ul className="space-y-2">
+                          {atsAnalysis.contentGaps.map((gap, index) => (
+                            <li key={index} className="text-sm text-orange-600 dark:text-orange-400">
+                              • {gap}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Missing Keywords */}
+                    {atsAnalysis.missingKeywords && atsAnalysis.missingKeywords.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">🔍 Missing Keywords from Job</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {atsAnalysis.missingKeywords.map((keyword, index) => (
+                            <span key={index} className="text-xs bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 px-2 py-1 rounded-full">
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {atsAnalysis.recommendations && atsAnalysis.recommendations.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3">💡 Actionable Improvements</h4>
+                        <ul className="space-y-2">
+                          {atsAnalysis.recommendations.map((rec, index) => (
+                            <li key={index} className="text-sm text-green-600 dark:text-green-400">
+                              • {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 text-center text-sm text-blue-700 dark:text-blue-300">
+                    ✨ This analysis was automatically generated based on your job description
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>

@@ -1,12 +1,4 @@
-// Import prisma with error handling
-let prisma;
-try {
-  const prismaModule = require('../../lib/prisma');
-  prisma = prismaModule.prisma;
-} catch (error) {
-  console.error('Failed to import Prisma client:', error);
-  prisma = null;
-}
+import { prisma } from '../../lib/prisma';
 
 // Helper function to get client IP
 function getClientIP(req) {
@@ -20,22 +12,6 @@ function getClientIP(req) {
 
 export default async function handler(req, res) {
   const ipAddress = getClientIP(req);
-
-  // Check if prisma is available
-  if (!prisma) {
-    console.error('Prisma client is not available');
-    return res.status(500).json({ 
-      error: 'Database connection not available',
-      // Fail-secure: assume limits are exhausted when DB is down
-      generationsUsed: 2,
-      downloadsUsed: 2,
-      generationsLimit: 2,
-      downloadsLimit: 2,
-      canGenerate: false,
-      canDownload: false,
-      lastUsed: null
-    });
-  }
 
   if (req.method === 'GET') {
     // Get trial usage for this IP
