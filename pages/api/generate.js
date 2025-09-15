@@ -164,6 +164,91 @@ async function extractAllowedSkills(client, resumeText){
   return uniq;
 }
 
+// ---- NEW: combined skills processing for efficiency ----
+async function processAllSkills(client, resumeData, resumeText, projects, jobDesc) {
+  const sys = `Output ONLY JSON: {
+    "resumeSkills": string[],
+    "projectSkills": string[],
+    "jobSkills": string[],
+    "consolidatedSkills": string[],
+    "expandedSkills": string[]
+  }
+
+🎯 COMPREHENSIVE SKILLS PROCESSING MISSION:
+
+🚨 CRITICAL RULE: ONLY extract skills that are EXPLICITLY MENTIONED in the text. DO NOT add similar technologies or make assumptions.
+
+1. RESUME_SKILLS: Extract HARD TECHNICAL SKILLS only from resume content:
+   - Programming languages, frameworks, databases, tools that are ACTUALLY WRITTEN in the resume
+   - Look for exact mentions of technology names
+   - EXCLUDE: Soft skills, broad concepts, methodologies
+   - NEVER add technologies not explicitly mentioned
+
+2. PROJECT_SKILLS: Extract concrete technologies from project bullets only.
+   - Only technologies specifically named in project descriptions
+   - Do not infer or assume related technologies
+
+3. JOB_SKILLS: Extract ONLY specific technical skills/technologies mentioned by name in job description:
+   - Must be explicitly written in the job posting
+   - EXCLUDE: Job concepts, business terms, product features, general descriptions
+   - Do not add related or similar technologies
+
+4. CONSOLIDATED_SKILLS: Clean and standardize skills:
+   - Combine only the skills extracted above from steps 1-3
+   - Remove duplicates and fix capitalization
+   - Remove vague terms
+   - Max 15 skills total
+   - NO NEW SKILLS - only clean existing ones
+
+5. EXPANDED_SKILLS: Add 1 common variant per consolidated skill for matching:
+   - Only add variants for skills already in consolidated list
+   - Common variations only (React/ReactJS, Node.js/NodeJS)
+
+STRICT EXTRACTION RULES:
+- NEVER add technologies not explicitly mentioned in the source text
+- NEVER assume related technologies (if React is mentioned, don't add JavaScript unless JavaScript is also mentioned)
+- NEVER use example technologies from instructions - only extract what's actually written
+- If a technology is not clearly stated, don't include it`;
+
+  const projectBullets = projects?.length > 0
+    ? projects.map(p => (p.bullets || []).join(' ')).filter(Boolean).join(' ')
+    : '';
+
+  const resumeSkillsText = resumeData
+    ? `SKILLS: ${(resumeData.skills || []).join(', ')}\nEXPERIENCE: ${resumeData.experience?.map(e => (e.bullets || []).join(' ')).join(' ')}`
+    : resumeText;
+
+  const user = `RESUME_CONTENT:\n${resumeSkillsText}\n\nPROJECT_BULLETS:\n${projectBullets}\n\nJOB_DESCRIPTION:\n${jobDesc}`;
+
+  try {
+    const r = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+    });
+
+    const result = safeJSON(r.choices?.[0]?.message?.content || '{}');
+
+    return {
+      resumeSkills: Array.isArray(result.resumeSkills) ? result.resumeSkills : [],
+      projectSkills: Array.isArray(result.projectSkills) ? result.projectSkills : [],
+      jobSkills: Array.isArray(result.jobSkills) ? result.jobSkills : [],
+      consolidatedSkills: Array.isArray(result.consolidatedSkills) ? result.consolidatedSkills : [],
+      expandedSkills: Array.isArray(result.expandedSkills) ? result.expandedSkills : []
+    };
+  } catch (error) {
+    console.error('Error processing skills:', error);
+    return {
+      resumeSkills: resumeData ? (resumeData.skills || []) : [],
+      projectSkills: [],
+      jobSkills: [],
+      consolidatedSkills: [],
+      expandedSkills: []
+    };
+  }
+}
+
 // ---- NEW: inventory skills from job description ----
 async function extractJobSkills(client, jobDesc){
   const sys = "Output ONLY JSON: {\\\"skills\\\": string[]} Extract skills explicitly mentioned IN THE JOB DESCRIPTION ONLY. No guessing or synonyms.";
@@ -276,69 +361,70 @@ EXAMPLES:
 async function rewriteBullets(client, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
   
-  const sys = `Output ONLY JSON: {"bullets": string[]} 
+  const sys = `Output ONLY JSON: {"bullets": string[]}
 
-🚨 ABSOLUTE TRUTHFULNESS REQUIREMENT - ZERO FABRICATION TOLERANCE:
+🎯 BULLET ENHANCEMENT MISSION: Transform basic bullet points into professional, detailed resume bullets with ABSOLUTE QUALITY ASSURANCE.
 
-BANNED FABRICATIONS (Will result in complete rejection):
-- ANY numbers not explicitly in original: No percentages, statistics, metrics, quantities, dollars, timeframes
-- ANY achievements not stated: No accomplishments, projects, outcomes, results, impacts, improvements
-- ANY role inflation: Don't change "helped" to "led", "worked on" to "managed", "assisted" to "directed"
-- ANY technical additions: No software versions, methodologies, frameworks not explicitly mentioned
-- ANY scale assumptions: No team sizes, company metrics, budget amounts, departmental scope
-- ANY timeline fabrications: No "quickly", "efficiently", "ahead of schedule" unless stated
-- ANY responsibility expansion: No cross-functional work, leadership roles, strategic involvement not mentioned
-- ANY skill implications: Don't add skills or expertise not explicitly demonstrated
-- ANY business impact: No revenue, cost savings, growth, efficiency gains not stated
-- ANY qualification inflation: Don't upgrade certifications, education level, or experience scope
+⚡ CRITICAL ENHANCEMENT DIRECTIVE: Since this is the FINAL quality check, every bullet must be perfect. No verification calls will follow.
 
-MANDATORY VERIFICATION PROCESS:
-1. Every enhanced bullet must be 100% traceable to original content
-2. If original has no metrics → enhanced version has no metrics
-3. If original shows basic task → enhanced version shows same task with better words only
-4. When in doubt → use weaker but truthful language
-5. Better to under-sell truth than over-sell fiction
+📝 ENHANCED TRANSFORMATION PHILOSOPHY:
+- Build upon stated facts with professional language and industry terminology
+- Expand basic statements into compelling, detailed descriptions that showcase expertise
+- Use action-oriented language that demonstrates impact and technical competence
+- Maintain 100% truthfulness while maximizing professional appeal
 
-EXAMPLE TRANSFORMATIONS (Good):
-Original: "Helped customers with questions" → Enhanced: "Assisted customers with inquiries and concerns"
-Original: "Worked on database project" → Enhanced: "Contributed to database development project"
+🔧 ADVANCED TRANSFORMATION RULES:
 
-PROHIBITED TRANSFORMATIONS (Will be rejected):
-Original: "Helped customers" → NEVER: "Managed customer relationships for 500+ clients"
-Original: "Worked on project" → NEVER: "Led cross-functional team to deliver project 20% ahead of schedule"
+1. PROFESSIONAL EXPANSION EXAMPLES:
+   Basic: "React and Node JS project"
+   Enhanced: "Developed full-stack web application leveraging React for dynamic user interfaces and Node.js for robust backend API architecture"
 
-Transform BULLETS using only information from RESUME_CONTEXT:
+   Basic: "Scalable AI resume builder"
+   Enhanced: "Built scalable AI-powered resume generation platform featuring automated content optimization and intelligent formatting capabilities"
 
-FORMULA: [Action Verb] + [What You Did] + [Context/Technology/Scope if mentioned]
+   Basic: "Monetised with different tiers"
+   Enhanced: "Implemented comprehensive tiered subscription model with multiple pricing plans, integrated payment processing, and user access management"
 
-ENHANCEMENT APPROACH:
-1. START WITH POWER VERBS: Achieved, Led, Transformed, Optimized, Delivered, Implemented, Streamlined, Spearheaded, Developed, Built, Maintained, Collaborated, Supported, Analyzed
+2. QUALITY ASSURANCE ENHANCEMENTS:
+   ✅ Technical Context: "Built app" → "Architected and developed application following modern software engineering principles"
+   ✅ Professional Scope: "Worked on feature" → "Collaborated on cross-functional feature development from conception through deployment"
+   ✅ Industry Standards: "Created website" → "Developed responsive web application with optimized performance and accessibility compliance"
+   ✅ Technical Depth: "Used database" → "Implemented data persistence layer with optimized database schema and query performance"
+   ✅ Process Excellence: "Fixed bugs" → "Diagnosed and resolved software defects through systematic debugging and testing methodologies"
 
-2. PRESERVE ORIGINAL FACTS:
-   - Only use numbers/metrics if explicitly stated in RESUME_CONTEXT
-   - Only mention technologies/tools if listed in RESUME_CONTEXT  
-   - Only reference scope/scale if mentioned in RESUME_CONTEXT
-   - Only claim leadership if indicated in RESUME_CONTEXT
+3. FORBIDDEN FABRICATIONS (ZERO TOLERANCE):
+   ❌ Specific metrics: "500+ users", "20% improvement", "$10K revenue", "50ms response time"
+   ❌ Exact timeframes: "2-week sprint", "delivered early", "under budget"
+   ❌ Team specifications: "5-person team", "cross-functional squad", "led 10 developers"
+   ❌ Company scale: "enterprise client", "startup environment", "Fortune 500"
+   ❌ Unmentioned technologies: Don't add frameworks, tools, or languages not stated
 
-3. FOCUS ON TRUTHFUL IMPACT:
-   - Highlight the nature of work done (development, analysis, support, etc.)
-   - Emphasize technologies used (only if mentioned)
-   - Note collaboration and teamwork (only if indicated)
-   - Describe processes and methodologies (only if mentioned)
+4. PREMIUM POWER VERBS BY CATEGORY:
+   - Architecture: Architected, Engineered, Designed, Structured, Planned
+   - Development: Developed, Built, Implemented, Created, Programmed, Coded
+   - Optimization: Optimized, Enhanced, Improved, Streamlined, Refined
+   - Integration: Integrated, Connected, Linked, Unified, Synchronized
+   - Leadership: Collaborated, Coordinated, Facilitated, Guided, Mentored
+   - Analysis: Analyzed, Evaluated, Assessed, Investigated, Researched
 
-4. AVOID WEAK LANGUAGE:
-   - Remove: "Responsible for", "Duties included", "Worked on"
-   - Replace with specific action verbs that reflect the actual work
+5. PROFESSIONAL STRUCTURE FORMULA:
+   [Premium Action Verb] + [Technical/Business Context] + [Professional Methodology/Approach] + [Logical Outcome/Capability]
 
-5. STRUCTURE: 15-25 words max, clear and concise
+6. QUALITY CHECKPOINTS:
+   - Each bullet 25-40 words for maximum impact
+   - Technical terminology appropriate to field
+   - Action-oriented language throughout
+   - Professional terminology that hiring managers expect
+   - Logical progression from action to outcome
+   - Industry-standard practices implied where appropriate
 
-6. KEYWORDS: Naturally integrate relevant JOB_DESC terms ONLY when supported by RESUME_CONTEXT`;
+🎯 FINAL QUALITY MANDATE: Every bullet must read like it was written by a senior professional describing sophisticated work. No simple or basic language allowed.`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
   const r = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    temperature: 0.1, // Reduced for more consistent, factual output
+    temperature: 0.3, // Balanced for creative enhancement while staying factual
     response_format: { type: "json_object" },
     messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
@@ -364,9 +450,27 @@ async function verifyBullets(client, resumeContext, original, rewritten){
   return rewritten.map((b,i)=> flags[i] ? b : original[i]);
 }
 
-// ---- NEW: optimize professional summary ----
-async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
-  const sys = `Output ONLY JSON: {"summary": "string"} 
+// ---- NEW: combined summary optimization and ATS analysis ----
+async function optimizeSummaryAndATS(client, resumeContext, jobDesc, currentSummary, resumeData, jobSkills = []){
+  const sys = `Output ONLY JSON: {
+    "optimizedSummary": "string",
+    "atsAnalysis": {
+      "overallScore": number,
+      "categories": {
+        "keywordMatch": {"score": number, "gaps": string[]},
+        "contentDepth": {"score": number, "gaps": string[]},
+        "relevance": {"score": number, "gaps": string[]},
+        "completeness": {"score": number, "gaps": string[]}
+      },
+      "contentGaps": string[],
+      "missingKeywords": string[],
+      "recommendations": string[]
+    }
+  }
+
+🎯 DUAL OPTIMIZATION MISSION: Enhance professional summary AND analyze ATS compatibility in one comprehensive review.
+
+📝 SUMMARY OPTIMIZATION REQUIREMENTS:
 
 🚨 ABSOLUTE TRUTHFULNESS REQUIREMENT:
 - NEVER add years of experience not explicitly stated in resume
@@ -378,36 +482,75 @@ async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
 - If information is not explicitly in RESUME_CONTEXT, do not include it
 - Better to have a shorter truthful summary than a longer fabricated one
 
-Create a professional summary using information from RESUME_CONTEXT only:
+ENHANCED SUMMARY STRUCTURE (2-3 sentences, 60-100 words):
+1. Professional title + demonstrated expertise from resume
+2. Key technologies/skills evidenced in resume with professional terminology
+3. Value proposition based on actual experience shown in resume with compelling language
 
-STRUCTURE (2-3 sentences, 50-80 words):
-1. Professional title + experience level (only if clearly stated in resume)
-2. Key technologies/skills mentioned in resume
-3. Value proposition based on actual experience shown in resume
-
-STRICT RULES:
-- Start with professional identity from resume (e.g., "Software Engineer", "Developer", etc.)
-- Use power words (achieved, led, transformed, optimized, delivered) only if supported by resume
-- Include specific metrics ONLY when explicitly stated in RESUME_CONTEXT
-- Mention 2-3 most relevant technical skills from resume
-- Focus on demonstrated capabilities from resume experience
-- Avoid generic phrases like "results-driven" or "team player"
+ADVANCED SUMMARY RULES:
+- Start with professional identity from resume (e.g., "Software Engineer", "Full-Stack Developer")
+- Use premium power words when supported by resume content
+- Include 3-4 most relevant technical skills from resume in natural flow
+- Focus on demonstrated capabilities with sophisticated language
 - Write in third person, no "I" statements
 - NEVER add experience years, company scales, or achievements not in resume
+- Use industry-standard terminology that hiring managers expect
 
-TONE: Professional, factual, based on actual resume content`;
+📊 ATS ANALYSIS REQUIREMENTS:
 
-  const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nCURRENT_SUMMARY:\n${currentSummary || "No existing summary"}`;
-  
-  const r = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.1, // Reduced for more consistent, less creative output
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
-  });
-  
-  const out = safeJSON(r.choices?.[0]?.message?.content || "");
-  return out?.summary || currentSummary;
+ANALYSIS FOCUS: This resume was AUTOMATICALLY GENERATED and ATS-OPTIMIZED by our system. Structure and format are already perfect.
+
+Focus on CONTENT GAPS and MISSING TECHNICAL SKILLS:
+- Score range: 70-95 (already optimized formatting)
+- Identify TECHNICAL SKILL gaps between resume and job requirements
+- Only use TECHNICAL SKILLS from JOB_TECHNICAL_SKILLS list provided
+- Suggest missing programming languages, frameworks, databases, tools
+- Focus on concrete technologies the candidate should learn/highlight
+
+MISSING KEYWORDS RULES:
+- ONLY include specific technical skills from JOB_TECHNICAL_SKILLS
+- EXCLUDE business terms, product features, general descriptions
+- Examples: "React", "Python", "AWS", "PostgreSQL" (good)
+- Examples: "SaaS product", "AI-driven features", "automated reporting" (bad)
+- Max 8 missing keywords, prioritize most important
+
+CONTENT GAP CATEGORIES:
+1. Keyword Match: Technical skills from job requirements missing from resume
+2. Content Depth: Experience details that need expansion or quantification
+3. Relevance: Skills demonstrated but not highlighted for this role
+4. Completeness: Missing sections or incomplete information
+
+TONE: Professional, constructive, focused on technical skill enhancement.`;
+
+  const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nJOB_TECHNICAL_SKILLS:\n${jobSkills.join(', ')}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nCURRENT_SUMMARY:\n${currentSummary || "No existing summary"}`;
+
+  try {
+    const r = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+    });
+
+    const result = safeJSON(r.choices?.[0]?.message?.content || '{}');
+
+    return {
+      optimizedSummary: result.optimizedSummary || currentSummary,
+      atsAnalysis: result.atsAnalysis || null
+    };
+  } catch (error) {
+    console.error('Error optimizing summary and ATS:', error);
+    return {
+      optimizedSummary: currentSummary,
+      atsAnalysis: null
+    };
+  }
+}
+
+// ---- Legacy function kept for compatibility ----
+async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
+  const result = await optimizeSummaryAndATS(client, resumeContext, jobDesc, currentSummary, null, []);
+  return result.optimizedSummary;
 }
 
 async function coreHandler(req, res){
@@ -509,23 +652,31 @@ async function coreHandler(req, res){
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Pass 1: résumé-only allow-list (consolidate long skills first)
-    let allowedSkillsBase = resumeData
-      ? (resumeData.skills || [])
-      : await extractAllowedSkills(client, resumeText);
-    
-    // Consolidate long skills into concise terms
-    allowedSkillsBase = await consolidateSkills(client, allowedSkillsBase);
-    
-    // Convert to lowercase for matching
-    const allowedSkillsLower = allowedSkillsBase.map(s=>String(s).toLowerCase());
-    const allowedSkills = await expandSkills(client, allowedSkillsLower);
-    const expanded = new Set(allowedSkills);
+    // OPTIMIZED: Combined skills processing (6 calls → 1 call)
+    const skillsResult = await processAllSkills(
+      client,
+      resumeData,
+      resumeText,
+      resumeData?.projects || [],
+      jobDesc
+    );
+
+    // Process results from combined call
+    const allowedSkillsBase = [...new Set([
+      ...skillsResult.resumeSkills,
+      ...skillsResult.projectSkills,
+      ...skillsResult.consolidatedSkills
+    ])];
+
+    const allowedSkills = skillsResult.expandedSkills.length > 0
+      ? skillsResult.expandedSkills
+      : allowedSkillsBase;
+
+    const expanded = new Set(allowedSkills.map(s => String(s).toLowerCase()));
     const allowedSkillsCSV = allowedSkills.join(", ");
 
-    // Pass 2: derive job-only skills
-    const jobSkills = await extractJobSkills(client, jobDesc);
-    const jobOnlySkills = jobSkills.filter(s => !expanded.has(s));
+    // Job-only skills for learning suggestions
+    const jobOnlySkills = skillsResult.jobSkills.filter(s => !expanded.has(String(s).toLowerCase()));
     const jobOnlySkillsCSV = jobOnlySkills.join(", ");
 
     // Pass 3: generate with hard constraints
@@ -571,7 +722,7 @@ async function coreHandler(req, res){
 - Skills ONLY from: ${allowedSkillsCSV}
 - ⚠️ NEVER fabricate metrics/achievements
 - Standard headers: Experience, Projects, Education, Skills
-- 🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). Extract technologies from project bullets and add to skills section automatically
+- 🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). CRITICAL: Extract ALL technologies mentioned in project bullets and automatically add them to the skills section
 - For JOB_ONLY skills (${jobOnlySkillsCSV}): Don't mention unless explicitly in original
 - LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
 
@@ -584,7 +735,7 @@ async function coreHandler(req, res){
 📝 RULES:
 - 4 paragraphs: Hook → Value → Fit → Close
 - Only skills from: ${allowedSkillsCSV}
-- 🔧 PROJECTS: Reference relevant projects to demonstrate skills and experience
+- 🔧 PROJECTS: MUST reference specific relevant projects from resume to demonstrate skills, technologies used, and practical experience when applicable to the role
 - 🚨 ABSOLUTE TRUTHFULNESS: NEVER fabricate experience, achievements, skills, or qualifications not explicitly in ${langTerms.resume}
 - 🚨 NO INFLATION: Don't upgrade job titles, responsibilities, or seniority levels
 - 🚨 NO METRICS: Don't add statistics, percentages, or quantified results not in original
@@ -601,9 +752,9 @@ async function coreHandler(req, res){
 🎯 Create ATS ${langTerms.resume} + ${tone} cover letter from original ${langTerms.resume} only.
 
 📋 ${langTerms.resume.toUpperCase()}: Power verbs (${langTerms.verbs}), 3-5 bullets/role, standard headers (Experience, Projects, Education, Skills)
-📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone. Reference relevant projects to demonstrate skills
+📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone. MUST reference specific relevant projects to demonstrate skills and experience
 ⚠️ SKILLS: Only use ${allowedSkillsCSV}
-🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). Extract technologies from project bullets and add to skills section automatically
+🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). CRITICAL: Extract ALL technologies mentioned in project bullets and automatically add them to the skills section
 ⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
 🚨 ZERO FABRICATION TOLERANCE: 
 - NEVER add metrics, statistics, percentages, or quantified results not in original
@@ -645,35 +796,80 @@ async function coreHandler(req, res){
 
     // Normalize + optimize with best practices
     let rd = null;
+    let atsAnalysisResult = null; // Declare in outer scope
+
     if (resumeNeeded) {
       const allowed = new Set(allowedSkills);
       rd = normalizeResumeData(json.resumeData || {});
-      
+
       // Filter skills and ensure consolidated skills are preserved
       const filteredSkills = (rd.skills || []).filter(s => allowed.has(String(s).toLowerCase()));
-      
+
       // Add consolidated base skills that might not be in the expanded set
-      const consolidatedSet = new Set(filteredSkills.map(s => s.toLowerCase()));
+      const consolidatedSet = new Set(filteredSkills.map(s => String(s).toLowerCase()));
       allowedSkillsBase.forEach(skill => {
-        if (!consolidatedSet.has(skill.toLowerCase())) {
+        const skillStr = String(skill).toLowerCase();
+        if (!consolidatedSet.has(skillStr)) {
           filteredSkills.push(skill);
-          consolidatedSet.add(skill.toLowerCase());
+          consolidatedSet.add(skillStr);
         }
       });
-      
+
       rd.skills = filteredSkills;
 
       const resumeContext = resumeData ? JSON.stringify(resumeData) : resumeText;
-      
-      // Optimize professional summary
-      rd.summary = await optimizeSummary(client, resumeContext, jobDesc, rd.summary);
-      
-      // Optimize experience bullets with modern best practices
-      for (const exp of rd.experience || []) {
-        const originalBullets = exp.bullets || [];
-        const rewritten = await rewriteBullets(client, jobDesc, resumeContext, originalBullets);
-        exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
+
+      // OPTIMIZED: Batch all bullet optimization in single call (3+ calls → 1 call)
+      const allBulletsToOptimize = [];
+      const bulletMapping = [];
+
+      // Collect all bullets from all sections
+      (rd.experience || []).forEach((exp, expIndex) => {
+        (exp.bullets || []).forEach((bullet, bulletIndex) => {
+          allBulletsToOptimize.push(bullet);
+          bulletMapping.push({ section: 'experience', sectionIndex: expIndex, bulletIndex });
+        });
+      });
+
+      (rd.projects || []).forEach((project, projIndex) => {
+        (project.bullets || []).forEach((bullet, bulletIndex) => {
+          allBulletsToOptimize.push(bullet);
+          bulletMapping.push({ section: 'projects', sectionIndex: projIndex, bulletIndex });
+        });
+      });
+
+      (rd.education || []).forEach((edu, eduIndex) => {
+        (edu.bullets || []).forEach((bullet, bulletIndex) => {
+          allBulletsToOptimize.push(bullet);
+          bulletMapping.push({ section: 'education', sectionIndex: eduIndex, bulletIndex });
+        });
+      });
+
+      // Optimize all bullets in one call if we have any
+      if (allBulletsToOptimize.length > 0) {
+        const optimizedBullets = await rewriteBullets(client, jobDesc, resumeContext, allBulletsToOptimize);
+
+        // Map optimized bullets back to their sections
+        optimizedBullets.forEach((optimizedBullet, index) => {
+          const mapping = bulletMapping[index];
+          if (mapping) {
+            if (mapping.section === 'experience') {
+              rd.experience[mapping.sectionIndex].bullets[mapping.bulletIndex] = optimizedBullet;
+            } else if (mapping.section === 'projects') {
+              rd.projects[mapping.sectionIndex].bullets[mapping.bulletIndex] = optimizedBullet;
+            } else if (mapping.section === 'education') {
+              rd.education[mapping.sectionIndex].bullets[mapping.bulletIndex] = optimizedBullet;
+            }
+          }
+        });
       }
+
+      // OPTIMIZED: Combined summary optimization and ATS analysis (2 calls → 1 call)
+      const summaryAndATS = await optimizeSummaryAndATS(client, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
+      rd.summary = summaryAndATS.optimizedSummary;
+
+      // Store ATS analysis for later use
+      atsAnalysisResult = summaryAndATS.atsAnalysis;
     }
 
     const payload = {
@@ -694,14 +890,10 @@ async function coreHandler(req, res){
     if (resumeNeeded) {
       payload.resumeData = rd;
 
-      // Run ATS analysis if job description is provided and resume was generated
-      if (jobDesc && jobDesc.trim().length > 50) {
-        console.log('Running ATS analysis...');
-        const atsAnalysis = await analyzeATSScore(client, rd, jobDesc);
-        if (atsAnalysis) {
-          payload.atsAnalysis = atsAnalysis;
-          console.log('ATS analysis completed:', atsAnalysis.overallScore);
-        }
+      // Use combined ATS analysis result (already computed above)
+      if (atsAnalysisResult && jobDesc && jobDesc.trim().length > 50) {
+        payload.atsAnalysis = atsAnalysisResult;
+        console.log('ATS analysis completed:', atsAnalysisResult.overallScore);
       }
     }
 

@@ -12,7 +12,7 @@ import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useError } from '../contexts/ErrorContext';
-import { InfoTooltip, HelpTooltip } from './ui/TooltipPortal';
+import { InfoTooltip } from './ui/TooltipPortal';
 import { Upload } from 'lucide-react';
 
 const emptyResume = {
@@ -80,7 +80,7 @@ const schemas = {
   })
 };
 
-export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
+export default function ResumeWizard({ initialData, onComplete, autosaveKey, onAuthCheck }) {
   const router = useRouter();
   const { data: session } = useSession();
   const { language, getTerminology } = useLanguage();
@@ -88,7 +88,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
   const terms = getTerminology();
   const [step, setStep] = useState(0);
   const stepIds = ['goal', 'basics', 'skills', 'work', 'projects', 'education', 'review'];
-  const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects','Education','Review'];
+  const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects (Optional)','Education','Review'];
   const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
@@ -417,11 +417,29 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
 
   async function submit(data) {
     if(step !== stepIds.length -1) return;
-    
+
     console.log('Submit called with userGoal:', userGoal, 'session:', !!session?.user);
-    
-    // Check if user can generate
-    if (!canGenerate()) {
+
+    // If onAuthCheck is provided, use it for real-time auth verification
+    if (onAuthCheck) {
+      try {
+        const authResult = await onAuthCheck();
+        if (!authResult.canAccess) {
+          if (!authResult.authenticated) {
+            setShowAccountPrompt(true);
+            return;
+          } else {
+            showUpgradeAlert(authResult.reason || 'Access denied');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        showError('Unable to verify access. Please try again.');
+        return;
+      }
+    } else if (!canGenerate()) {
+      // Fallback to existing check if onAuthCheck not provided
       if (!session?.user) {
         // Trial user has exhausted their generations - show signup BEFORE generation attempt
         const remaining = getTrialGenerationsRemaining();
@@ -497,31 +515,22 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 0 && (
           <section className="space-y-6">
             <header className="text-center space-y-3">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">What do you want to create?</h2>
-                <HelpTooltip 
-                  content={
-                    <div className="space-y-3">
-                      <p><strong>Resume Only:</strong> Perfect if you already have a cover letter or the job doesn't require one.</p>
-                      <p><strong>Cover Letter Only:</strong> Generate a personalized cover letter when you have an up-to-date resume.</p>
-                      <p><strong>Both:</strong> Get a complete application package - recommended for maximum impact!</p>
-                      <p className="text-blue-200 text-sm">💡 Most successful applications include both documents.</p>
-                    </div>
-                  }
-                />
               </div>
               <p className="text-muted">Choose what you'd like to optimize based on the job description.</p>
             </header>
             <div className="space-y-4">
-              <div className="grid gap-3 max-w-2xl mx-auto">
+              {/* CV and Cover Letter options side by side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
                 <label className={`card p-4 transition-all duration-300 group border-2 ${
                   !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-200'
                 }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
-                  <input 
-                    type="radio" 
-                    name="goal" 
-                    value="cv" 
-                    checked={userGoal === 'cv'} 
+                  <input
+                    type="radio"
+                    name="goal"
+                    value="cv"
+                    checked={userGoal === 'cv'}
                     onChange={(e) => setUserGoal(e.target.value)}
                     className="sr-only"
                     disabled={!session}
@@ -533,7 +542,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
                       <div className="text-sm text-muted">Optimise your {terms.resume} for the job description</div>
-                      <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
+                      {(userPlan === 'free' || userPlan === 'day_pass') && (
+                        <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
+                      )}
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
                       )}
@@ -543,11 +554,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                 <label className={`card p-4 transition-all duration-300 group border-2 ${
                   !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-purple-200'
                 }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
-                  <input 
-                    type="radio" 
-                    name="goal" 
-                    value="cover-letter" 
-                    checked={userGoal === 'cover-letter'} 
+                  <input
+                    type="radio"
+                    name="goal"
+                    value="cover-letter"
+                    checked={userGoal === 'cover-letter'}
                     onChange={(e) => setUserGoal(e.target.value)}
                     className="sr-only"
                     disabled={!session}
@@ -559,19 +570,25 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Cover Letter Only</div>
                       <div className="text-sm text-muted">Generate a tailored cover letter for the job</div>
-                      <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
+                      {(userPlan === 'free' || userPlan === 'day_pass') && (
+                        <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
+                      )}
                       {!session && (
                         <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
                       )}
                     </div>
                   </div>
                 </label>
+              </div>
+
+              {/* Both option below spanning full width */}
+              <div className="max-w-2xl mx-auto">
                 <label className="card p-4 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200" style={{backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : 'rgb(249 250 251)', borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(229 231 235)'}}>
-                  <input 
-                    type="radio" 
-                    name="goal" 
-                    value="both" 
-                    checked={userGoal === 'both'} 
+                  <input
+                    type="radio"
+                    name="goal"
+                    value="both"
+                    checked={userGoal === 'both'}
                     onChange={(e) => setUserGoal(e.target.value)}
                     className="sr-only"
                   />
@@ -582,9 +599,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Both {terms.Resume} and Cover Letter</div>
                       <div className="text-sm text-muted">Get a complete application package</div>
-                      <div className="text-xs text-green-600 font-bold">
-                        {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
-                      </div>
+                      {(userPlan === 'free' || userPlan === 'day_pass') && (
+                        <div className="text-xs text-green-600 font-bold">
+                          {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
+                        </div>
+                      )}
                       {!session && (
                         <div className="text-xs text-green-600 font-bold mt-1">Try before you sign up!</div>
                       )}
@@ -599,17 +618,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 1 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center">
                 <h2 className="text-2xl font-bold text-text">Basic Information</h2>
-                <HelpTooltip
-                  content={
-                    <div className="space-y-2">
-                      <p>Fill in your personal and contact details. This information will appear at the top of your resume.</p>
-                      <p><strong>Pro tip:</strong> Use a professional email address and ensure your phone number is current.</p>
-                      <p className="text-blue-200 text-sm">💡 All fields except name are optional, but more details = better results!</p>
-                    </div>
-                  }
-                />
               </div>
               <p className="text-muted">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
             </header>
@@ -735,19 +745,13 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey }) {
         {step === 4 && (
           <section className="space-y-8">
             <header className="text-center space-y-3">
-              <div className="flex items-center justify-center gap-2">
-                <h2 className="text-2xl font-bold text-text">Projects</h2>
-                <HelpTooltip
-                  content={
-                    <div className="space-y-2">
-                      <p>Showcase your personal projects, open source contributions, and side work. This is especially important for developers, designers, and creative professionals.</p>
-                      <p><strong>Pro tip:</strong> Include GitHub links, live demos, and specific technologies used.</p>
-                      <p className="text-blue-200 text-sm">💡 Focus on projects that demonstrate skills relevant to your target role!</p>
-                    </div>
-                  }
-                />
+              <div className="flex items-center justify-center">
+                <h2 className="text-2xl font-bold text-text">Projects <span className="text-lg font-normal text-muted">(Optional)</span></h2>
               </div>
-              <p className="text-muted">Showcase your personal projects, open source work, and side projects that demonstrate your skills.</p>
+              <p className="text-muted">
+                <strong>Optional:</strong> Showcase your personal projects, open source work, and side projects that demonstrate your skills.
+                <span className="block mt-1 text-sm">You can skip this section if you don't have relevant projects to include.</span>
+              </p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>

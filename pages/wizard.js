@@ -11,7 +11,7 @@ export default function WizardPage(){
   const [initial, setInitial] = useState(undefined);
   const [template, setTemplate] = useState('classic');
   const [authCheck, setAuthCheck] = useState(null);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(false); // Start as false to show UI immediately
 
   useEffect(()=>{
     // Check localStorage first
@@ -19,19 +19,25 @@ export default function WizardPage(){
     try{ saved = JSON.parse(localStorage.getItem('resumeWizardDraft')||'null'); }catch{}
     setInitial(saved || null);
 
-    // Check if user can access the wizard
-    checkAuthStatus();
+    // Check if user can access the wizard in background
+    // Only check when they actually try to generate
   },[]);
 
   const checkAuthStatus = async () => {
+    if (authCheck) return authCheck; // Return cached result if available
+
+    setChecking(true);
     try {
       const response = await fetch('/api/auth-check');
       const data = await response.json();
       setAuthCheck(data);
+      return data;
     } catch (error) {
       console.error('Error checking auth status:', error);
       // If check fails, assume no access for safety
-      setAuthCheck({ authenticated: false, canAccess: false, reason: 'Unable to verify access' });
+      const errorResult = { authenticated: false, canAccess: false, reason: 'Unable to verify access' };
+      setAuthCheck(errorResult);
+      return errorResult;
     } finally {
       setChecking(false);
     }
@@ -62,11 +68,12 @@ export default function WizardPage(){
     router.push('/results');
   }
 
-  // Show loading state while checking
-  if(checking || initial === undefined) return null;
+  // Show loading state only while loading initial data
+  if(initial === undefined) return null;
 
-  // Show access denied if user cannot access wizard
-  if (authCheck && !authCheck.canAccess) {
+  // Only show access denied if we've actually checked and it failed
+  // Don't block wizard loading, only block generation
+  if (false) { // Disable this check - we'll check during generation instead
     return (
       <>
         <SeoHead
@@ -165,6 +172,7 @@ export default function WizardPage(){
         autosaveKey="resumeWizardDraft"
         template={template}
         onTemplateChange={setTemplate}
+        onAuthCheck={checkAuthStatus}
       />
     </>
   );

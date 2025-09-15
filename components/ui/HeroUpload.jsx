@@ -4,10 +4,48 @@ import { useSession } from 'next-auth/react';
 import { Upload, Sparkles, ArrowRight, Zap, Shield, Star, Clock, Info, X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useError } from '../../contexts/ErrorContext';
-import { InfoTooltip, HelpTooltip } from './TooltipPortal';
+import { InfoTooltip } from './TooltipPortal';
 import OnboardingTourFixed from './OnboardingTourFixed';
 import FirstTimeUserGuide from './FirstTimeUserGuide';
-import TourTrigger from './TourTrigger';
+
+// Rotating Features Component
+function RotatingFeatures() {
+  const [currentFeature, setCurrentFeature] = useState(0);
+
+  const features = [
+    { icon: '✓', text: 'ATS-Optimized Beats applicant tracking systems' },
+    { icon: '✓', text: '5+ Premium Templates Professional to creative designs' },
+    { icon: '✓', text: 'DOCX + PDF Downloads Multiple format support' },
+    { icon: '✓', text: 'Cover Letter Generation Perfectly matched to your resume' },
+    { icon: '✓', text: 'Skill Cross-Referencing No fabricated experience' },
+    { icon: '✓', text: '24-Hour Day Pass Perfect for urgent applications' }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [features.length]);
+
+  return (
+    <div className="text-center overflow-hidden h-8">
+      <div
+        className="text-lg font-medium text-text transition-transform duration-700 ease-in-out"
+        style={{
+          transform: `translateY(-${currentFeature * 32}px)`
+        }}
+      >
+        {features.map((feature, index) => (
+          <div key={index} className="h-8 flex items-center justify-center">
+            {feature.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function HeroUpload() {
   const router = useRouter();
@@ -20,7 +58,6 @@ export default function HeroUpload() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [hasLatestResume, setHasLatestResume] = useState(false);
   const [checkingResume, setCheckingResume] = useState(false);
-  const [showTourTrigger, setShowTourTrigger] = useState(false);
   const [hasJustUploaded, setHasJustUploaded] = useState(false);
   const [trialUsage, setTrialUsage] = useState(null);
   const [trialUsageLoading, setTrialUsageLoading] = useState(true);
@@ -38,23 +75,6 @@ export default function HeroUpload() {
     // Check authentication and access status
     checkAuthStatus();
     
-    // Check if we should show the tour trigger
-    const checkTourTrigger = () => {
-      const hasSeenGuide = localStorage.getItem('first_time_guide_shown') === 'true';
-      setShowTourTrigger(hasSeenGuide);
-    };
-    
-    checkTourTrigger();
-    
-    // Listen for the first-time guide completion
-    const handleGuideCompleted = () => {
-      setShowTourTrigger(true);
-    };
-    
-    window.addEventListener('firstTimeGuideCompleted', handleGuideCompleted);
-    return () => {
-      window.removeEventListener('firstTimeGuideCompleted', handleGuideCompleted);
-    };
   }, [session]);
 
   const checkForLatestResume = async () => {
@@ -204,19 +224,35 @@ export default function HeroUpload() {
     <div className="relative">
       {/* Hero Section */}
       <div className="relative bg-bg">
-        {/* Minimal background accents */}
+        {/* Hero background image with color accents */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-24 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/8 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-primary/2 to-transparent rounded-full blur-3xl"></div>
+          {/* Main background image with reduced greyscale */}
+          <div
+            className="absolute inset-0 opacity-50"
+            style={{
+              backgroundImage: 'url(/heroalt3.jpg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              filter: 'grayscale(40%) blur(0.5px)',
+            }}
+          ></div>
+          {/* Brand color overlay removed per user request */}
+          {/* Subtle readability overlay */}
+          <div className="absolute inset-0 bg-bg/25"></div>
+          {/* Enhanced brand color accents */}
+          <div className="absolute top-16 right-0 w-[500px] h-[500px] bg-primary/8 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/12 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-accent/6 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
         </div>
-        
+
         <div className="relative tc-container">
           <div className="flex flex-col lg:flex-row items-center lg:items-start min-h-[90vh] py-12 lg:py-20">
-            
+
             {/* Left Column - Content */}
             <div className="flex-1 lg:pr-20 text-center max-w-2xl lg:max-w-none">
-              
+
 
               {/* Clean headline */}
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text leading-tight mb-8">
@@ -228,7 +264,7 @@ export default function HeroUpload() {
               </h1>
 
               {/* Clear value prop */}
-              <p className="text-xl text-muted leading-relaxed mb-12 max-w-2xl">
+              <p className="text-xl text-text font-medium leading-relaxed mb-12 max-w-2xl">
                 Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
               </p>
 
@@ -366,10 +402,27 @@ export default function HeroUpload() {
         
       </div>
 
+      {/* Section Break - Rotating Features */}
+      <div className="py-6 bg-bg">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RotatingFeatures />
+        </div>
+      </div>
 
       {/* Call-to-Action Section */}
-      <div className="py-20 bg-surface">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative py-20 bg-surface overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: 'url(/2herobg.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'grayscale(70%) blur(3px)',
+          }}
+        ></div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center space-x-2 bg-surface/80 backdrop-blur-sm border border-border/50 rounded-full px-4 py-2 mb-6">
             <Sparkles className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-medium text-text">Apply to Multiple Jobs</span>
@@ -471,10 +524,6 @@ export default function HeroUpload() {
       {/* First-time user guide */}
       <FirstTimeUserGuide />
       
-      {/* Manual tour trigger (only show after first-time guide is dismissed) */}
-      {showTourTrigger && !session && (
-        <TourTrigger onStartTour={() => console.log('Starting tour')} />
-      )}
       
       {/* Onboarding Tour - now manual only */}
       <OnboardingTourFixed 

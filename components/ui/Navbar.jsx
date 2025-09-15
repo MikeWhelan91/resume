@@ -23,10 +23,11 @@ export default function Navbar() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const terms = getTerminology();
 
-  // Fetch user entitlement data
+  // Fetch user entitlement data with debouncing
   useEffect(() => {
+    let isMounted = true;
     const fetchUserData = async () => {
-      if (session?.user?.id) {
+      if (session?.user?.id && isMounted) {
         try {
           // Fetch entitlement, usage, and subscription data in parallel
           const [entitlementResponse, dayPassResponse, downloadResponse, subscriptionResponse] = await Promise.all([
@@ -64,13 +65,21 @@ export default function Navbar() {
             setSubscriptionInfo(subscriptionData);
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          if (isMounted) {
+            console.error('Error fetching user data:', error);
+          }
         }
       }
     };
 
-    fetchUserData();
-  }, [session]);
+    // Add a small delay to prevent rapid successive calls
+    const timeoutId = setTimeout(fetchUserData, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [session?.user?.id]); // Only depend on user ID, not entire session object
 
   // Check auth status for access control
   useEffect(() => {
@@ -267,15 +276,6 @@ export default function Navbar() {
                 Create {terms.Resume}
               </Link>
             </div>
-            {session && (
-              <Link 
-                href="/my-resumes" 
-                className={`nav-link ${router.pathname === '/my-resumes' ? 'active' : ''}`}
-              >
-                <FileText className="w-4 h-4" />
-                My {terms.ResumePlural}
-              </Link>
-            )}
             {router.pathname === '/results' && (
               <Link 
                 href="/results" 
@@ -510,16 +510,6 @@ export default function Navbar() {
                   <FileText className="w-4 h-4" />
                   Create {terms.Resume}
                 </Link>
-                {session && (
-                  <Link 
-                    href="/my-resumes" 
-                    className={`mobile-nav-link ${router.pathname === '/my-resumes' ? 'active' : ''}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <FileText className="w-4 h-4" />
-                    My {terms.ResumePlural}
-                  </Link>
-                )}
                 
                 {router.pathname === '/results' && (
                   <Link 

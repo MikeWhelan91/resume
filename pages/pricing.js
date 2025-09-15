@@ -3,7 +3,7 @@ import SeoHead from '../components/SeoHead';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Check, Crown, Sparkles, ArrowRight, Zap, Info, Clock } from 'lucide-react';
-import { InfoTooltip, HelpTooltip } from '../components/ui/TooltipPortal';
+import { InfoTooltip } from '../components/ui/TooltipPortal';
 
 export default function PricingPage() {
   const { data: session } = useSession();
@@ -145,20 +145,6 @@ export default function PricingPage() {
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-4xl font-bold text-gradient">TailoredCV Pricing</h1>
-                <HelpTooltip 
-                  content={
-                    <div className="space-y-3">
-                      <p><strong>Why choose TailoredCV?</strong></p>
-                      <ul className="space-y-1 text-sm">
-                        <li>• AI analyzes job descriptions to optimize your resume</li>
-                        <li>• Generate both resume and cover letter for each application</li>
-                        <li>• ATS-friendly formats ensure you pass initial screenings</li>
-                        <li>• Save hours of manual customization</li>
-                      </ul>
-                      <p className="text-blue-200 text-sm">💡 Most users see 3x more interview callbacks!</p>
-                    </div>
-                  }
-                />
               </div>
               <p className="text-xl text-muted max-w-3xl mx-auto mb-4">
                 Choose the perfect plan to create professional, ATS-friendly resumes and cover letters

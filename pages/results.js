@@ -842,7 +842,6 @@ export default function ResultsPage() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-text font-medium">{accent}</p>
                         </div>
                       </div>
                     </div>
@@ -1017,7 +1016,7 @@ export default function ResultsPage() {
               <h2 className="text-lg font-semibold text-text">Document Previews</h2>
             </div>
             
-            <div className={`grid gap-6 ${userGoal === 'both' ? 'lg:grid-cols-2' : 'lg:grid-cols-1 max-w-2xl mx-auto'}`}>
+            <div className={`grid gap-6 ${userGoal === 'both' ? 'lg:grid-cols-2' : 'lg:grid-cols-1 max-w-2xl mx-auto'} justify-items-center`}>
               {(userGoal === 'cv' || userGoal === 'both') && renderCVPreview()}
               {(userGoal === 'cover-letter' || userGoal === 'both') && renderCoverLetterPreview()}
             </div>

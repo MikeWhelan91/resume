@@ -11,21 +11,24 @@ export default function StepNav({ steps, current, onChange, allowNext=true, onNe
     return () => window.removeEventListener('keydown', onKey);
   }, [current, steps.length, allowNext, onChange]);
 
+  const progressPercentage = Math.round(((current + 1) / steps.length) * 100);
+
   return (
     <nav className="mb-6">
-      {/* Desktop: Progress steps with buttons */}
+      {/* Desktop: Progress bar with percentage */}
       <div className="hidden md:flex items-center justify-between">
-        <ol className="flex items-center gap-4 flex-1">
-          {steps.map((s,i)=>{
-            const state = i<current ? 'done' : i===current ? 'active' : 'todo';
-            return (
-              <li key={s} className="flex items-center cursor-pointer" onClick={()=>{ if(i<=current || allowNext) onChange(i); }}>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2 transition-all duration-200 ${state==='done'?'bg-accent text-accent-contrast':state==='active'?'border-2 border-accent text-accent':'border border-border text-muted'}`}>{i+1}</span>
-                <span className={`text-sm transition-colors ${state==='active'?'text-text font-medium':'text-muted'}`}>{s}</span>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="flex-1 pr-8">
+          <div className="flex items-center justify-between text-sm text-muted mb-3">
+            <span>Step {current + 1} of {steps.length}: {steps[current]}</span>
+            <span className="font-medium text-accent">{progressPercentage}% Complete</span>
+          </div>
+          <div className="h-3 bg-border/50 rounded-full">
+            <div
+              className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
+              style={{width:`${progressPercentage}%`}}
+            />
+          </div>
+        </div>
         
         {showButtons && (
           <div className="flex items-center gap-3 ml-8">
@@ -68,11 +71,11 @@ export default function StepNav({ steps, current, onChange, allowNext=true, onNe
       {/* Mobile: Progress bar with buttons */}
       <div className="md:hidden space-y-4">
         <div className="flex items-center justify-between text-sm text-muted mb-2">
-          <span>Step {current + 1} of {steps.length}</span>
-          <span>{steps[current]}</span>
+          <span>Step {current + 1} of {steps.length}: {steps[current]}</span>
+          <span className="font-medium text-accent">{progressPercentage}%</span>
         </div>
         <div className="h-2 bg-border/50 rounded-full">
-          <div className="h-full bg-accent rounded-full transition-all duration-300" style={{width:`${(current)/(steps.length-1)*100}%`}} />
+          <div className="h-full bg-accent rounded-full transition-all duration-500 ease-out" style={{width:`${progressPercentage}%`}} />
         </div>
         
         {showButtons && (

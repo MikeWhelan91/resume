@@ -31,7 +31,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
             className="form-input"
             value={value.name || ''}
             onChange={e => updateField('name', e.target.value)}
-            placeholder="My Awesome Project"
+            placeholder="Project name"
           />
         </div>
         <div className="space-y-1">
@@ -40,7 +40,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
             className="form-input"
             value={value.url || ''}
             onChange={e => updateField('url', e.target.value)}
-            placeholder="https://github.com/user/project"
+            placeholder="Repository or project URL"
             type="url"
           />
         </div>
@@ -50,7 +50,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
             className="form-input"
             value={value.start || ''}
             onChange={e => updateField('start', e.target.value)}
-            placeholder="Jan 2024"
+            placeholder="Start date"
           />
         </div>
         <div className="space-y-1">
@@ -60,7 +60,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
               className="form-input"
               value={value.end || ''}
               onChange={e => updateField('end', e.target.value)}
-              placeholder="Mar 2024"
+              placeholder="End date"
               disabled={value.present}
             />
             <label className="flex items-center text-xs text-muted">
@@ -80,7 +80,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
             className="form-input"
             value={value.demo || ''}
             onChange={e => updateField('demo', e.target.value)}
-            placeholder="https://myproject.vercel.app"
+            placeholder="Live demo URL"
             type="url"
           />
         </div>
@@ -92,7 +92,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
           className="form-textarea"
           value={value.description || ''}
           onChange={e => updateField('description', e.target.value)}
-          placeholder="Brief description of what this project does and its purpose..."
+          placeholder="Project description"
           rows={3}
         />
       </div>
@@ -105,7 +105,7 @@ export default function ProjectCard({ value, onChange, onRemove, onDuplicate, in
             className="form-input flex-1"
             value={bulletInput}
             onChange={e => setBulletInput(e.target.value)}
-            placeholder="e.g., Built scalable API serving 10k+ requests/day using React and Node.js"
+            placeholder="Add project detail or achievement"
             onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); addBullet(); } }}
           />
           <button type="button" onClick={addBullet} className="btn btn-primary" disabled={!bulletInput.trim()}>+ Add</button>
