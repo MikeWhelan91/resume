@@ -10,6 +10,7 @@ import { LanguageProvider } from "../contexts/LanguageContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { ErrorProvider } from "../contexts/ErrorContext";
 import CookieBanner from "../components/ui/CookieBanner";
+import BackToTop from "../components/ui/BackToTop";
 
 export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
@@ -61,6 +62,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
             </main>
             <Footer />
             <CookieBanner />
+            <BackToTop />
           </div>
           </ErrorProvider>
         </LanguageProvider>

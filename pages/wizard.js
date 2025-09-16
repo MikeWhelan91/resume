@@ -3,25 +3,22 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Lock } from 'lucide-react';
 import ResumeWizard from '../components/ResumeWizard';
+import WizardEntry from '../components/WizardEntry';
 import SeoHead from '../components/SeoHead';
 
 export default function WizardPage(){
   const router = useRouter();
   const { data: session } = useSession();
-  const [initial, setInitial] = useState(undefined);
+  const [initialData, setInitialData] = useState(null);
+  const [showWizard, setShowWizard] = useState(false);
   const [template, setTemplate] = useState('classic');
   const [authCheck, setAuthCheck] = useState(null);
   const [checking, setChecking] = useState(false); // Start as false to show UI immediately
 
-  useEffect(()=>{
-    // Check localStorage first
-    let saved = null;
-    try{ saved = JSON.parse(localStorage.getItem('resumeWizardDraft')||'null'); }catch{}
-    setInitial(saved || null);
-
-    // Check if user can access the wizard in background
-    // Only check when they actually try to generate
-  },[]);
+  const handleWizardStart = (data) => {
+    setInitialData(data);
+    setShowWizard(true);
+  };
 
   const checkAuthStatus = async () => {
     if (authCheck) return authCheck; // Return cached result if available
@@ -68,8 +65,20 @@ export default function WizardPage(){
     router.push('/results');
   }
 
-  // Show loading state only while loading initial data
-  if(initial === undefined) return null;
+  // Show entry screen if wizard hasn't been started
+  if (!showWizard) {
+    return (
+      <>
+        <SeoHead
+          title="Resume Wizard – TailoredCV.app"
+          description="Step-by-step resume builder with real-time template rendering and one-click PDF downloads."
+          canonical="https://tailoredcv.app/wizard"
+          robots="noindex,nofollow"
+        />
+        <WizardEntry onStart={handleWizardStart} />
+      </>
+    );
+  }
 
   // Only show access denied if we've actually checked and it failed
   // Don't block wizard loading, only block generation
@@ -167,7 +176,7 @@ export default function WizardPage(){
       />
 
       <ResumeWizard
-        initialData={initial}
+        initialData={initialData}
         onComplete={handleComplete}
         autosaveKey="resumeWizardDraft"
         template={template}

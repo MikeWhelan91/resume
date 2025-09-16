@@ -48,6 +48,7 @@ model User {
   entitlement             Entitlement?
   sessions                Session[]
   savedResumes            SavedResume[]
+  draft                   Draft?
   accountDeletionRequest  AccountDeletionRequest?
   cookiePreferences       Json?
 }
@@ -107,9 +108,21 @@ model SavedResume {
   expiresAt DateTime? // When this resume expires and should be deleted
   isLatest  Boolean  @default(true) // Mark the most recent one
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId, createdAt])
   @@index([userId, isLatest])
+  @@index([expiresAt]) // For cleanup queries
+}
+
+model Draft {
+  id        String   @id @default(cuid())
+  userId    String   @unique // One draft per user
+  data      Json     // Resume form data in progress
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime @default(dbgenerated("now() + interval '30 days'")) // Auto-cleanup after 30 days
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([expiresAt]) // For cleanup queries
 }
 

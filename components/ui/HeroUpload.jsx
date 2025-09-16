@@ -323,9 +323,8 @@ export default function HeroUpload() {
       }
       return;
     }
-    
-    // Clear any existing draft and go directly to wizard
-    localStorage.removeItem('resumeWizardDraft');
+
+    // Go to wizard entry screen where user can choose their path
     router.push('/wizard');
   }
 
@@ -427,7 +426,7 @@ export default function HeroUpload() {
                         ? "border-border dark:border-border-strong cursor-pointer hover:border-primary hover:bg-primary/5 group" 
                         : "border-gray-300 dark:border-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800 opacity-60"
                     }`}
-                    onClick={() => canGenerate() && fileRef.current?.click()}
+                    onClick={() => canGenerate() && router.push('/wizard')}
                   >
                     <div className="flex items-center space-x-6">
                       <div className="space-y-2">
@@ -436,17 +435,17 @@ export default function HeroUpload() {
                             ? "text-text group-hover:text-primary" 
                             : "text-gray-500 dark:text-gray-400"
                         }`}>
-                          {canGenerate() ? `Drop your ${terms.Resume} here` : `Upload ${authCheck?.authenticated ? 'Disabled' : 'Limited'}`}
+                          {canGenerate() ? 'Click to Start' : `Upload ${authCheck?.authenticated ? 'Disabled' : 'Limited'}`}
                         </div>
                         <div className={`text-sm transition-colors duration-250 ${
                           canGenerate() 
                             ? "text-muted group-hover:text-primary/80" 
                             : "text-gray-400 dark:text-gray-500"
                         }`}>
-                          {canGenerate() 
-                            ? "PDF, DOCX, or TXT • Up to 10MB"
-                            : authCheck?.authenticated 
-                              ? "Please upgrade to upload resumes"
+                          {canGenerate()
+                            ? "Start your tailored application"
+                            : authCheck?.authenticated
+                              ? "Please upgrade to get started"
                               : "Sign up for free access"
                           }
                         </div>
@@ -485,7 +484,7 @@ export default function HeroUpload() {
                 {/* Action Buttons */}
                 <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <InfoTooltip
-                    content="Build your resume from scratch using our step-by-step wizard."
+                    content="Start creating your tailored resume and cover letter with our step-by-step wizard."
                     position="bottom"
                   >
                     <button
@@ -494,26 +493,10 @@ export default function HeroUpload() {
                       disabled={loading || checkingResume || !canGenerate()}
                     >
                       <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                      Start Fresh
+                      Start Now
                     </button>
                   </InfoTooltip>
 
-                  {/* Recent resume option for logged-in users - hide during upload and after upload */}
-                  {session?.user && hasLatestResume && !loading && !hasJustUploaded && (
-                    <InfoTooltip
-                      content="Continue editing your previously saved resume."
-                      position="bottom"
-                    >
-                      <button
-                        className="btn btn-outline btn-xl w-full sm:w-auto group"
-                        onClick={loadLatestResume}
-                        disabled={loading || checkingResume}
-                      >
-                        <Clock className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                        Use Recent
-                      </button>
-                    </InfoTooltip>
-                  )}
                 </div>
 
                 {/* Subtle accent elements */}
@@ -605,23 +588,14 @@ export default function HeroUpload() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button 
-              className="btn btn-primary btn-lg group" 
-              onClick={()=>fileRef.current?.click()} 
-              disabled={loading || !canGenerate()}
-            >
-              <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              Start Tailoring Now
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <button 
-              className="btn btn-secondary btn-lg group" 
-              onClick={handleCreateNew} 
+            <button
+              className="btn btn-primary btn-lg group"
+              onClick={() => router.push('/wizard')}
               disabled={loading || !canGenerate()}
             >
               <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              Build From Scratch
+              Start Now
+              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>

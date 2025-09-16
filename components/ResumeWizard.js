@@ -190,16 +190,47 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     return () => sub.unsubscribe();
   }, [watch, step, getValues, jd, session, userPlan, entitlement, dayPassUsage]);
 
-  // autosave
+  // autosave - database for authenticated users, localStorage for anonymous
   useEffect(() => {
     if (!autosaveKey) return;
+
+    const saveDraft = async (data) => {
+      if (session?.user) {
+        // Save to database for authenticated users
+        try {
+          await fetch('/api/save-draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ draftData: data })
+          });
+        } catch (error) {
+          console.error('Error saving draft to database:', error);
+          // Fallback to localStorage if database save fails
+          try {
+            localStorage.setItem(autosaveKey, JSON.stringify(data));
+          } catch {}
+        }
+      } else {
+        // Save to localStorage for anonymous users
+        try {
+          localStorage.setItem(autosaveKey, JSON.stringify(data));
+        } catch {}
+      }
+    };
+
     const sub = watch((val) => {
-      try {
-        localStorage.setItem(autosaveKey, JSON.stringify(val));
-      } catch {}
+      // Debounce saves to avoid excessive API calls
+      clearTimeout(window.draftSaveTimeout);
+      window.draftSaveTimeout = setTimeout(() => {
+        saveDraft(val);
+      }, 1000);
     });
-    return () => sub.unsubscribe();
-  }, [watch, autosaveKey]);
+
+    return () => {
+      sub.unsubscribe();
+      clearTimeout(window.draftSaveTimeout);
+    };
+  }, [watch, autosaveKey, session]);
 
   // Fetch user entitlement data (authenticated) or trial usage (anonymous)
   useEffect(() => {
@@ -324,7 +355,27 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
   function next() { if (step < stepIds.length -1) setStep(s => s + 1); }
   function prev() { if (step > 0) setStep(s => s - 1); }
-  function saveDraft(){ try{ localStorage.setItem('resumeWizardDraft', JSON.stringify(getValues())); }catch{} }
+  const saveDraftNow = async () => {
+    const data = getValues();
+    if (session?.user) {
+      try {
+        await fetch('/api/save-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftData: data })
+        });
+      } catch (error) {
+        console.error('Error saving draft:', error);
+        try {
+          localStorage.setItem('resumeWizardDraft', JSON.stringify(data));
+        } catch {}
+      }
+    } else {
+      try {
+        localStorage.setItem('resumeWizardDraft', JSON.stringify(data));
+      } catch {}
+    }
+  };
 
   function addLink() {
     const links = getValues('links');
@@ -420,10 +471,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           }
         });
 
-        // Save to localStorage
-        try {
-          localStorage.setItem(autosaveKey, JSON.stringify(getValues()));
-        } catch {}
+        // Save draft after upload
+        saveDraftNow();
 
       } else {
         showError(data.error || 'Failed to process resume', 'Upload Failed');
@@ -522,6 +571,21 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
         // Also save job description with the result data
         const resultData = { ...out, jobDescription: jd };
         localStorage.setItem('resumeResult', JSON.stringify(resultData));
+
+        // Clear drafts after successful generation
+        if (session?.user) {
+          try {
+            // Delete draft from database
+            await fetch('/api/save-draft', {
+              method: 'DELETE'
+            });
+          } catch (error) {
+            console.error('Error clearing database draft:', error);
+          }
+        }
+        // Always clear localStorage draft
+        localStorage.removeItem(autosaveKey);
+
         onComplete && onComplete(resultData);
       } else {
         // Show specific error message from API

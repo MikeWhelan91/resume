@@ -11,6 +11,126 @@ function stripCodeFence(s=""){
 }
 function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { return null; } }
 
+// ---- ATS Analysis Function ----
+async function analyzeATSScore(client, resumeData, jobDescription) {
+  if (!jobDescription || !resumeData) return null;
+
+  try {
+    // Convert resume data to text for analysis
+    const resumeText = formatResumeForAnalysis(resumeData);
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: `You are analyzing a resume that was AUTOMATICALLY GENERATED and ATS-OPTIMIZED by our system. The formatting and structure should already be perfect for ATS systems.
+
+Focus your analysis on CONTENT GAPS and MISSING ELEMENTS that the user needs to address:
+
+Return JSON:
+{
+  "overallScore": <number 70-95>,
+  "categories": {
+    "keywordMatch": {"score": <number>, "gaps": ["missing critical keywords from job"]},
+    "contentDepth": {"score": <number>, "gaps": ["missing experience details", "quantifiable achievements"]},
+    "relevance": {"score": <number>, "gaps": ["skills not demonstrated", "experience misalignment"]},
+    "completeness": {"score": <number>, "gaps": ["missing sections", "incomplete information"]}
+  },
+  "contentGaps": [
+    "Specific missing experience or skills from job requirements",
+    "Achievement areas that need quantification",
+    "Critical qualifications not highlighted"
+  ],
+  "missingKeywords": ["job-critical", "keywords", "missing"],
+  "recommendations": [
+    "Add specific experience in X",
+    "Quantify achievements in Y role",
+    "Highlight Z skills more prominently"
+  ]
+}`
+        },
+        {
+          role: "user",
+          content: `This resume was auto-generated with ATS-friendly formatting. The structure and format are already optimized.
+
+Focus on CONTENT analysis: What experience, skills, or achievements is the candidate missing for this specific job? What gaps exist between their background and job requirements?
+
+JOB DESCRIPTION:
+${jobDescription}
+
+RESUME CONTENT:
+${resumeText}
+
+What content gaps exist? What should the user add to their experience to better match this role?`
+        }
+      ]
+    });
+
+    const analysisText = response.choices[0].message.content;
+    const analysis = safeJSON(analysisText);
+
+    return analysis?.overallScore ? analysis : null;
+  } catch (error) {
+    console.error('ATS analysis error:', error);
+    return null;
+  }
+}
+
+function formatResumeForAnalysis(resumeData) {
+  let text = '';
+
+  if (resumeData.name) text += `Name: ${resumeData.name}\n`;
+  if (resumeData.email) text += `Email: ${resumeData.email}\n`;
+  if (resumeData.phone) text += `Phone: ${resumeData.phone}\n`;
+  if (resumeData.location) text += `Location: ${resumeData.location}\n`;
+
+  if (resumeData.summary) {
+    text += `\nPROFESSIONAL SUMMARY:\n${resumeData.summary}\n`;
+  }
+
+  if (resumeData.experience && resumeData.experience.length > 0) {
+    text += '\nWORK EXPERIENCE:\n';
+    resumeData.experience.forEach(exp => {
+      text += `${exp.title} at ${exp.company} (${exp.start || ''} - ${exp.end || exp.present ? 'Present' : ''})\n`;
+      if (exp.bullets && exp.bullets.length > 0) {
+        exp.bullets.forEach(bullet => {
+          text += `• ${bullet}\n`;
+        });
+      }
+      text += '\n';
+    });
+  }
+
+  if (resumeData.skills && resumeData.skills.length > 0) {
+    text += `SKILLS:\n${resumeData.skills.join(', ')}\n\n`;
+  }
+
+  if (resumeData.education && resumeData.education.length > 0) {
+    text += 'EDUCATION:\n';
+    resumeData.education.forEach(edu => {
+      text += `${edu.degree} from ${edu.school} (${edu.start || ''} - ${edu.end || edu.present ? 'Present' : ''})\n`;
+    });
+  }
+
+  if (resumeData.projects && resumeData.projects.length > 0) {
+    text += '\nPROJECTS:\n';
+    resumeData.projects.forEach(project => {
+      text += `${project.name}\n`;
+      if (project.bullets && project.bullets.length > 0) {
+        project.bullets.forEach(bullet => {
+          text += `• ${bullet}\n`;
+        });
+      }
+      text += '\n';
+    });
+  }
+
+  return text;
+}
+
 // ---- Extract allowed skills strictly from résumé ----
 async function extractAllowedSkills(client, resumeData){
   const resumeText = JSON.stringify(resumeData);
@@ -234,11 +354,28 @@ ${userData.coverLetter || ''}
       exp.bullets = await verifyBullets(client, resumeContext, originalBullets, rewritten);
     }
 
+    // Generate ATS analysis for the new content
+    let atsAnalysis = null;
+    try {
+      atsAnalysis = await analyzeATSScore(client, rd, jobDescription);
+      if (atsAnalysis) {
+        console.log('ATS analysis completed with score:', atsAnalysis.overallScore);
+      }
+    } catch (error) {
+      console.error('ATS analysis failed:', error);
+      // Continue without ATS analysis
+    }
+
     const payload = {
       ...userData,
       resumeData: rd,
       coverLetter: String(json.coverLetterText || ""),
     };
+
+    // Add ATS analysis if generated successfully
+    if (atsAnalysis) {
+      payload.atsAnalysis = atsAnalysis;
+    }
 
     // Consume credit and track usage after successful generation
     if (userId) {

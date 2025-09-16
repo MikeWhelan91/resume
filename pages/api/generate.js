@@ -226,7 +226,9 @@ STRICT EXTRACTION RULES:
       model: "gpt-4o-mini",
       temperature: 0,
       response_format: { type: "json_object" },
-      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+      messages: [{ role:"system", content: sys }, { role:"user", content: user }],
+      max_tokens: 1000, // Speed optimization for skills
+      top_p: 0.9
     });
 
     const result = safeJSON(r.choices?.[0]?.message?.content || '{}');
@@ -427,7 +429,9 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
     model: "gpt-4o-mini",
     temperature: 0.3, // Balanced for creative enhancement while staying factual
     response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
+    messages: [{ role:"system", content: sys }, { role:"user", content: user }],
+    max_tokens: 2000, // Speed optimization for bullet rewriting
+    top_p: 0.9
   });
   
   const out = safeJSON(r.choices?.[0]?.message?.content || "");
@@ -555,6 +559,9 @@ async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
 }
 
 async function coreHandler(req, res){
+  const startTime = Date.now();
+  console.time('Total Generation Time');
+
   if (req.method !== "POST") return res.status(405).json({ error:"Method not allowed" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error:"Missing OPENAI_API_KEY" });
 
@@ -653,14 +660,18 @@ async function coreHandler(req, res){
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // OPTIMIZED: Combined skills processing (6 calls → 1 call)
-    const skillsResult = await processAllSkills(
+    // OPTIMIZED: Combined skills processing (6 calls → 1 call) - start in parallel
+    console.time('Skills Processing');
+    const skillsPromise = processAllSkills(
       client,
       resumeData,
       resumeText,
       resumeData?.projects || [],
       jobDesc
     );
+
+    const skillsResult = await skillsPromise;
+    console.timeEnd('Skills Processing');
 
     // Process results from combined call
     const allowedSkillsBase = [...new Set([
@@ -792,12 +803,22 @@ async function coreHandler(req, res){
     
     const user = userPromptParts.join('\n\n');
 
-    const resp = await client.chat.completions.create({
+    // PARALLEL OPTIMIZATION: Start main generation call with speed optimizations
+    console.time('Main Generation');
+    const generationPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.1, // Reduced temperature for more factual, less creative output
       response_format: { type: "json_object" },
-      messages: [{ role:"system", content: system }, { role:"user", content: user }]
+      messages: [{ role:"system", content: system }, { role:"user", content: user }],
+      // Speed optimizations
+      max_tokens: userGoal === 'cv' ? 2000 : userGoal === 'cover-letter' ? 800 : 3000,
+      top_p: 0.9, // Reduce response variability for faster processing
+      frequency_penalty: 0, // Disable for speed
+      presence_penalty: 0 // Disable for speed
     });
+
+    const resp = await generationPromise;
+    console.timeEnd('Main Generation');
 
     const raw = resp.choices?.[0]?.message?.content || "";
     const json = safeJSON(raw);
@@ -854,11 +875,29 @@ async function coreHandler(req, res){
         });
       });
 
-      // Optimize all bullets in one call if we have any
-      if (allBulletsToOptimize.length > 0) {
-        const optimizedBullets = await rewriteBullets(client, jobDesc, resumeContext, allBulletsToOptimize);
+      // PARALLEL OPTIMIZATION: Run bullet optimization and summary+ATS in parallel
+      console.time('Parallel Post-Processing');
+      const promises = [];
 
-        // Map optimized bullets back to their sections
+      // Start bullet optimization if needed
+      let bulletsPromise = null;
+      if (allBulletsToOptimize.length > 0) {
+        bulletsPromise = rewriteBullets(client, jobDesc, resumeContext, allBulletsToOptimize);
+        promises.push(bulletsPromise);
+      }
+
+      // Start summary+ATS optimization in parallel
+      const summaryPromise = optimizeSummaryAndATS(client, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
+      promises.push(summaryPromise);
+
+      // Wait for both to complete
+      const [optimizedBullets, summaryAndATS] = await Promise.all([
+        bulletsPromise,
+        summaryPromise
+      ]);
+
+      // Map optimized bullets back to their sections if we had bullets
+      if (optimizedBullets && allBulletsToOptimize.length > 0) {
         optimizedBullets.forEach((optimizedBullet, index) => {
           const mapping = bulletMapping[index];
           if (mapping) {
@@ -873,12 +912,10 @@ async function coreHandler(req, res){
         });
       }
 
-      // OPTIMIZED: Combined summary optimization and ATS analysis (2 calls → 1 call)
-      const summaryAndATS = await optimizeSummaryAndATS(client, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
+      // Apply summary and ATS results
       rd.summary = summaryAndATS.optimizedSummary;
-
-      // Store ATS analysis for later use
       atsAnalysisResult = summaryAndATS.atsAnalysis;
+      console.timeEnd('Parallel Post-Processing');
     }
 
     const payload = {
@@ -930,9 +967,16 @@ async function coreHandler(req, res){
       }
     }
 
+    // Performance monitoring
+    const endTime = Date.now();
+    const totalTime = endTime - startTime;
+    console.timeEnd('Total Generation Time');
+    console.log(`✅ Generation completed in ${totalTime}ms | Goal: ${userGoal || 'unknown'}`);
+
     return res.status(200).json(payload);
   }catch(err){
     console.error(err);
+    console.timeEnd('Total Generation Time');
     return res.status(500).json({ error:"Server error", detail:String(err?.message || err) });
   }
 }

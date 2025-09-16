@@ -30,52 +30,49 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Product & Settings - Side by Side */}
-          <div className="grid grid-cols-2 gap-8">
-            {/* Product - Left */}
-            <div className="text-left">
-              <h3 className="text-sm font-semibold text-text mb-4">Product</h3>
-              <ul className="space-y-3">
-                <li>
-                  <a href="/privacy" className="text-sm text-muted hover:text-text transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms" className="text-sm text-muted hover:text-text transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <Link href="/support" className="text-sm text-muted hover:text-text transition-colors">
-                    Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
+          {/* Links Section - Centered */}
+          <div className="text-center mb-6">
+            <h3 className="text-sm font-semibold text-text mb-4">Product</h3>
+            <ul className="space-y-3">
+              <li>
+                <a href="/privacy" className="text-sm text-muted hover:text-text transition-colors">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="text-sm text-muted hover:text-text transition-colors">
+                  Terms of Service
+                </a>
+              </li>
+              <li>
+                <Link href="/support" className="text-sm text-muted hover:text-text transition-colors">
+                  Support
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-            {/* Settings - Right */}
-            <div className="text-right">
-              <h3 className="text-sm font-semibold text-text mb-4">Settings</h3>
-              <div className="space-y-4">
-                {/* Theme Toggle */}
-                <div className="flex flex-col items-end">
-                  <label className="text-xs font-medium text-muted block mb-2">Theme</label>
-                  <ThemeToggle />
-                </div>
+          {/* Settings Section - Centered */}
+          <div className="text-center">
+            <h3 className="text-sm font-semibold text-text mb-4">Settings</h3>
+            <div className="flex justify-center items-center space-x-6">
+              {/* Theme Toggle */}
+              <div className="flex flex-col items-center">
+                <label className="text-xs font-medium text-muted block mb-2">Theme</label>
+                <ThemeToggle />
+              </div>
 
-                {/* Language Toggle */}
-                <div className="flex flex-col items-end">
-                  <label className="text-xs font-medium text-muted block mb-2">Language</label>
-                  <button
-                    onClick={toggleLanguage}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-text hover:bg-bg transition-colors"
-                    title={`Switch to ${getLanguageDisplay() === 'US English' ? 'UK English' : 'US English'}`}
-                  >
-                    <Globe className="w-4 h-4" />
-                    <span>{getLanguageDisplay()}</span>
-                  </button>
-                </div>
+              {/* Language Toggle */}
+              <div className="flex flex-col items-center">
+                <label className="text-xs font-medium text-muted block mb-2">Language</label>
+                <button
+                  onClick={toggleLanguage}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-text hover:bg-bg transition-colors"
+                  title={`Switch to ${getLanguageDisplay() === 'US English' ? 'UK English' : 'US English'}`}
+                >
+                  <Globe className="w-4 h-4" />
+                  <span className="text-xs">{getLanguageDisplay()}</span>
+                </button>
               </div>
             </div>
           </div>

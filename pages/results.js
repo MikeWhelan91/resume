@@ -471,7 +471,12 @@ export default function ResultsPage() {
       
       const tailoredData = await response.json();
       setUserData(tailoredData);
-      
+
+      // Update ATS analysis if included in the response
+      if (tailoredData.atsAnalysis) {
+        setAtsAnalysis(tailoredData.atsAnalysis);
+      }
+
       // Save updated data to localStorage
       localStorage.setItem('resumeResult', JSON.stringify(tailoredData));
       
