@@ -114,8 +114,8 @@ export default async function handler(req,res){
     }
     if (!resumeText) return res.status(400).json({ error:"No readable file" });
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const system = `Extract as JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[]}}
-Experience: company,title,start,end,location?,bullets[]. Education: school,degree,start,end,grade?.`;
+    const system = `Extract as JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[],projects[]}}
+Experience: company,title,start,end,location?,bullets[]. Education: school,degree,start,end,grade?. Projects: name,description?,start?,end?,present?,url?,demo?,bullets[].`;
     const user = `${resumeText.slice(0, 15000)}`; // Limit input text for faster processing
     const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",

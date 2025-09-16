@@ -318,35 +318,6 @@ export default function Dashboard() {
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Upload CV Area */}
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    className={`relative p-4 bg-bg rounded-lg border-2 border-dashed transition-colors group cursor-pointer ${
-                      dragOver
-                        ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'border-border hover:border-indigo-200 dark:hover:border-indigo-800'
-                    }`}
-                    onClick={() => document.getElementById('file-upload').click()}
-                  >
-                    <input
-                      id="file-upload"
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileInputChange}
-                      className="hidden"
-                    />
-                    <div className="flex items-center">
-                      <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg mr-4">
-                        <CloudUpload className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-text">Upload {terms.Resume}</p>
-                        <p className="text-sm text-muted">Drag & drop or click to browse</p>
-                      </div>
-                    </div>
-                  </div>
 
                   <Link
                     href="/wizard"
@@ -362,19 +333,6 @@ export default function Dashboard() {
                     <ChevronRight className="w-4 h-4 text-muted group-hover:text-indigo-600" />
                   </Link>
 
-                  <Link
-                    href="/my-resumes"
-                    className="flex items-center p-4 bg-bg rounded-lg border border-border hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors group"
-                  >
-                    <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg mr-4">
-                      <FileText className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-text">View All {terms.ResumePlural}</p>
-                      <p className="text-sm text-muted">Manage your saved {terms.resumePlural}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted group-hover:text-green-600" />
-                  </Link>
 
                   <Link
                     href="/account"
@@ -411,70 +369,6 @@ export default function Dashboard() {
             {/* Sidebar */}
             <div className="space-y-6">
 
-              {/* Usage Overview */}
-              <div className="bg-surface rounded-lg border border-border p-6">
-                <h3 className="text-lg font-semibold text-text mb-4 flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2 text-indigo-600" />
-                  Usage Overview
-                </h3>
-
-                {usage ? (
-                  <div className="space-y-4">
-                    {/* Generations */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-muted">Generations</span>
-                        <span className="text-sm text-text">
-                          {usage.generations?.used || 0}
-                          {usage.generations?.limit && usage.generations.limit !== 'unlimited' && `/${usage.generations.limit}`}
-                        </span>
-                      </div>
-                      {usage.generations?.limit && usage.generations.limit !== 'unlimited' && (
-                        <>
-                          <div className="w-full bg-border/50 rounded-full h-2">
-                            <div
-                              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${getUsagePercentage(usage.generations.used, usage.generations.limit)}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-muted mt-1">
-                            {usage.generations.limit - usage.generations.used} remaining this {usage.generations.period || 'period'}
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Downloads */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-muted">Downloads</span>
-                        <span className="text-sm text-text">
-                          {usage.downloads?.used || 0}
-                          {usage.downloads?.limit && usage.downloads.limit !== 'unlimited' && `/${usage.downloads.limit}`}
-                        </span>
-                      </div>
-                      {usage.downloads?.limit && usage.downloads.limit !== 'unlimited' && (
-                        <>
-                          <div className="w-full bg-border/50 rounded-full h-2">
-                            <div
-                              className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${getUsagePercentage(usage.downloads.used, usage.downloads.limit)}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-muted mt-1">
-                            {usage.downloads.limit - usage.downloads.used} remaining this {usage.downloads.period || 'period'}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <BarChart3 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-muted">No usage data available</p>
-                  </div>
-                )}
-              </div>
 
               {/* Pro Features */}
               {entitlement?.plan === 'free' && (

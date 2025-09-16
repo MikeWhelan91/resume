@@ -91,6 +91,28 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects (Optional)','Education','Review'];
   const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
 
+  // Check if user has enough generations for specific option
+  const canGenerateOption = (requiredGenerations) => {
+    if (!session?.user) {
+      // Trial users - check trial usage
+      const generationsRemaining = trialUsage
+        ? Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed)
+        : 0;
+
+
+      return generationsRemaining >= requiredGenerations;
+    }
+    if (userPlan === 'free') {
+      return (entitlement?.freeWeeklyCreditsRemaining || 0) >= requiredGenerations;
+    }
+    if (userPlan === 'day_pass') {
+      if (!dayPassUsage) return false; // Still loading
+      return (dayPassUsage.generationsLimit - dayPassUsage.generationsUsed) >= requiredGenerations;
+    }
+    return true; // Pro users have unlimited generations
+  };
+
+
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
   const { register, handleSubmit, watch, setValue, getValues } = methods;
 
@@ -108,13 +130,25 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
 
-  // Force 'both' option for signed-out users
+  // Handle userGoal logic for signed-out users and generation limits
   useEffect(() => {
-    if (!session && (userGoal === 'cv' || userGoal === 'cover-letter')) {
-      console.log('Forcing userGoal to both for trial user, was:', userGoal);
-      setUserGoal('both');
+    if (!session && trialUsage && !trialUsageLoading) {
+      // Trial user logic - only run once when trialUsage loads
+      const generationsRemaining = Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed);
+
+      if (generationsRemaining < 2) {
+        // Not enough generations for 'both', default to 'cv'
+        if (userGoal === 'both') {
+          setUserGoal('cv');
+        }
+      } else if (generationsRemaining >= 2) {
+        // Has enough generations, force 'both' for trial users
+        if (userGoal === 'cv' || userGoal === 'cover-letter') {
+          setUserGoal('both');
+        }
+      }
     }
-  }, [session, userGoal]);
+  }, [session, trialUsage, trialUsageLoading]); // Added trialUsageLoading to prevent running before data loads
 
   useEffect(() => {
     const sub = watch(() => {
@@ -198,9 +232,24 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           if (trialResponse.ok) {
             const trialData = await trialResponse.json();
             setTrialUsage(trialData);
+          } else {
+            // Provide fallback trial usage data with correct structure
+            setTrialUsage({
+              generationsUsed: 1, // Assume they used 1 so they have 1 remaining
+              generationsLimit: 2,
+              canGenerate: true,
+              canDownload: true
+            });
           }
         } catch (error) {
           console.error('Error fetching trial usage:', error);
+          // Provide fallback trial usage data with correct structure
+          setTrialUsage({
+            generationsUsed: 1, // Assume they used 1 so they have 1 remaining
+            generationsLimit: 2,
+            canGenerate: true,
+            canDownload: true
+          });
         }
         setTrialUsageLoading(false);
       }
@@ -524,16 +573,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
               {/* CV and Cover Letter options side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
                 <label className={`card p-4 transition-all duration-300 group border-2 ${
-                  !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-200'
+                  canGenerateOption(1) ? 'cursor-pointer hover:shadow-lg hover:border-blue-200' : 'opacity-50 cursor-not-allowed'
                 }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
                   <input
                     type="radio"
                     name="goal"
                     value="cv"
                     checked={userGoal === 'cv'}
-                    onChange={(e) => setUserGoal(e.target.value)}
+                    onChange={(e) => canGenerateOption(1) && setUserGoal(e.target.value)}
                     className="sr-only"
-                    disabled={!session}
+                    disabled={!canGenerateOption(1)}
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'transparent'}}>
@@ -543,25 +592,25 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
                       <div className="text-sm text-muted">Optimise your {terms.resume} for the job description</div>
                       {(userPlan === 'free' || userPlan === 'day_pass') && (
-                        <div className="text-xs text-blue-600 font-bold">Uses 1 generation</div>
+                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 generation</div>
                       )}
-                      {!session && (
-                        <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
+                      {!session && !canGenerateOption(1) && (
+                        <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
                       )}
                     </div>
                   </div>
                 </label>
                 <label className={`card p-4 transition-all duration-300 group border-2 ${
-                  !session ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-purple-200'
+                  canGenerateOption(1) ? 'cursor-pointer hover:shadow-lg hover:border-purple-200' : 'opacity-50 cursor-not-allowed'
                 }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
                   <input
                     type="radio"
                     name="goal"
                     value="cover-letter"
                     checked={userGoal === 'cover-letter'}
-                    onChange={(e) => setUserGoal(e.target.value)}
+                    onChange={(e) => canGenerateOption(1) && setUserGoal(e.target.value)}
                     className="sr-only"
-                    disabled={!session}
+                    disabled={!canGenerateOption(1)}
                   />
                   <div className="flex items-center space-x-4">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'transparent'}}>
@@ -573,8 +622,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       {(userPlan === 'free' || userPlan === 'day_pass') && (
                         <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
                       )}
-                      {!session && (
-                        <div className="text-xs text-red-500 font-bold mt-1">Sign up required</div>
+                      {!session && !canGenerateOption(1) && (
+                        <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
                       )}
                     </div>
                   </div>
@@ -583,13 +632,21 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
               {/* Both option below spanning full width */}
               <div className="max-w-2xl mx-auto">
-                <label className="card p-4 cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200" style={{backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : 'rgb(249 250 251)', borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(229 231 235)'}}>
+                <label className={`card p-4 transition-all duration-300 group border-2 ${
+                  canGenerateOption(2)
+                    ? 'cursor-pointer hover:shadow-lg hover:border-green-200'
+                    : 'cursor-not-allowed opacity-60'
+                }`} style={{
+                  backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : canGenerateOption(2) ? 'rgb(249 250 251)' : 'rgb(243 244 246)',
+                  borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : canGenerateOption(2) ? 'rgb(229 231 235)' : 'rgb(209 213 219)'
+                }}>
                   <input
                     type="radio"
                     name="goal"
                     value="both"
                     checked={userGoal === 'both'}
-                    onChange={(e) => setUserGoal(e.target.value)}
+                    onChange={(e) => canGenerateOption(2) && setUserGoal(e.target.value)}
+                    disabled={!canGenerateOption(2)}
                     className="sr-only"
                   />
                   <div className="flex items-center space-x-4">
@@ -606,6 +663,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       )}
                       {!session && (
                         <div className="text-xs text-green-600 font-bold mt-1">Try before you sign up!</div>
+                      )}
+                      {!canGenerateOption(2) && (
+                        <div className="text-xs text-red-500 font-bold mt-1">
+                          Insufficient generations remaining ({trialUsage ? Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed) : 0}/2 needed)
+                        </div>
                       )}
                     </div>
                   </div>
@@ -710,7 +772,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={addLink} className="btn btn-ghost btn-sm text-blue-600">+ Add link</button>
+              <button type="button" onClick={addLink} className="btn btn-ghost btn-sm" style={{color: '#2840A7'}}>+ Add link</button>
             </div>
           </section>
         )}
@@ -737,7 +799,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                   <ExperienceCard key={i} value={exp} index={i} onChange={v => updateExp(i, v)} onRemove={() => removeExp(i)} onDuplicate={() => duplicateExp(i)} />
                 ))}
               </AnimatePresence>
-              <button type="button" onClick={addExp} className="btn btn-ghost btn-sm text-blue-600">+ Add role</button>
+              <button type="button" onClick={addExp} className="btn btn-ghost btn-sm" style={{color: '#2840A7'}}>+ Add role</button>
             </div>
           </section>
         )}
@@ -759,7 +821,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                   <ProjectCard key={i} value={project} index={i} onChange={v => updateProject(i, v)} onRemove={() => removeProject(i)} onDuplicate={() => duplicateProject(i)} />
                 ))}
               </AnimatePresence>
-              <button type="button" onClick={addProject} className="btn btn-ghost btn-sm text-blue-600">+ Add project</button>
+              <button type="button" onClick={addProject} className="btn btn-ghost btn-sm" style={{color: '#2840A7'}}>+ Add project</button>
             </div>
           </section>
         )}
@@ -776,7 +838,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                   <EducationCard key={i} value={edu} index={i} onChange={v => updateEdu(i, v)} onRemove={() => removeEdu(i)} onDuplicate={() => duplicateEdu(i)} />
                 ))}
               </AnimatePresence>
-              <button type="button" onClick={addEdu} className="btn btn-ghost btn-sm text-blue-600">+ Add education</button>
+              <button type="button" onClick={addEdu} className="btn btn-ghost btn-sm" style={{color: '#2840A7'}}>+ Add education</button>
             </div>
           </section>
         )}
@@ -842,7 +904,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
       {showAccountPrompt && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="card p-8 max-w-md w-full text-center space-y-6 animate-scale-in mx-4">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{backgroundColor: '#2840A7'}}>
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>

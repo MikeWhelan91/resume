@@ -12,13 +12,13 @@
   --tc-text: 15 23 42;            /* Slate-900 - deep, readable text */
   --tc-text-secondary: 51 65 85;   /* Slate-700 - secondary text */
   --tc-muted: 100 116 139;         /* Slate-500 - muted text */
-  --tc-heading: 37 99 235;         /* Blue headings for consistency */
+  --tc-heading: 40 64 167;         /* Blue headings for consistency */
   --tc-border: 226 232 240;        /* Slate-200 - subtle borders */
   --tc-border-strong: 203 213 225; /* Slate-300 - stronger borders */
   
   /* Professional Blue Primary System */
-  --tc-primary: 37 99 235;         /* Blue-600 - primary brand color */
-  --tc-primary-hover: 29 78 216;   /* Blue-700 - hover state */
+  --tc-primary: 40 64 167;         /* #2840A7 - primary brand color */
+  --tc-primary-hover: 32 51 134;   /* Darker shade for hover state */
   --tc-primary-light: 219 234 254; /* Blue-100 - light backgrounds */
   --tc-primary-contrast: 255 255 255; /* White text on primary */
   
@@ -30,7 +30,7 @@
   --tc-error: 239 68 68;           /* Red-500 */
   --tc-error-light: 254 226 226;   /* Red-100 */
   
-  --tc-accent: 37 99 235;          /* Same as primary for consistency */
+  --tc-accent: 40 64 167;          /* Same as primary for consistency */
   --tc-accent-contrast: 255 255 255;
   --tc-elev: 15 23 42;             /* Shadow color base */
 
@@ -120,6 +120,13 @@
   --tc-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --tc-shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.4);
   --tc-shadow-xl: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Fixed navbar spacing - mobile only */
+@media (max-width: 768px) {
+  body {
+    padding-top: 80px; /* Account for fixed navbar height on mobile */
+  }
 }
 
 /* Resume Template Dark Mode Styles */

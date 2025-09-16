@@ -228,19 +228,25 @@ export default function Navbar() {
   // Removed popup-based functions - now using dedicated pages
 
   return (
-    <nav className="sticky top-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border">
+    <nav className="fixed md:static top-0 left-0 right-0 md:top-auto md:left-auto md:right-auto z-40 bg-bg/90 backdrop-blur-xl border-b border-border">
       <div className="tc-container">
         <div className="flex justify-between items-center h-20">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-3 group">
+            <Link href="/" className="flex items-center group">
               <div className="relative">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all duration-250">
+                {/* Light mode: favicon1, Dark mode: sparkles icon */}
+                <img
+                  src="/favicon1.png"
+                  alt="TailoredCV.app"
+                  className="w-10 h-8 rounded-xl shadow-lg transform group-hover:scale-105 transition-all duration-250 dark:hidden"
+                />
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all duration-250 hidden dark:flex">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div className="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-250"></div>
               </div>
-              <span className="text-xl font-bold text-text group-hover:text-primary transition-colors duration-250">TailoredCV.app</span>
+              <span className="text-xl font-bold transition-all duration-300" style={{color: '#2840A7'}}>TailoredCV.app</span>
             </Link>
           </div>
 
@@ -468,11 +474,11 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <>
             {/* Backdrop */}
-            <div 
+            <div
               className="fixed inset-0 z-40 bg-black/20 md:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            
+
             {/* Mobile menu panel */}
             <div className="absolute top-full left-0 right-0 z-50 md:hidden bg-surface border border-border shadow-xl rounded-b-lg">
               <div className="px-4 py-6 space-y-4">

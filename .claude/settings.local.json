@@ -27,7 +27,10 @@
       "Bash(del \"C:\\Users\\whela\\resume\\pages\\api\\billing\\create-portal-session.js\")",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(npx dotenv -e .env.local -- npx prisma db push:*)"
+      "Bash(npx dotenv -e .env.local -- npx prisma db push:*)",
+      "Read(//c/**)",
+      "Bash(cmd //c:*)",
+      "Bash(del \"C:\\Users\\whela\\resume\\test_cv_with_projects.txt\")"
     ],
     "deny": [],
     "ask": []

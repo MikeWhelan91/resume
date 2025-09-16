@@ -170,7 +170,7 @@ export default function SignUp() {
           <div className="text-center">
             <p className="mt-2 text-sm text-muted">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/auth/signin" className="font-medium hover:opacity-80" style={{color: '#2840A7'}}>
                 Sign in
               </Link>
             </p>

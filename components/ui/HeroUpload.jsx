@@ -8,40 +8,123 @@ import { InfoTooltip } from './TooltipPortal';
 import OnboardingTourFixed from './OnboardingTourFixed';
 import FirstTimeUserGuide from './FirstTimeUserGuide';
 
-// Rotating Features Component
-function RotatingFeatures() {
-  const [currentFeature, setCurrentFeature] = useState(0);
-
-  const features = [
-    { icon: '✓', text: 'ATS-Optimized Beats applicant tracking systems' },
-    { icon: '✓', text: '5+ Premium Templates Professional to creative designs' },
-    { icon: '✓', text: 'DOCX + PDF Downloads Multiple format support' },
-    { icon: '✓', text: 'Cover Letter Generation Perfectly matched to your resume' },
-    { icon: '✓', text: 'Skill Cross-Referencing No fabricated experience' },
-    { icon: '✓', text: '24-Hour Day Pass Perfect for urgent applications' }
-  ];
+// Single Carousel Component
+function SingleCarousel({ features, offset = 0, colorTheme = 'default' }) {
+  const [currentFeature, setCurrentFeature] = useState(offset);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Set initial offset
+    setCurrentFeature(offset);
+
     const interval = setInterval(() => {
       setCurrentFeature((prev) => (prev + 1) % features.length);
-    }, 3000);
+    }, 3500);
 
     return () => clearInterval(interval);
-  }, [features.length]);
+  }, [features.length, offset]);
+
+  const itemHeight = isMobile ? 64 : 40;
+
+  // Color theme configurations
+  const colorThemes = {
+    blue: {
+      glow: 'from-blue-500/20 via-blue-400/10 to-blue-600/20',
+      border: 'border-blue-500/30',
+      text: 'text-blue-600'
+    },
+    purple: {
+      glow: 'from-purple-500/20 via-purple-400/10 to-purple-600/20',
+      border: 'border-purple-500/30',
+      text: 'text-purple-600'
+    },
+    green: {
+      glow: 'from-green-500/20 via-green-400/10 to-green-600/20',
+      border: 'border-green-500/30',
+      text: 'text-green-600'
+    },
+    default: {
+      glow: 'from-primary/10 via-accent/10 to-primary/10',
+      border: 'border-border/20',
+      text: 'text-text'
+    }
+  };
+
+  const theme = colorThemes[colorTheme] || colorThemes.default;
 
   return (
-    <div className="text-center overflow-hidden h-8">
-      <div
-        className="text-lg font-medium text-text transition-transform duration-700 ease-in-out"
-        style={{
-          transform: `translateY(-${currentFeature * 32}px)`
-        }}
-      >
-        {features.map((feature, index) => (
-          <div key={index} className="h-8 flex items-center justify-center">
-            {feature.text}
-          </div>
-        ))}
+    <div className="relative">
+      {/* Background glow effect */}
+      <div className={`absolute inset-0 bg-gradient-to-r ${theme.glow} rounded-xl blur-xl`}></div>
+
+      <div className={`relative text-center overflow-hidden h-16 sm:h-10 bg-surface/30 backdrop-blur-sm rounded-lg ${theme.border} shadow-lg`}>
+        <div
+          className="transition-transform duration-1000 ease-in-out"
+          style={{
+            transform: `translateY(-${currentFeature * itemHeight}px)`
+          }}
+        >
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="h-16 sm:h-10 flex items-center justify-center px-6 relative group"
+            >
+              <div className="flex items-center justify-center relative z-10">
+                {/* Text without gradient effect */}
+                <div className="text-center">
+                  <div className={`text-sm sm:text-base font-bold ${theme.text} transition-all duration-500`}>
+                    {feature.text}
+                  </div>
+                  <div className="text-sm text-muted/80 hidden sm:block">
+                    {feature.subtext}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Triple Rotating Features Component
+function RotatingFeatures() {
+  const features = [
+    { text: 'ATS-Optimized', subtext: 'Beats applicant tracking systems' },
+    { text: '5+ Premium Templates', subtext: 'Professional to creative designs' },
+    { text: 'DOCX + PDF Downloads', subtext: 'Multiple format support' },
+    { text: 'Cover Letter Generation', subtext: 'Perfectly matched to your resume' },
+    { text: 'Skill Cross-Referencing', subtext: 'No fabricated experience' },
+    { text: '24-Hour Day Pass', subtext: 'Perfect for urgent applications' }
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl mx-auto">
+      {/* Left carousel - offset by 0 - Blue theme */}
+      <div className="hidden md:block">
+        <SingleCarousel features={features} offset={0} colorTheme="blue" />
+      </div>
+
+      {/* Center carousel - offset by 2 - Purple theme */}
+      <div>
+        <SingleCarousel features={features} offset={2} colorTheme="purple" />
+      </div>
+
+      {/* Right carousel - offset by 4 - Green theme */}
+      <div className="hidden md:block">
+        <SingleCarousel features={features} offset={4} colorTheme="green" />
       </div>
     </div>
   );
@@ -163,9 +246,26 @@ export default function HeroUpload() {
       if (response.ok) {
         const data = await response.json();
         setTrialUsage(data);
+      } else {
+        // Provide fallback trial usage data
+        setTrialUsage({
+          generationsUsed: 0,
+          generationsRemaining: 2,
+          generationsLimit: 2,
+          canGenerate: true,
+          canDownload: true
+        });
       }
     } catch (error) {
       console.error('Error fetching trial usage:', error);
+      // Provide fallback trial usage data
+      setTrialUsage({
+        generationsUsed: 0,
+        generationsRemaining: 2,
+        generationsLimit: 2,
+        canGenerate: true,
+        canDownload: true
+      });
     } finally {
       setTrialUsageLoading(false);
     }
@@ -174,12 +274,21 @@ export default function HeroUpload() {
   async function checkAuthStatus() {
     try {
       const response = await fetch('/api/auth-check');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       setAuthCheck(data);
     } catch (error) {
       console.error('Error checking auth status:', error);
-      // If check fails, assume no access for safety
-      setAuthCheck({ authenticated: false, canAccess: false, reason: 'Unable to verify access' });
+      // If check fails, assume limited access for trial users
+      setAuthCheck({
+        authenticated: false,
+        canAccess: !session, // Trial users get basic access if API fails
+        reason: error.message.includes('NetworkError') ? 'Connection error' : 'Unable to verify access',
+        generationsRemaining: !session ? 2 : 0,
+        generationsLimit: 2
+      });
     } finally {
       setCheckingAuth(false);
     }
@@ -222,19 +331,38 @@ export default function HeroUpload() {
 
   return (
     <div className="relative">
+      {/* Trial Exhausted Banner */}
+      {!session && authCheck && !authCheck.canAccess && (
+        <div className="bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-3 text-center">
+          <div className="max-w-4xl mx-auto">
+            <span className="font-medium">
+              You've used all {authCheck.generationsLimit} free generations.
+            </span>
+            <span className="ml-2">
+              <a href="/auth/signup" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                Sign up free
+              </a> for 10 generations per week, or{' '}
+              <a href="/pricing" className="text-blue-600 hover:text-blue-700 underline font-semibold">
+                upgrade to Pro
+              </a> for unlimited access!
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="relative bg-bg">
         {/* Hero background image with color accents */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Main background image with reduced greyscale */}
           <div
-            className="absolute inset-0 opacity-50"
+            className="absolute inset-0"
             style={{
               backgroundImage: 'url(/heroalt3.jpg)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              filter: 'grayscale(40%) blur(0.5px)',
+              filter: 'grayscale(15%)',
             }}
           ></div>
           {/* Brand color overlay removed per user request */}
@@ -248,25 +376,26 @@ export default function HeroUpload() {
         </div>
 
         <div className="relative tc-container">
-          <div className="flex flex-col lg:flex-row items-center lg:items-start min-h-[90vh] py-12 lg:py-20">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start py-4 lg:py-6">
 
             {/* Left Column - Content */}
             <div className="flex-1 lg:pr-20 text-center max-w-2xl lg:max-w-none">
+              {/* Content container with shared background */}
+              <div className="bg-surface/70 backdrop-blur-sm rounded-2xl p-8 border border-border/20">
+                {/* Clean headline */}
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text leading-tight mb-8">
+                  Your {terms.resume},
+                  <br />
+                  <span style={{color: '#2840A7'}}>perfectly matched</span>
+                  <br />
+                  to every job
+                </h1>
 
-
-              {/* Clean headline */}
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text leading-tight mb-8">
-                Your {terms.resume},
-                <br />
-                <span className="text-primary">perfectly matched</span>
-                <br />
-                to every job
-              </h1>
-
-              {/* Clear value prop */}
-              <p className="text-xl text-text font-medium leading-relaxed mb-12 max-w-2xl">
-                Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
-              </p>
+                {/* Clear value prop */}
+                <p className="text-xl text-text font-medium leading-relaxed mb-12 max-w-2xl mx-auto">
+                  Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
+                </p>
+              </div>
 
 
               <div className="mb-16">
@@ -279,20 +408,15 @@ export default function HeroUpload() {
               <div className="relative">
                 {/* Main demo card */}
                 <div className="tc-card-elevated tc-card-hover relative z-10">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-center mb-6">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center">
                         <Upload className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold text-text">{terms.Resume} Upload</div>
-                        <div className="text-xs text-muted">Instant AI Analysis</div>
+                        <div className="font-bold text-lg text-text">{terms.Resume} Upload</div>
+                        <div className="text-sm text-muted">Instant AI Analysis</div>
                       </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                     </div>
                   </div>
                   
@@ -413,13 +537,13 @@ export default function HeroUpload() {
       <div className="relative py-20 bg-surface overflow-hidden">
         {/* Background Image */}
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-40"
           style={{
             backgroundImage: 'url(/2herobg.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            filter: 'grayscale(70%) blur(3px)',
+            filter: 'grayscale(30%)',
           }}
         ></div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -428,13 +552,15 @@ export default function HeroUpload() {
             <span className="text-sm font-medium text-text">Apply to Multiple Jobs</span>
           </div>
           
-          <h2 className="text-3xl md:text-4xl font-bold text-text mb-6">
-            One {terms.Resume}, <span className="text-gradient">Unlimited Tailored Versions</span>
-          </h2>
-          
-          <p className="text-xl text-muted mb-8 max-w-2xl mx-auto">
-            Stop sending the same generic {terms.resume} to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
-          </p>
+          <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-8 border border-border/20 max-w-4xl mx-auto mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-text mb-6">
+              One {terms.Resume}, <span style={{color: '#2840A7'}}>Unlimited Tailored Versions</span>
+            </h2>
+
+            <p className="text-xl text-muted">
+              Stop sending the same generic {terms.resume} to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
+            </p>
+          </div>
           
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.1s'}}>

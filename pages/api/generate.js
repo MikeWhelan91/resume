@@ -194,7 +194,8 @@ async function processAllSkills(client, resumeData, resumeText, projects, jobDes
    - Do not add related or similar technologies
 
 4. CONSOLIDATED_SKILLS: Clean and standardize skills:
-   - Combine only the skills extracted above from steps 1-3
+   - Combine ONLY skills from steps 1-2 (resume and projects only)
+   - NEVER include job description skills in consolidated list
    - Remove duplicates and fix capitalization
    - Remove vague terms
    - Max 15 skills total
@@ -668,9 +669,15 @@ async function coreHandler(req, res){
       ...skillsResult.consolidatedSkills
     ])];
 
+    // CRITICAL: Remove any skills that came from job description
+    const jobSkillsSet = new Set(skillsResult.jobSkills.map(s => String(s).toLowerCase()));
+    const resumeOnlySkills = allowedSkillsBase.filter(skill =>
+      !jobSkillsSet.has(String(skill).toLowerCase())
+    );
+
     const allowedSkills = skillsResult.expandedSkills.length > 0
-      ? skillsResult.expandedSkills
-      : allowedSkillsBase;
+      ? skillsResult.expandedSkills.filter(skill => !jobSkillsSet.has(String(skill).toLowerCase()))
+      : resumeOnlySkills;
 
     const expanded = new Set(allowedSkills.map(s => String(s).toLowerCase()));
     const allowedSkillsCSV = allowedSkills.join(", ");
@@ -754,16 +761,18 @@ async function coreHandler(req, res){
 📋 ${langTerms.resume.toUpperCase()}: Power verbs (${langTerms.verbs}), 3-5 bullets/role, standard headers (Experience, Projects, Education, Skills)
 📝 COVER LETTER: 4 paragraphs, 250-400 words, ${tone} tone. MUST reference specific relevant projects to demonstrate skills and experience
 ⚠️ SKILLS: Only use ${allowedSkillsCSV}
-🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). CRITICAL: Extract ALL technologies mentioned in project bullets and automatically add them to the skills section
+🔧 PROJECTS: Include ALL project data (name, description, dates, bullets). NEVER add technologies to skills that aren't already in the allowed skills list
 ⚠️ JOB_ONLY (${jobOnlySkillsCSV}): Express learning interest only
-🚨 ZERO FABRICATION TOLERANCE: 
+🚨 ZERO FABRICATION TOLERANCE:
 - NEVER add metrics, statistics, percentages, or quantified results not in original
-- NEVER fabricate achievements, accomplishments, or business impact not stated  
+- NEVER fabricate achievements, accomplishments, or business impact not stated
 - NEVER inflate job titles, responsibilities, or seniority levels
-- NEVER add skills, technologies, or certifications not demonstrated
+- NEVER add skills, technologies, or certifications not demonstrated in original resume
+- NEVER add skills from job description that aren't in original resume
 - NEVER assume company scale, team sizes, or organizational structure
 - NEVER add experience years, industry tenure, or domain expertise not mentioned
 - Every single claim must be 100% verifiable against original resume content
+- SKILLS SECTION: Must contain ONLY technologies explicitly mentioned in original resume
 ⚠️ LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
     }
 
@@ -807,7 +816,7 @@ async function coreHandler(req, res){
 
       // Add consolidated base skills that might not be in the expanded set
       const consolidatedSet = new Set(filteredSkills.map(s => String(s).toLowerCase()));
-      allowedSkillsBase.forEach(skill => {
+      resumeOnlySkills.forEach(skill => {
         const skillStr = String(skill).toLowerCase();
         if (!consolidatedSet.has(skillStr)) {
           filteredSkills.push(skill);
