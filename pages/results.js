@@ -438,9 +438,9 @@ export default function ResultsPage() {
       if (session) {
         if (userPlan === 'free') {
           const remaining = getCreditsRemaining();
-          showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+          showUpgradeAlert(`You've used all your monthly credits. You have ${remaining} credits remaining. Your credits reset on the 1st of each month. Upgrade to Pro for unlimited credits!`);
         } else if (userPlan === 'day_pass') {
-          showUpgradeAlert(`You've reached your day pass generation limit. Upgrade to Pro for unlimited generations or purchase another day pass!`);
+          showUpgradeAlert(`You've reached your day pass credit limit. Upgrade to Pro for unlimited credits or purchase another day pass!`);
         }
         // Pro users should never hit this condition, but if they do, show generic message
         else {
@@ -448,7 +448,7 @@ export default function ResultsPage() {
         }
       } else {
         const remaining = getTrialGenerationsRemaining();
-        showSignUpPrompt(`You've used all your trial generations. You have ${remaining} generations remaining. Sign up for unlimited generations!`);
+        showSignUpPrompt(`You've used all your trial credits. You have ${remaining} credits remaining. Sign up for unlimited credits!`);
       }
       return;
     }
@@ -951,7 +951,11 @@ export default function ResultsPage() {
                     ) : (
                       <Zap className="w-4 h-4" />
                     )}
-                    {isGenerating ? 'Generating...' : 'Generate'}
+                    {isGenerating ? 'Generating...' :
+                      userPlan === 'standard' ?
+                        (userGoal === 'both' ? 'Generate (2 credits)' : 'Generate (1 credit)') :
+                        'Generate'
+                    }
                   </button>
                   <button 
                     className="btn btn-secondary flex items-center justify-center" 
@@ -981,7 +985,7 @@ export default function ResultsPage() {
                     <div className="inline-flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-3 py-2">
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                       <span className="text-sm font-medium text-orange-700">
-                        {dayPassUsage.generationsUsed}/{dayPassUsage.generationsLimit} generations used today
+                        {dayPassUsage.generationsUsed}/{dayPassUsage.generationsLimit} credits used today
                       </span>
                     </div>
                     <p className="text-xs text-muted mt-2">

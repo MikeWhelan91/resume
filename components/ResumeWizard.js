@@ -545,10 +545,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
         setShowAccountPrompt(true);
         return;
       } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've used all your weekly credits. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've used all your monthly credits. Your credits reset on the 1st of each month. Upgrade to Pro for unlimited credits!`);
         return;
       } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've reached your daily generation limit. Upgrade to Pro for unlimited generations!`);
+        showUpgradeAlert(`You've reached your daily credit limit. Upgrade to Pro for unlimited credits!`);
         return;
       }
     }
@@ -655,6 +655,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
                       <div className="text-sm text-muted">Optimise your {terms.resume} for the job description</div>
+                      {userPlan === 'standard' && (
+                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 credit</div>
+                      )}
                       {(userPlan === 'free' || userPlan === 'day_pass') && (
                         <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 generation</div>
                       )}
@@ -683,6 +686,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Cover Letter Only</div>
                       <div className="text-sm text-muted">Generate a tailored cover letter for the job</div>
+                      {userPlan === 'standard' && (
+                        <div className="text-xs text-purple-600 font-bold">Uses 1 credit</div>
+                      )}
                       {(userPlan === 'free' || userPlan === 'day_pass') && (
                         <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
                       )}
@@ -720,6 +726,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-white">Both {terms.Resume} and Cover Letter</div>
                       <div className="text-sm text-muted">Get a complete application package</div>
+                      {userPlan === 'standard' && (
+                        <div className="text-xs text-green-600 font-bold">Uses 2 credits</div>
+                      )}
                       {(userPlan === 'free' || userPlan === 'day_pass') && (
                         <div className="text-xs text-green-600 font-bold">
                           {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
@@ -730,7 +739,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       )}
                       {!canGenerateOption(2) && (
                         <div className="text-xs text-red-500 font-bold mt-1">
-                          Insufficient generations remaining ({trialUsage ? Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed) : 0}/2 needed)
+                          {userPlan === 'standard' ?
+                            'Insufficient credits remaining (2 needed)' :
+                            `Insufficient generations remaining (${trialUsage ? Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed) : 0}/2 needed)`
+                          }
                         </div>
                       )}
                     </div>

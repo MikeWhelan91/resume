@@ -51,6 +51,7 @@ model User {
   draft                   Draft?
   accountDeletionRequest  AccountDeletionRequest?
   cookiePreferences       Json?
+  creditPurchases         CreditPurchase[]
 }
 
 model VerificationToken {
@@ -62,15 +63,16 @@ model VerificationToken {
 }
 
 model Entitlement {
-  userId                     String            @id
-  plan                       Plan              @default(free)
-  status                     EntitlementStatus @default(active)
-  features                   Json              @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
-  updatedAt                  DateTime          @updatedAt
-  expiresAt                  DateTime?
-  freeWeeklyCreditsRemaining Int               @default(10)
-  lastWeeklyReset            DateTime?
-  user                       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String            @id
+  plan                 Plan              @default(standard)
+  status               EntitlementStatus @default(active)
+  features             Json              @default("{\"docx\": false, \"cover_letter\": false, \"max_req_per_min\": 10}")
+  updatedAt            DateTime          @updatedAt
+  expiresAt            DateTime?
+  creditBalance        Int               @default(0) // Purchased credit balance for Standard users
+  freeCreditsThisMonth Int               @default(6) // Monthly free credits (capped at 6)
+  lastMonthlyReset     DateTime?         // Track when free credits were last reset
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ApiUsage {
@@ -98,16 +100,17 @@ model AccountDeletionRequest {
 }
 
 model SavedResume {
-  id        String   @id @default(cuid())
-  userId    String
-  data      Json     // Resume form data
-  name      String?  // Optional name for the resume
-  template  String   @default("classic")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  expiresAt DateTime? // When this resume expires and should be deleted
-  isLatest  Boolean  @default(true) // Mark the most recent one
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  userId            String
+  data              Json     // Resume form data
+  name              String?  // Optional name for the resume
+  template          String   @default("classic")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  expiresAt         DateTime? // When this resume expires and should be deleted
+  isLatest          Boolean  @default(true) // Mark the most recent one
+  downloadsRemaining Int     @default(10) // Downloads allowed per generated document
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([userId, isLatest])
@@ -133,14 +136,33 @@ model TrialUsage {
   downloadsUsed    Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
+
   @@index([ipAddress])
   @@index([updatedAt]) // For cleanup of old records
 }
 
+model CreditPurchase {
+  id                String   @id @default(cuid())
+  userId            String
+  stripePaymentId   String?  @unique // Stripe payment intent ID
+  packSize          Int      // Number of credits purchased
+  amountPaid        Int      // Amount in cents
+  creditsGranted    Int      // Credits actually granted (may differ from packSize due to bonuses)
+  status            String   @default("pending") // pending, completed, failed, refunded
+  createdAt         DateTime @default(now())
+  processedAt       DateTime?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripePaymentId])
+  @@index([status])
+}
+
 enum Plan {
-  free
-  day_pass
+  free // Keep for migration
+  day_pass // Keep for migration - will be migrated to standard
+  trial // Anonymous trial users (keep for backward compatibility)
+  standard // Logged in users with credit balance
   pro_monthly
   pro_annual
 }

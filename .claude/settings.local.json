@@ -30,7 +30,10 @@
       "Bash(npx dotenv -e .env.local -- npx prisma db push:*)",
       "Read(//c/**)",
       "Bash(cmd //c:*)",
-      "Bash(del \"C:\\Users\\whela\\resume\\test_cv_with_projects.txt\")"
+      "Bash(del \"C:\\Users\\whela\\resume\\test_cv_with_projects.txt\")",
+      "WebFetch(domain:www.resumebuild.ai)",
+      "Bash(del fix-schema.sql)",
+      "Bash(del fix-credits.js)"
     ],
     "deny": [],
     "ask": []

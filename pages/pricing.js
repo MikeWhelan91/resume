@@ -8,6 +8,7 @@ import { InfoTooltip } from '../components/ui/TooltipPortal';
 export default function PricingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState('');
+  const [creditLoading, setCreditLoading] = useState('');
 
  const handleUpgrade = async (planType) => {
   if (!session) {
@@ -39,48 +40,47 @@ export default function PricingPage() {
   }
 };
 
+  const handleCreditPurchase = async (packId) => {
+    if (!session) {
+      window.location.href = '/auth/signin?callbackUrl=' + encodeURIComponent('/pricing');
+      return;
+    }
+
+    setCreditLoading(packId);
+    try {
+      // For now, redirect to a simple credit purchase page
+      // TODO: Create a proper Stripe checkout session for credits
+      window.location.href = `/purchase-credits?pack=${packId}`;
+    } catch (err) {
+      console.error('Credit purchase error:', err);
+      alert('Unable to process purchase. Please try again.');
+    } finally {
+      setCreditLoading('');
+    }
+  };
 
   const plans = [
     {
-      name: 'Free',
-      description: 'Perfect for trying out TailoredCV',
+      name: 'Standard',
+      description: 'Perfect for regular job seekers',
       monthlyPrice: 0,
       annualPrice: 0,
       features: [
-        '10 credits per week (resets Monday)',
-        '10 PDF downloads per week',
+        '6 free credits per month',
+        '10 downloads per generation',
         'Professional template only',
-        'PDF downloads only',
+        'PDF downloads included',
         'Basic customization',
-        'Resume + Cover Letter generation'
+        'Resume + Cover Letter generation',
+        'Buy additional credit packs'
       ],
       limitations: [
         'Limited templates',
-        'Weekly credit limit'
+        'Monthly credit limit'
       ],
       buttonText: 'Get Started Free',
       buttonVariant: 'secondary',
       popular: false
-    },
-    {
-      name: 'Day Pass',
-      description: 'Perfect for urgent job applications',
-      monthlyPrice: 2.99,
-      annualPrice: 2.99,
-      features: [
-        '24-hour access period',
-        '30 generations per day',
-        '100 PDF downloads per day',
-        '100 DOCX downloads per day',
-        'All premium templates',
-        'All color themes',
-        'Priority processing',
-        'Full customization access'
-      ],
-      buttonText: 'Buy Day Pass',
-      buttonVariant: 'primary',
-      popular: false,
-      planType: 'day_pass'
     },
     {
       name: 'Pro Monthly',
@@ -293,6 +293,78 @@ export default function PricingPage() {
             ))}
           </div>
 
+          {/* Credit Packs Section */}
+          {session && (
+            <div className="mt-20">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-text mb-4">Credit Packs</h2>
+                <p className="text-muted max-w-2xl mx-auto">
+                  Need more credits? Purchase credit packs to generate more resumes and cover letters.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {[
+                  { id: 'starter', name: 'Starter Pack', credits: 6, price: 5, description: 'Perfect for trying out our service' },
+                  { id: 'standard', name: 'Standard Pack', credits: 20, price: 15, description: 'Great for regular job searching', popular: true },
+                  { id: 'professional', name: 'Professional Pack', credits: 60, price: 35, description: 'Best value for active job seekers' },
+                  { id: 'bulk', name: 'Bulk Pack', credits: 150, price: 75, description: 'Perfect for career coaches and agencies' }
+                ].map((pack, index) => (
+                  <div
+                    key={index}
+                    className={`relative bg-surface rounded-2xl p-6 border-2 transition-all duration-300 hover:shadow-lg ${
+                      pack.popular ? 'border-primary shadow-lg scale-105' : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    {pack.popular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-primary text-white px-3 py-1 rounded-full text-xs font-medium">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-text mb-2">{pack.name}</h3>
+                      <div className="mb-4">
+                        <span className="text-3xl font-bold text-text">€{pack.price}</span>
+                        <span className="text-muted ml-1">for {pack.credits} credits</span>
+                      </div>
+                      <p className="text-muted text-sm mb-6">{pack.description}</p>
+
+                      <div className="space-y-2 mb-6 text-left">
+                        <div className="flex items-center space-x-2">
+                          <Check className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-text">{pack.credits} credits</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Check className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-text">10 downloads per generation</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Check className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-text">Credits never expire</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleCreditPurchase(pack.id)}
+                        disabled={creditLoading === pack.id}
+                        className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
+                          pack.popular
+                            ? 'bg-primary text-white hover:bg-primary/90 shadow-lg'
+                            : 'bg-gray-100 dark:bg-gray-800 text-text hover:bg-gray-200 dark:hover:bg-gray-700'
+                        } ${creditLoading === pack.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {creditLoading === pack.id ? 'Processing...' : 'Buy Credits'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* FAQ Section */}
           <div className="mt-20">
             <div className="text-center mb-12">
@@ -306,7 +378,7 @@ export default function PricingPage() {
               <div className="bg-surface text-text rounded-lg border border-border p-6">
                 <h3 className="text-lg font-medium text-text mb-2">What happens when I run out of credits?</h3>
                 <p className="text-muted">
-                  Free users get 10 credits per week that reset every Monday at midnight Dublin time. Each generation consumes 1 credit. Pro users have unlimited usage.
+                  Standard users get 6 free credits per month that reset on the 1st of each month. Each generation consumes 1 credit. Pro users have unlimited usage.
                 </p>
               </div>
 

@@ -4,8 +4,10 @@ import puppeteer from 'puppeteer';
 import ResumeTemplate, { resumeBaseStyles } from '../../components/ResumeTemplate';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { getUserEntitlement } from '../../lib/entitlements';
-import { checkCreditAvailability, consumeCredit, trackApiUsage, getEffectivePlan } from '../../lib/credit-system';
+import { getUserEntitlement } from '../../lib/credit-purchase-system';
+import { checkAndConsumeDownload, trackApiUsage } from '../../lib/credit-purchase-system';
+import { getEffectivePlan } from '../../lib/credit-system';
+import { prisma } from '../../lib/prisma';
 import { checkTrialLimit, consumeTrialUsage } from '../../lib/trialUtils';
 
 export default async function handler(req, res) {
@@ -33,15 +35,28 @@ export default async function handler(req, res) {
       entitlement = await getUserEntitlement(userId);
       userPlan = getEffectivePlan(entitlement);
       
-      // Check credit availability
-      const creditCheck = await checkCreditAvailability(userId, 'download');
-      if (!creditCheck.allowed) {
-        return res.status(429).json({ 
-          error: 'Limit exceeded', 
-          message: creditCheck.message,
-          credits: creditCheck.credits,
-          plan: creditCheck.plan
-        });
+      // For authenticated users, check per-document download limits
+      // Find the user's latest saved resume for download tracking
+      const latestResume = await prisma.savedResume.findFirst({
+        where: {
+          userId,
+          isLatest: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        }
+      });
+
+      if (latestResume) {
+        const downloadCheck = await checkAndConsumeDownload(userId, latestResume.id);
+        if (!downloadCheck.allowed) {
+          return res.status(429).json({
+            error: 'Download limit reached',
+            message: downloadCheck.message,
+            downloadsRemaining: downloadCheck.downloadsRemaining || 0
+          });
+        }
       }
     } else {
       // Anonymous trial user
@@ -91,9 +106,8 @@ export default async function handler(req, res) {
     });
     await browser.close();
 
-    // Track usage and consume credit/trial usage after successful generation
+    // Track usage after successful generation
     if (userId) {
-      await consumeCredit(userId, 'download');
       await trackApiUsage(userId, 'pdf-download');
     } else if (isTrialUser) {
       try {

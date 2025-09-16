@@ -2,8 +2,10 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Bord
 import { limitExperience, limitEducation } from "../../lib/renderUtils.js";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { getUserEntitlement } from '../../lib/entitlements';
-import { getEffectivePlan, checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
+import { getUserEntitlement } from '../../lib/credit-purchase-system';
+import { getEffectivePlan } from '../../lib/credit-system';
+import { checkAndConsumeDownload, trackApiUsage } from '../../lib/credit-purchase-system';
+import { prisma } from '../../lib/prisma';
 
 // Helper function to safely get values
 function safeProp(obj, path, fallback = '') {
@@ -2907,16 +2909,29 @@ export default async function handler(req, res) {
       });
     }
 
-    // Check credit availability for downloads
+    // Check per-document download limits for authenticated users
     if (userId) {
-      const creditCheck = await checkCreditAvailability(userId, 'download');
-      if (!creditCheck.allowed) {
-        return res.status(429).json({ 
-          error: 'Limit exceeded', 
-          message: creditCheck.message,
-          credits: creditCheck.credits,
-          plan: creditCheck.plan
-        });
+      // Find the user's latest saved resume for download tracking
+      const latestResume = await prisma.savedResume.findFirst({
+        where: {
+          userId,
+          isLatest: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        }
+      });
+
+      if (latestResume) {
+        const downloadCheck = await checkAndConsumeDownload(userId, latestResume.id);
+        if (!downloadCheck.allowed) {
+          return res.status(429).json({
+            error: 'Download limit reached',
+            message: downloadCheck.message,
+            downloadsRemaining: downloadCheck.downloadsRemaining || 0
+          });
+        }
       }
     }
 
@@ -2968,9 +2983,8 @@ export default async function handler(req, res) {
     
     const fileName = `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`;
     
-    // Track usage and consume credit after successful generation
+    // Track usage after successful generation
     if (userId) {
-      await consumeCredit(userId, 'download');
       await trackApiUsage(userId, 'docx-download');
     }
 

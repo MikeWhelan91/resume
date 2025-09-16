@@ -1,7 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { getUserEntitlement } from '../../lib/entitlements';
+import { getUserEntitlement } from '../../lib/credit-purchase-system';
 import { getEffectivePlan, checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
 
 function h(text, level = HeadingLevel.HEADING_2) {

@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from './auth/[...nextauth]'
-import { getUserEntitlement } from '../../lib/credit-purchase-system'
+import { authOptions } from '../auth/[...nextauth]'
+import { getUserCreditStatus } from '../../../lib/credit-purchase-system'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -9,16 +9,16 @@ export default async function handler(req, res) {
 
   try {
     const session = await getServerSession(req, res, authOptions)
-    
+
     if (!session?.user?.id) {
       return res.status(401).json({ error: 'Authentication required' })
     }
 
-    const entitlement = await getUserEntitlement(session.user.id)
-    
-    return res.status(200).json(entitlement)
+    const status = await getUserCreditStatus(session.user.id)
+
+    return res.status(200).json(status)
   } catch (error) {
-    console.error('Entitlements API error:', error)
+    console.error('Error fetching credit balance:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 }

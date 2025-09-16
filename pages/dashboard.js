@@ -380,7 +380,7 @@ export default function Dashboard() {
                   <ul className="space-y-2 text-sm mb-4">
                     <li className="flex items-center">
                       <Zap className="w-4 h-4 mr-2" />
-                      Unlimited {terms.resume} generations
+                      Unlimited {terms.resume} credits
                     </li>
                     <li className="flex items-center">
                       <Download className="w-4 h-4 mr-2" />

@@ -21,6 +21,7 @@ export default function Navbar() {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [authCheck, setAuthCheck] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [creditStatus, setCreditStatus] = useState(null);
   const terms = getTerminology();
 
   // Fetch user entitlement data with debouncing
@@ -29,12 +30,13 @@ export default function Navbar() {
     const fetchUserData = async () => {
       if (session?.user?.id && isMounted) {
         try {
-          // Fetch entitlement, usage, and subscription data in parallel
-          const [entitlementResponse, dayPassResponse, downloadResponse, subscriptionResponse] = await Promise.all([
+          // Fetch entitlement, usage, subscription, and credit data in parallel
+          const [entitlementResponse, dayPassResponse, downloadResponse, subscriptionResponse, creditResponse] = await Promise.all([
             fetch('/api/entitlements'),
             fetch('/api/day-pass-usage'),
             fetch('/api/download-usage'),
-            fetch('/api/stripe/subscription-info')
+            fetch('/api/stripe/subscription-info'),
+            fetch('/api/credits/balance')
           ]);
           
           if (entitlementResponse.ok) {
@@ -63,6 +65,11 @@ export default function Navbar() {
           if (subscriptionResponse.ok) {
             const subscriptionData = await subscriptionResponse.json();
             setSubscriptionInfo(subscriptionData);
+          }
+
+          if (creditResponse.ok) {
+            const creditData = await creditResponse.json();
+            setCreditStatus(creditData);
           }
         } catch (error) {
           if (isMounted) {
@@ -296,6 +303,25 @@ export default function Navbar() {
 
           {/* Auth Section */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* Credit Balance Display for Standard Users */}
+            {session && creditStatus && creditStatus.canPurchase && (
+              <Link
+                href="/pricing"
+                className="flex items-center space-x-2 bg-surface/60 hover:bg-surface/80 px-3 py-2 rounded-lg border border-border/50 transition-all duration-200 cursor-pointer group"
+              >
+                <CreditCard className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium text-text">
+                  {creditStatus.credits === 'unlimited' ? 'Unlimited' :
+                    `${creditStatus.credits.total} credits`}
+                </span>
+                {creditStatus.needsCredits && (
+                  <span className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-primary/90 transition-colors">
+                    Buy More
+                  </span>
+                )}
+              </Link>
+            )}
+
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
             ) : session ? (

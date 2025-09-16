@@ -75,7 +75,7 @@ export default async function handler(req, res) {
       // Check limits
       if (type === 'generation' && currentGenerations >= 2) {
         return res.status(429).json({ 
-          error: 'Trial generation limit reached. Please sign up for unlimited access.',
+          error: 'Trial credit limit reached. Please sign up for unlimited access.',
           code: 'TRIAL_GENERATION_LIMIT'
         });
       }

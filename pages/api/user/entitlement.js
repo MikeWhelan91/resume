@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../auth/[...nextauth]'
-import { getUserEntitlement } from '../../../lib/entitlements.js'
+import { getUserEntitlement } from '../../../lib/credit-purchase-system'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

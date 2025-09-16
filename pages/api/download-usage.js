@@ -2,7 +2,7 @@ import { prisma } from '../../lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from './auth/[...nextauth]'
 import { getEffectivePlan } from '../../lib/credit-system'
-import { getUserEntitlement } from '../../lib/entitlements'
+import { getUserEntitlement } from '../../lib/credit-purchase-system'
 
 // Get the start of the current week (Monday)
 function getWeekStart() {
