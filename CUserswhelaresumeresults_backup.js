@@ -43,9 +43,6 @@ export default function ResultsPage() {
   const [userData, setUserData] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState('');
-  const [contentUpdated, setContentUpdated] = useState(false);
   const [userGoal, setUserGoal] = useState('both');
   const [userPlan, setUserPlan] = useState('free');
   const [entitlement, setEntitlement] = useState(null);
@@ -61,75 +58,11 @@ export default function ResultsPage() {
   const [showTrialSignup, setShowTrialSignup] = useState(false);
   const [signupType, setSignupType] = useState('post_generation');
   const [atsAnalysis, setAtsAnalysis] = useState(null);
-  const [downloadCooldowns, setDownloadCooldowns] = useState({
-    cv: 0,
-    cvDocx: 0,
-    coverLetter: 0,
-    coverLetterDocx: 0
-  });
-  const [downloadingStates, setDownloadingStates] = useState({
-    cv: false,
-    cvDocx: false,
-    coverLetter: false,
-    coverLetterDocx: false
-  });
-
-  // Download rate limiting helpers
-  const DOWNLOAD_COOLDOWN_MS = 2000; // 2 seconds between downloads
-
-  const setDownloadCooldown = (downloadType) => {
-    const now = Date.now();
-    setDownloadCooldowns(prev => ({
-      ...prev,
-      [downloadType]: now + DOWNLOAD_COOLDOWN_MS
-    }));
-  };
-
-  const isDownloadOnCooldown = (downloadType) => {
-    return Date.now() < downloadCooldowns[downloadType];
-  };
-
-  const getDownloadCooldownRemaining = (downloadType) => {
-    const remaining = downloadCooldowns[downloadType] - Date.now();
-    return Math.max(0, Math.ceil(remaining / 1000));
-  };
-
-  const setDownloadingState = (downloadType, isDownloading) => {
-    setDownloadingStates(prev => ({
-      ...prev,
-      [downloadType]: isDownloading
-    }));
-  };
-
-  // Enhanced download availability checks
-  const canDownloadResume = () => {
-    const formatType = resumeFormat === 'pdf' ? 'cv' : 'cvDocx';
-    return canDownload() && !downloadingStates[formatType] && !isDownloadOnCooldown(formatType);
-  };
-
-  const canDownloadCoverLetter = () => {
-    const formatType = coverLetterFormat === 'pdf' ? 'coverLetter' : 'coverLetterDocx';
-    return canDownload() && !downloadingStates[formatType] && !isDownloadOnCooldown(formatType);
-  };
-
-  const getDownloadButtonText = (baseText, formatType) => {
-    if (downloadingStates[formatType]) {
-      return `Downloading...`;
-    }
-    if (isDownloadOnCooldown(formatType)) {
-      const remaining = getDownloadCooldownRemaining(formatType);
-      return `Wait ${remaining}s`;
-    }
-    return baseText;
-  };
 
   // Credit system helpers for authenticated users
   const getCreditsRemaining = () => {
-    if (session && entitlement) {
-      if (String(userPlan || '').startsWith('pro')) return null;
-      const free = entitlement.freeCreditsThisMonth ?? entitlement.freeWeeklyCreditsRemaining ?? 0;
-      const purchased = entitlement.creditBalance ?? 0;
-      return Math.max(0, free + purchased);
+    if (session && userPlan === 'free' && entitlement) {
+      return entitlement.freeWeeklyCreditsRemaining || 0;
     }
     return null; // Pro users have unlimited/different limits
   };
@@ -151,23 +84,35 @@ export default function ResultsPage() {
 
   const canDownload = () => {
     if (session) {
-      return true; // Authenticated users: downloads not gated by credits
+      // Authenticated users
+      if (userPlan === 'free') {
+        return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+      }
+      return true; // Pro users can download (subject to their own limits)
+    } else {
+      // Trial users
+      return trialUsage ? trialUsage.canDownload : false;
     }
-    // Trial users
-    return trialUsage ? trialUsage.canDownload : false;
   };
 
   const canGenerate = () => {
     if (session) {
-      if (String(userPlan || '').startsWith('pro')) return true;
-      return (getCreditsRemaining() || 0) > 0;
+      // Authenticated users
+      if (userPlan === 'free') {
+        return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
+      } else if (userPlan === 'day_pass') {
+        // Day pass users have generation limits
+        return dayPassUsage ? (dayPassUsage.generationsUsed < dayPassUsage.generationsLimit) : false;
+      }
+      return true; // Pro users can generate (unlimited)
+    } else {
+      // Trial users - need at least 2 generations remaining (since each generation uses 2)
+      return trialUsage ? (trialUsage.generationsRemaining >= 2) : false;
     }
-    // Trial users - need at least 2 generations remaining (since each generation uses 2)
-    return trialUsage ? (trialUsage.generationsRemaining >= 2) : false;
   };
 
   const canUseDocx = () => {
-    return String(userPlan || '').startsWith('pro');
+    return userPlan !== 'free';
   };
 
   const canDownloadResumeFormat = () => {
@@ -270,24 +215,14 @@ export default function ResultsPage() {
       return;
     }
 
-    // Check for rate limiting cooldown
-    if (isDownloadOnCooldown('cv')) {
-      const remaining = getDownloadCooldownRemaining('cv');
-      showError(`Please wait ${remaining} second${remaining !== 1 ? 's' : ''} before downloading again.`);
-      return;
-    }
-
-    // Check if already downloading
-    if (downloadingStates.cv) {
-      showError('Download already in progress. Please wait...');
-      return;
-    }
-
     if (!canDownload()) {
       if (session) {
-        if (userPlan === 'standard') {
+        if (userPlan === 'free') {
           const remaining = getCreditsRemaining();
-          showUpgradeAlert(`You've used all your available credits. You have ${remaining} total credits remaining. Free credits reset monthly. Upgrade to Pro for unlimited downloads!`);
+          showUpgradeAlert(`You've used all your weekly credits. You have ${remaining} credits remaining. Your credits reset every Monday at midnight Dublin time. Upgrade to Pro for unlimited downloads!`);
+        } else if (userPlan === 'day_pass') {
+          // Day pass users should have unlimited downloads, so this shouldn't happen
+          showUpgradeAlert('Unable to download at this time. Please try again or contact support if the issue persists.');
         }
         // Pro users should never hit this condition, but if they do, show generic message
         else {
@@ -301,10 +236,6 @@ export default function ResultsPage() {
     }
 
     try {
-      // Set downloading state and cooldown
-      setDownloadingState('cv', true);
-      setDownloadCooldown('cv');
-
       // Start the download process
       await triggerDownload('/api/download-cv', 'resume.pdf', {
         template,
@@ -320,7 +251,7 @@ export default function ResultsPage() {
           if (entitlementResponse.ok) {
             const entitlementData = await entitlementResponse.json();
             setEntitlement(entitlementData);
-            setUserPlan(entitlementData.plan === 'free' ? 'standard' : entitlementData.plan);
+            setUserPlan(entitlementData.plan);
           }
         } else {
           // Refresh trial usage for anonymous users
@@ -349,9 +280,6 @@ export default function ResultsPage() {
         // For other errors (likely mobile browser quirks), just log them
         console.warn('Download may have succeeded despite error:', error);
       }
-    } finally {
-      // Reset downloading state
-      setDownloadingState('cv', false);
     }
   };
 
@@ -361,24 +289,7 @@ export default function ResultsPage() {
       return;
     }
 
-    // Check for rate limiting cooldown
-    if (isDownloadOnCooldown('coverLetter')) {
-      const remaining = getDownloadCooldownRemaining('coverLetter');
-      showError(`Please wait ${remaining} second${remaining !== 1 ? 's' : ''} before downloading again.`);
-      return;
-    }
-
-    // Check if already downloading
-    if (downloadingStates.coverLetter) {
-      showError('Download already in progress. Please wait...');
-      return;
-    }
-
     try {
-      // Set downloading state and cooldown
-      setDownloadingState('coverLetter', true);
-      setDownloadCooldown('coverLetter');
-
       await triggerDownload('/api/download-cover-letter', 'cover-letter.pdf', {
         accent,
         data: userData,
@@ -386,9 +297,6 @@ export default function ResultsPage() {
     } catch (error) {
       console.error('Download error:', error);
       // Silently handle download errors
-    } finally {
-      // Reset downloading state
-      setDownloadingState('coverLetter', false);
     }
   };
 
@@ -398,24 +306,7 @@ export default function ResultsPage() {
       return;
     }
 
-    // Check for rate limiting cooldown
-    if (isDownloadOnCooldown('cvDocx')) {
-      const remaining = getDownloadCooldownRemaining('cvDocx');
-      showError(`Please wait ${remaining} second${remaining !== 1 ? 's' : ''} before downloading again.`);
-      return;
-    }
-
-    // Check if already downloading
-    if (downloadingStates.cvDocx) {
-      showError('Download already in progress. Please wait...');
-      return;
-    }
-
     try {
-      // Set downloading state and cooldown
-      setDownloadingState('cvDocx', true);
-      setDownloadCooldown('cvDocx');
-
       await triggerDownload('/api/export-resume-docx', `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`, {
         userData,
         template,
@@ -424,7 +315,7 @@ export default function ResultsPage() {
     } catch (error) {
       console.error('Download error:', error);
       
-      // Only show error alerts for actual server/network failures (not mobile browser quirks)
+      // Only show error alerts for actual server/network failures (not mobile browser quirks)  
       if (error.message && error.message.includes('Network response was not ok')) {
         showError('Failed to generate resume file. Please try again.');
       } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
@@ -432,9 +323,6 @@ export default function ResultsPage() {
       } else {
         console.warn('Download may have succeeded despite error:', error);
       }
-    } finally {
-      // Reset downloading state
-      setDownloadingState('cvDocx', false);
     }
   };
 
@@ -444,24 +332,7 @@ export default function ResultsPage() {
       return;
     }
 
-    // Check for rate limiting cooldown
-    if (isDownloadOnCooldown('coverLetterDocx')) {
-      const remaining = getDownloadCooldownRemaining('coverLetterDocx');
-      showError(`Please wait ${remaining} second${remaining !== 1 ? 's' : ''} before downloading again.`);
-      return;
-    }
-
-    // Check if already downloading
-    if (downloadingStates.coverLetterDocx) {
-      showError('Download already in progress. Please wait...');
-      return;
-    }
-
     try {
-      // Set downloading state and cooldown
-      setDownloadingState('coverLetterDocx', true);
-      setDownloadCooldown('coverLetterDocx');
-
       await triggerDownload('/api/export-cover-letter-docx', `${(userData.resumeData?.name || userData.name || 'cover_letter').replace(/\s+/g, '_')}_cover_letter.docx`, {
         userData,
         accent
@@ -477,9 +348,6 @@ export default function ResultsPage() {
       } else {
         console.warn('Download may have succeeded despite error:', error);
       }
-    } finally {
-      // Reset downloading state
-      setDownloadingState('coverLetterDocx', false);
     }
   };
 
@@ -506,7 +374,7 @@ export default function ResultsPage() {
       return;
     }
 
-    if (userPlan === 'standard') {
+    if (userPlan === 'free') {
       showUpgradeAlert('ATS optimization is a Pro feature. Upgrade to access this functionality.');
       return;
     }
@@ -532,12 +400,23 @@ export default function ResultsPage() {
       // Save updated data to localStorage
       localStorage.setItem('resumeResult', JSON.stringify(optimizedData));
       
-      // No day pass: nothing to refresh here
+      // Refresh day pass usage data
+      if (userPlan === 'day_pass') {
+        try {
+          const dayPassResponse = await fetch('/api/day-pass-usage');
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
+          }
+        } catch (error) {
+          console.error('Error refreshing day pass usage:', error);
+        }
+      }
       
-      showSuccess(`${terms.Resume} optimized for job matching! Your ${terms.resume} has been enhanced with smart keywords and tailored content.`);
+      showSuccess(`${terms.Resume} optimized for ATS systems! Your ${terms.resume} has been enhanced with ATS-friendly formatting and keywords.`);
       
     } catch (error) {
-      console.error('Job matching optimization error:', error);
+      console.error('ATS optimization error:', error);
       showError(`Failed to optimize ${terms.resume}. Please try again.`);
     } finally {
       setIsGenerating(false);
@@ -557,14 +436,19 @@ export default function ResultsPage() {
 
     if (!canGenerate()) {
       if (session) {
-        if (userPlan === 'standard') {
+        if (userPlan === 'free') {
           const remaining = getCreditsRemaining();
-          showUpgradeAlert(`You've used all your monthly credits. You have ${remaining} credits remaining. Free credits reset monthly. Upgrade to Pro for unlimited credits!`);
-        } else {
-          showError('Unable to generate at this time. Please try again.');
+          showUpgradeAlert(`You've used all your monthly credits. You have ${remaining} credits remaining. Your credits reset on the 1st of each month. Upgrade to Pro for unlimited credits!`);
+        } else if (userPlan === 'day_pass') {
+          showUpgradeAlert(`You've reached your day pass credit limit. Upgrade to Pro for unlimited credits or purchase another day pass!`);
+        }
+        // Pro users should never hit this condition, but if they do, show generic message
+        else {
+          showUpgradeAlert('Unable to generate at this time. Please try again or contact support if the issue persists.');
         }
       } else {
-        setShowAccountPrompt(true);
+        const remaining = getTrialGenerationsRemaining();
+        showSignUpPrompt(`You've used all your trial credits. You have ${remaining} credits remaining. Sign up for unlimited credits!`);
       }
       return;
     }
@@ -573,89 +457,136 @@ export default function ResultsPage() {
     try {
       const response = await fetch('/api/tailor-content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userData, jobDescription, tone })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userData,
+          jobDescription: jobDescription.trim(),
+          tone,
+        }),
       });
+
       if (!response.ok) throw new Error('Network response was not ok');
-      const updated = await response.json();
-      setUserData(updated);
-      setContentUpdated(true);
+      
+      const tailoredData = await response.json();
+      setUserData(tailoredData);
+
+      // Update ATS analysis if included in the response
+      if (tailoredData.atsAnalysis) {
+        setAtsAnalysis(tailoredData.atsAnalysis);
+      }
+
+      // Save updated data to localStorage
+      localStorage.setItem('resumeResult', JSON.stringify(tailoredData));
+      
+      // Refresh usage data after successful generation
+      if (session) {
+        const entitlementResponse = await fetch('/api/entitlements');
+        if (entitlementResponse.ok) {
+          const entitlementData = await entitlementResponse.json();
+          setEntitlement(entitlementData);
+          setUserPlan(entitlementData.plan);
+        }
+      } else {
+        // Refresh trial usage for anonymous users
+        const trialResponse = await fetch('/api/trial-usage');
+        if (trialResponse.ok) {
+          const trialData = await trialResponse.json();
+          setTrialUsage(trialData);
+          
+          // Show post-generation signup modal for trial users who still have credits
+          const remainingCredits = Math.max(0, trialData.generationsLimit - trialData.generationsUsed);
+          if (remainingCredits > 0) {
+            setTimeout(() => {
+              setSignupType('post_generation');
+              setShowTrialSignup(true);
+            }, 1500); // Small delay to let user see the results first
+          }
+        }
+      }
     } catch (error) {
-      console.error('Generation error:', error);
-      showError('Failed to generate. Please try again.');
+      console.error('Generate error:', error);
+      // Silently handle errors - user can try again if needed
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Load data from localStorage on component mount
+  useEffect(() => {
+    // Load user data from localStorage
+    try {
+      const data = localStorage.getItem('resumeResult');
+      if (data) {
+        const parsed = JSON.parse(data);
+        setUserData(parsed);
+        // Check if userGoal was saved with the data
+        if (parsed.userGoal) {
+          setUserGoal(parsed.userGoal);
+        }
+        // Load job description from localStorage if available
+        if (parsed.jobDescription) {
+          setJobDescription(parsed.jobDescription);
+        }
+        // Load ATS analysis if available from generation
+        if (parsed.atsAnalysis) {
+          setAtsAnalysis(parsed.atsAnalysis);
+        }
+        console.log('Loaded user data:', parsed);
+      }
+      
+      // Also check for standalone job description in localStorage
+      const jobDesc = localStorage.getItem('jobDescription');
+      if (jobDesc && !jobDescription) {
+        setJobDescription(jobDesc);
+      }
+    } catch (e) {
+      console.error('Error loading user data:', e);
+    }
+  }, []);
+
+  // Fetch user entitlement and usage (authenticated) or trial usage (anonymous)
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-        // Get data from localStorage
-        const savedData = localStorage.getItem('resumeResult');
-        const savedJobDescription = localStorage.getItem('jobDescription');
-        const savedUserGoal = localStorage.getItem('userGoal');
-
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          setUserData(parsedData);
-          setContentUpdated(false);
-
-          // Process ATS analysis if it exists
-          if (parsedData.atsAnalysis) {
-            setAtsAnalysis(parsedData.atsAnalysis);
+      if (session?.user?.id) {
+        // Authenticated user - fetch entitlements and usage
+        try {
+          // Fetch entitlement, usage, and day pass usage in parallel
+          const [entitlementResponse, usageResponse, dayPassResponse] = await Promise.all([
+            fetch('/api/entitlements'),
+            fetch('/api/usage'),
+            fetch('/api/day-pass-usage')
+          ]);
+          
+          if (entitlementResponse.ok) {
+            const entitlementData = await entitlementResponse.json();
+            setEntitlement(entitlementData);
+            setUserPlan(entitlementData.plan);
           }
-        } else {
-          // Redirect if no data
-          router.push('/');
-          return;
-        }
-
-        if (savedJobDescription) {
-          setJobDescription(savedJobDescription);
-        }
-
-        if (savedUserGoal) {
-          setUserGoal(savedUserGoal);
-        }
-
-        // Fetch user entitlements and usage data
-        if (session) {
-          try {
-            const [entitlementResponse, usageResponse] = await Promise.all([
-              fetch('/api/entitlements'),
-              fetch('/api/usage')
-            ]);
-
-            if (entitlementResponse.ok) {
-              const entitlementData = await entitlementResponse.json();
-              setEntitlement(entitlementData);
-              setUserPlan(entitlementData.plan === 'free' ? 'standard' : entitlementData.plan);
-            }
-
-            if (usageResponse.ok) {
-              const usageData = await usageResponse.json();
-              setUsage(usageData);
-            }
-          } catch (error) {
-            console.error('Error fetching user data:', error);
+          
+          if (usageResponse.ok) {
+            const usageData = await usageResponse.json();
+            setUsage(usageData);
           }
-        } else {
-          // Fetch trial usage for anonymous users
-          try {
-            const trialResponse = await fetch('/api/trial-usage');
-            if (trialResponse.ok) {
-              const trialData = await trialResponse.json();
-              setTrialUsage(trialData);
-            }
-          } catch (error) {
-            console.error('Error fetching trial usage:', error);
+          
+          if (dayPassResponse.ok) {
+            const dayPassData = await dayPassResponse.json();
+            setDayPassUsage(dayPassData);
           }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
         }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-        router.push('/');
+      } else {
+        // Anonymous user - fetch trial usage
+        try {
+          const trialResponse = await fetch('/api/trial-usage');
+          if (trialResponse.ok) {
+            const trialData = await trialResponse.json();
+            setTrialUsage(trialData);
+          }
+        } catch (error) {
+          console.error('Error fetching trial usage:', error);
+        }
       }
       setEntitlementLoading(false);
       setUsageLoading(false);
@@ -715,7 +646,7 @@ export default function ResultsPage() {
   // Cover Letter Preview
   const renderCoverLetterPreview = () => {
     const scale = 1; // Preview uses 1x scale, PDF will use 1.75x
-
+    
     return (
       <div className="card p-6 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
@@ -826,7 +757,7 @@ export default function ResultsPage() {
         canonical="https://tailoredcv.app/results"
         robots="noindex,nofollow"
       />
-
+      
       {/* Simple Header */}
       <div className="bg-surface text-text border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -856,7 +787,7 @@ export default function ResultsPage() {
                 </div>
                 <h2 className="text-lg font-semibold text-text">Customization</h2>
               </div>
-
+          
               {(userGoal === 'cv' || userGoal === 'both') && (
                 <div className="space-y-4">
                   {/* Template Style and Theme Color on same line */}
@@ -939,7 +870,7 @@ export default function ResultsPage() {
               {userGoal !== 'cv' && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-muted">Cover Letter Tone</label>
-                  <select
+                  <select 
                     className="form-select w-full"
                     value={tone}
                     onChange={(e) => setTone(e.target.value)}
@@ -989,7 +920,7 @@ export default function ResultsPage() {
                     </button>
                   )}
                 </div>
-                <textarea
+                <textarea 
                   id="jobDescription"
                   className="form-textarea h-32 resize-none"
                   value={jobDescription}
@@ -1006,10 +937,10 @@ export default function ResultsPage() {
                   placeholder="Paste the job description here to tailor your documents..."
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <button
+                  <button 
                     className={`btn flex items-center gap-2 justify-center ${
-                      (isGenerating || !jobDescription.trim() || !canGenerate())
-                        ? 'bg-border text-muted cursor-not-allowed border border-border'
+                      (isGenerating || !jobDescription.trim() || !canGenerate()) 
+                        ? 'bg-border text-muted cursor-not-allowed border border-border' 
                         : 'btn-primary'
                     }`}
                     onClick={generateTailoredContent}
@@ -1026,8 +957,8 @@ export default function ResultsPage() {
                         'Generate'
                     }
                   </button>
-                  <button
-                    className="btn btn-secondary flex items-center justify-center"
+                  <button 
+                    className="btn btn-secondary flex items-center justify-center" 
                     onClick={() => router.push('/?step=1')}
                   >
                     Back to Wizard
@@ -1074,7 +1005,7 @@ export default function ResultsPage() {
                     <p className="text-xs text-muted mt-2">
                       Sign up for unlimited access!
                     </p>
-                    <button
+                    <button 
                       onClick={() => router.push('/auth/signup')}
                       className="text-xs text-green-600 hover:text-green-700 font-medium underline mt-1"
                     >
@@ -1121,7 +1052,7 @@ export default function ResultsPage() {
                         </select>
                       </div>
                       <button
-                        className={`w-full btn btn-primary btn-lg ${!(userGoal === 'cv' ? canDownloadResume() : canDownloadCoverLetter()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full btn btn-primary btn-lg ${!canDownload() ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={() => {
                           if (userGoal === 'cv') {
                             resumeFormat === 'pdf' ? downloadCV() : downloadResumeDocx();
@@ -1129,16 +1060,10 @@ export default function ResultsPage() {
                             coverLetterFormat === 'pdf' ? downloadCoverLetter() : downloadCoverLetterDocx();
                           }
                         }}
-                        disabled={!(userGoal === 'cv' ? canDownloadResume() : canDownloadCoverLetter())}
+                        disabled={!canDownload()}
                       >
                         <Download className="w-5 h-5 mr-2" />
-                        {(() => {
-                          const formatType = userGoal === 'cv'
-                            ? (resumeFormat === 'pdf' ? 'cv' : 'cvDocx')
-                            : (coverLetterFormat === 'pdf' ? 'coverLetter' : 'coverLetterDocx');
-                          const baseText = `Download ${userGoal === 'cv' ? terms.Resume : 'Cover Letter'} (${(userGoal === 'cv' ? resumeFormat : coverLetterFormat).toUpperCase()})`;
-                          return getDownloadButtonText(baseText, formatType);
-                        })()}
+                        Download {userGoal === 'cv' ? terms.Resume : 'Cover Letter'} ({(userGoal === 'cv' ? resumeFormat : coverLetterFormat).toUpperCase()})
                       </button>
                     </div>
                   </div>
@@ -1151,7 +1076,7 @@ export default function ResultsPage() {
               <div className="max-w-4xl mx-auto">
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-text">Job Match Analysis</h3>
+                    <h3 className="text-lg font-bold text-text">ATS Compatibility Analysis</h3>
                     <div className="flex items-center space-x-2">
                       <div className={`text-3xl font-bold ${
                         atsAnalysis.overallScore >= 80 ? 'text-green-600' :
@@ -1254,5 +1179,3 @@ export default function ResultsPage() {
     </>
   );
 }
-
-

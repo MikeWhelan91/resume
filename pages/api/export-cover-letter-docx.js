@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     }
 
     // Get user session and entitlement
-    let userPlan = 'free';
+    let userPlan = 'standard';
     let userId = null;
     try {
       const session = await getServerSession(req, res, authOptions);
@@ -33,8 +33,8 @@ export default async function handler(req, res) {
       console.error('Error fetching user entitlement:', error);
     }
 
-    // DOCX is not available for free users
-    if (userPlan === 'free') {
+    // DOCX is available for Pro plans only
+    if (!String(userPlan || '').startsWith('pro')) {
       return res.status(402).json({ 
         error: 'Upgrade required',
         message: 'DOCX downloads are only available for Pro users. Upgrade to access this feature.'

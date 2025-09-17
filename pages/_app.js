@@ -9,6 +9,7 @@ import { SessionProvider } from "next-auth/react";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { ErrorProvider } from "../contexts/ErrorContext";
+import { CreditProvider } from "../contexts/CreditContext";
 import CookieBanner from "../components/ui/CookieBanner";
 import BackToTop from "../components/ui/BackToTop";
 
@@ -18,6 +19,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
       <ThemeProvider>
         <LanguageProvider>
           <ErrorProvider>
+            <CreditProvider>
           <Head>
           <meta name="viewport" content="width=device-width,initial-scale=1" />
           <meta
@@ -64,6 +66,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
             <CookieBanner />
             <BackToTop />
           </div>
+            </CreditProvider>
           </ErrorProvider>
         </LanguageProvider>
       </ThemeProvider>

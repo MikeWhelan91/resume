@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { checkCreditAvailability } from '../../lib/credit-system';
+import { checkCreditAvailability } from '../../lib/credit-purchase-system';
 import { getTrialUsage } from '../../lib/trialUtils';
 
 export default async function handler(req, res) {

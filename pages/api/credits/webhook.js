@@ -37,22 +37,10 @@ export default async function handler(req, res) {
         if (session.metadata?.type === 'credit_purchase') {
           const { userId, packId, credits } = session.metadata
 
+          console.log(`🔄 Processing credit purchase: ${session.id} - ${credits} credits for user ${userId}`)
+
           // Add credits to user's account
           await addCredits(userId, parseInt(credits))
-
-          // Record the purchase
-          await prisma.creditPurchase.create({
-            data: {
-              userId: userId,
-              packId: packId,
-              credits: parseInt(credits),
-              amount: session.amount_total,
-              currency: session.currency,
-              stripePaymentId: session.payment_intent,
-              status: 'completed',
-              processedAt: new Date()
-            }
-          })
 
           console.log(`✅ Credit purchase completed: ${session.id} - ${credits} credits for user ${userId}`)
         }
@@ -64,6 +52,26 @@ export default async function handler(req, res) {
         // Handle expired credit purchase sessions
         if (expiredSession.metadata?.type === 'credit_purchase') {
           console.log(`⏰ Credit purchase session expired: ${expiredSession.id}`)
+        }
+        break
+
+      // Legacy payment intent events (keep for backward compatibility)
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object
+
+        // Only process if it has the old metadata format
+        if (paymentIntent.metadata.packId && !paymentIntent.metadata.type) {
+          await completeCreditPurchase(paymentIntent.id)
+          console.log(`✅ Legacy credit purchase completed: ${paymentIntent.id}`)
+        }
+        break
+
+      case 'payment_intent.payment_failed':
+        const failedPayment = event.data.object
+
+        // Mark purchase as failed (legacy)
+        if (failedPayment.metadata.packId && !failedPayment.metadata.type) {
+          console.log(`❌ Legacy credit purchase failed: ${failedPayment.id}`)
         }
         break
 

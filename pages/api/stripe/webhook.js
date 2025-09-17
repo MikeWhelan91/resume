@@ -125,10 +125,6 @@ async function handleCheckoutCompleted(session) {
     if (priceId === process.env.STRIPE_PRICE_PRO_ANNUAL) {
       plan = 'pro_annual'
     }
-  } else if (planType === 'day_pass') {
-    // Day pass - one-time payment
-    plan = 'day_pass'
-    expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
   }
 
   // Update entitlement
@@ -142,10 +138,9 @@ async function handleCheckoutCompleted(session) {
     }
   }
 
-  // Add expiration for day pass and clear free credits (they have unlimited access)
+  // Add expiration for day pass (legacy)
   if (expiresAt) {
     entitlementData.expiresAt = expiresAt
-    entitlementData.freeWeeklyCreditsRemaining = 0
   }
 
   await prisma.entitlement.upsert({
@@ -237,7 +232,7 @@ async function handleSubscriptionUpdated(subscription) {
   await prisma.entitlement.upsert({
     where: { userId: user.id },
     update: {
-      plan: isActive ? plan : 'free', // Revert to free if not active
+      plan: isActive ? plan : 'standard', // Revert to standard if not active
       status,
       features: {
         docx: isActive,
@@ -278,7 +273,7 @@ async function handleSubscriptionDeleted(subscription) {
   await prisma.entitlement.upsert({
     where: { userId: user.id },
     update: {
-      plan: 'free',
+      plan: 'standard',
       status: 'canceled',
       features: {
         docx: false,
@@ -288,7 +283,7 @@ async function handleSubscriptionDeleted(subscription) {
     },
     create: {
       userId: user.id,
-      plan: 'free',
+      plan: 'standard',
       status: 'canceled',
       features: {
         docx: false,

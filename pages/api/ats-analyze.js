@@ -1,12 +1,8 @@
-import OpenAI from 'openai';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
+import { checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-purchase-system';
 import { withLimiter } from '../../lib/ratelimit';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import aiService from '../../lib/ai-service';
 
 export default withLimiter(async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,9 +11,9 @@ export default withLimiter(async function handler(req, res) {
 
   const session = await getServerSession(req, res, authOptions);
   
-  // Require authentication for ATS analysis (premium feature)
+  // Require authentication for job match analysis (premium feature)
   if (!session?.user) {
-    return res.status(401).json({ error: 'Authentication required for ATS analysis' });
+    return res.status(401).json({ error: 'Authentication required for job match analysis' });
   }
 
   const userId = session.user.id;
@@ -32,11 +28,11 @@ export default withLimiter(async function handler(req, res) {
   }
 
   try {
-    // Check if user has access to ATS analysis (premium feature)
+    // Check if user has access to job match analysis (premium feature)
     const creditCheck = await checkCreditAvailability(userId, 'ats_analysis');
     if (!creditCheck.allowed) {
-      return res.status(429).json({ 
-        error: 'ATS Analysis not available',
+      return res.status(429).json({
+        error: 'Job Match Analysis not available',
         message: creditCheck.message,
         credits: creditCheck.credits,
         plan: creditCheck.plan,
@@ -47,14 +43,11 @@ export default withLimiter(async function handler(req, res) {
     // Prepare resume text for analysis
     const resumeText = formatResumeForAnalysis(resumeData);
 
-    // Generate ATS analysis using AI
-    const analysisResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.3,
-      messages: [
+    // Generate job match analysis using AI
+    const analysisResponse = await aiService.chatCompletion([
         {
           role: "system",
-          content: `You are an expert ATS (Applicant Tracking System) analyzer. Your task is to analyze a resume against a job description and provide a comprehensive ATS compatibility assessment.
+          content: `You are an expert job matching analyzer. Your task is to analyze a resume against a job description and provide a comprehensive job compatibility assessment focusing on content relevance and keyword optimization.
 
 Return your analysis as a JSON object with this exact structure:
 {
@@ -88,14 +81,14 @@ Return your analysis as a JSON object with this exact structure:
       "suggestions": ["<where to add it>"]
     }
   ],
-  "strengths": ["<what the resume does well for ATS>"],
+  "strengths": ["<what the resume does well for job matching>"],
   "quickWins": ["<easy improvements for immediate impact>"],
-  "industrySpecific": "<industry-specific ATS advice>"
+  "industrySpecific": "<industry-specific job matching advice>"
 }`
         },
         {
           role: "user",
-          content: `Please analyze this resume for ATS compatibility against the following job description.
+          content: `Please analyze this resume for job compatibility against the following job description.
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -105,15 +98,18 @@ ${resumeText}
 
 Focus on:
 1. Keyword matching between job description and resume
-2. ATS-friendly formatting and structure
-3. Content relevance and alignment
-4. Missing critical keywords or skills
-5. Industry-specific ATS considerations
+2. Content relevance and alignment with job requirements
+3. Skills alignment and experience matching
+4. Missing critical keywords or qualifications
+5. Industry-specific optimization opportunities
 
-Provide specific, actionable recommendations for improvement.`
+Provide specific, actionable recommendations for better job matching.`
         }
-      ]
-    });
+      ], {
+        model: "grok-3",
+        temperature: 0.3,
+        max_tokens: 2000
+      });
 
     const analysisText = analysisResponse.choices[0].message.content;
     let analysis;
@@ -123,17 +119,17 @@ Provide specific, actionable recommendations for improvement.`
       const cleanedResponse = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       analysis = JSON.parse(cleanedResponse);
     } catch (parseError) {
-      console.error('Failed to parse ATS analysis JSON:', parseError);
-      return res.status(500).json({ error: 'Failed to generate ATS analysis' });
+      console.error('Failed to parse job match analysis JSON:', parseError);
+      return res.status(500).json({ error: 'Failed to generate job match analysis' });
     }
 
     // Validate analysis structure
     if (!analysis.overallScore || !analysis.categories) {
-      console.error('Invalid ATS analysis structure:', analysis);
-      return res.status(500).json({ error: 'Invalid ATS analysis format' });
+      console.error('Invalid job match analysis structure:', analysis);
+      return res.status(500).json({ error: 'Invalid job match analysis format' });
     }
 
-    // Consume credit for ATS analysis
+    // Consume credit for job match analysis
     await consumeCredit(userId, 'ats_analysis');
     await trackApiUsage(userId, 'ats_analysis');
 
@@ -149,8 +145,8 @@ Provide specific, actionable recommendations for improvement.`
     });
 
   } catch (error) {
-    console.error('ATS analysis error:', error);
-    res.status(500).json({ error: 'Failed to analyze resume for ATS compatibility' });
+    console.error('Job match analysis error:', error);
+    res.status(500).json({ error: 'Failed to analyze resume for job compatibility' });
   }
 });
 

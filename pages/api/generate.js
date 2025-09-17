@@ -3,7 +3,7 @@ import fs from "fs";
 import formidable from "formidable";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
-import OpenAI from "openai";
+import aiService from "../../lib/ai-service";
 import { normalizeResumeData } from "../../lib/normalizeResume";
 import { withLimiter } from "../../lib/ratelimit";
 import { getServerSession } from 'next-auth/next';
@@ -46,18 +46,14 @@ function stripCodeFence(s=""){
 function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { return null; } }
 
 // ---- ATS Analysis Function ----
-async function analyzeATSScore(client, resumeData, jobDescription) {
+async function analyzeATSScore(aiService, resumeData, jobDescription) {
   if (!jobDescription || !resumeData) return null;
 
   try {
     // Convert resume data to text for analysis
     const resumeText = formatResumeForAnalysis(resumeData);
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
+    const response = await aiService.chatCompletion([
         {
           role: "system",
           content: `You are analyzing a resume that was AUTOMATICALLY GENERATED and ATS-OPTIMIZED by our system. The formatting and structure should already be perfect for ATS systems.
@@ -100,8 +96,11 @@ ${resumeText}
 
 What content gaps exist? What should the user add to their experience to better match this role?`
         }
-      ]
-    });
+      ], {
+        model: "grok-3",
+        temperature: 0.2,
+        max_tokens: 1500
+      });
 
     const analysisText = response.choices[0].message.content;
     const analysis = safeJSON(analysisText);
@@ -149,14 +148,15 @@ function formatResumeForAnalysis(resumeData) {
 }
 
 // ---- NEW: pass 1 — inventory skills strictly from résumé ----
-async function extractAllowedSkills(client, resumeText){
+async function extractAllowedSkills(aiService, resumeText){
   const sys = "Output ONLY JSON: {\"skills\": string[]} Extract skills mentioned IN THE RESUME TEXT ONLY. No guessing or synonyms. Ignore any job description.";
   const user = `RESUME_TEXT:\n${resumeText}`;
-  const r = await client.chat.completions.create({
+  const r = await aiService.chatCompletion([
+    { role:"system", content: sys },
+    { role:"user", content: user }
+  ], {
     model: "gpt-4o-mini",
     temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
   const inv = safeJSON(r.choices?.[0]?.message?.content || "") || {};
   const skills = Array.isArray(inv.skills) ? inv.skills.map(s=>String(s).trim()).filter(Boolean) : [];
@@ -165,7 +165,7 @@ async function extractAllowedSkills(client, resumeText){
 }
 
 // ---- NEW: combined skills processing for efficiency ----
-async function processAllSkills(client, resumeData, resumeText, projects, jobDesc) {
+async function processAllSkills(aiService, resumeData, resumeText, projects, jobDesc) {
   const sys = `Output ONLY JSON: {
     "resumeSkills": string[],
     "projectSkills": string[],
@@ -222,11 +222,12 @@ STRICT EXTRACTION RULES:
   const user = `RESUME_CONTENT:\n${resumeSkillsText}\n\nPROJECT_BULLETS:\n${projectBullets}\n\nJOB_DESCRIPTION:\n${jobDesc}`;
 
   try {
-    const r = await client.chat.completions.create({
+    const r = await aiService.chatCompletion([
+      { role:"system", content: sys },
+      { role:"user", content: user }
+    ], {
       model: "gpt-4o-mini",
       temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [{ role:"system", content: sys }, { role:"user", content: user }],
       max_tokens: 1000, // Speed optimization for skills
       top_p: 0.9
     });
@@ -253,14 +254,15 @@ STRICT EXTRACTION RULES:
 }
 
 // ---- NEW: inventory skills from job description ----
-async function extractJobSkills(client, jobDesc){
+async function extractJobSkills(aiService, jobDesc){
   const sys = "Output ONLY JSON: {\\\"skills\\\": string[]} Extract skills explicitly mentioned IN THE JOB DESCRIPTION ONLY. No guessing or synonyms.";
   const user = `JOB_DESCRIPTION:\n${jobDesc}`;
-  const r = await client.chat.completions.create({
+  const r = await aiService.chatCompletion([
+    { role:"system", content: sys },
+    { role:"user", content: user }
+  ], {
     model: "gpt-4o-mini",
     temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
   const inv = safeJSON(r.choices?.[0]?.message?.content || "") || {};
   const skills = Array.isArray(inv.skills) ? inv.skills.map(s=>String(s).trim()).filter(Boolean) : [];
@@ -269,15 +271,16 @@ async function extractJobSkills(client, jobDesc){
 }
 
 // ---- NEW: dynamically expand skills with synonyms ----
-async function expandSkills(client, skills){
+async function expandSkills(aiService, skills){
   if(!skills || skills.length === 0) return [];
   const sys = "Output ONLY JSON: {\\\"synonyms\\\": {<skill>: string[]}} For each SKILL in SKILLS, list up to three common keyword variants or synonyms that might appear in job postings.";
   const user = `SKILLS:${JSON.stringify(skills)}`;
-  const r = await client.chat.completions.create({
+  const r = await aiService.chatCompletion([
+    { role:"system", content: sys },
+    { role:"user", content: user }
+  ], {
     model: "gpt-4o-mini",
     temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
   const out = safeJSON(r.choices?.[0]?.message?.content || "");
   const map = out?.synonyms && typeof out.synonyms === 'object' ? out.synonyms : {};
@@ -290,7 +293,7 @@ async function expandSkills(client, skills){
 }
 
 // ---- NEW: consolidate long skills into concise 1-2 word terms ----
-async function consolidateSkills(client, skills){
+async function consolidateSkills(aiService, skills){
   if(!skills || skills.length === 0) return skills;
   
   // Filter out skills that are already concise (1-2 words)
@@ -328,12 +331,13 @@ EXAMPLES:
 
     const user = `Consolidate these skills into concise terms:\n${longSkills.map((skill, i) => `${i + 1}. ${skill}`).join('\n')}`;
     
-    const r = await client.chat.completions.create({
+    const r = await aiService.chatCompletion([
+      { role:"system", content: sys },
+      { role:"user", content: user }
+    ], {
       model: "gpt-4o-mini",
       temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
-    });
+      });
     
     const result = safeJSON(r.choices?.[0]?.message?.content || '{"skills": []}');
     const consolidatedSkills = Array.isArray(result.skills) 
@@ -361,7 +365,7 @@ EXAMPLES:
 }
 
 // ---- NEW: post-process bullets with modern resume best practices ----
-async function rewriteBullets(client, jobDesc, resumeContext, bullets){
+async function rewriteBullets(aiService, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
   
   const sys = `Output ONLY JSON: {"bullets": string[]}
@@ -425,11 +429,12 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
-  const r = await client.chat.completions.create({
+  const r = await aiService.chatCompletion([
+    { role:"system", content: sys },
+    { role:"user", content: user }
+  ], {
     model: "gpt-4o-mini",
     temperature: 0.3, // Balanced for creative enhancement while staying factual
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }],
     max_tokens: 2000, // Speed optimization for bullet rewriting
     top_p: 0.9
   });
@@ -440,15 +445,16 @@ async function rewriteBullets(client, jobDesc, resumeContext, bullets){
 }
 
 // ---- NEW: verify rewritten bullets against resume ----
-async function verifyBullets(client, resumeContext, original, rewritten){
+async function verifyBullets(aiService, resumeContext, original, rewritten){
   if(!rewritten || rewritten.length === 0) return rewritten;
   const sys = "Output ONLY JSON: {\\\"valid\\\": boolean[]} For each bullet in NEW_BULLETS, return true if it is fully supported by RESUME_CONTEXT or ORIGINAL_BULLETS. Return false otherwise.";
   const user = `RESUME_CONTEXT:\n${resumeContext}\nORIGINAL_BULLETS:${JSON.stringify(original)}\nNEW_BULLETS:${JSON.stringify(rewritten)}`;
-  const r = await client.chat.completions.create({
+  const r = await aiService.chatCompletion([
+    { role:"system", content: sys },
+    { role:"user", content: user }
+  ], {
     model: "gpt-4o-mini",
     temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [{ role:"system", content: sys }, { role:"user", content: user }]
   });
   const out = safeJSON(r.choices?.[0]?.message?.content || "");
   const flags = Array.isArray(out?.valid) ? out.valid : [];
@@ -456,7 +462,7 @@ async function verifyBullets(client, resumeContext, original, rewritten){
 }
 
 // ---- NEW: combined summary optimization and ATS analysis ----
-async function optimizeSummaryAndATS(client, resumeContext, jobDesc, currentSummary, resumeData, jobSkills = []){
+async function optimizeSummaryAndATS(aiService, resumeContext, jobDesc, currentSummary, resumeData, jobSkills = []){
   const sys = `Output ONLY JSON: {
     "optimizedSummary": "string",
     "atsAnalysis": {
@@ -530,12 +536,13 @@ TONE: Professional, constructive, focused on technical skill enhancement.`;
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nJOB_TECHNICAL_SKILLS:\n${jobSkills.join(', ')}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nCURRENT_SUMMARY:\n${currentSummary || "No existing summary"}`;
 
   try {
-    const r = await client.chat.completions.create({
+    const r = await aiService.chatCompletion([
+      { role:"system", content: sys },
+      { role:"user", content: user }
+    ], {
       model: "gpt-4o-mini",
       temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [{ role:"system", content: sys }, { role:"user", content: user }]
-    });
+      });
 
     const result = safeJSON(r.choices?.[0]?.message?.content || '{}');
 
@@ -553,8 +560,8 @@ TONE: Professional, constructive, focused on technical skill enhancement.`;
 }
 
 // ---- Legacy function kept for compatibility ----
-async function optimizeSummary(client, resumeContext, jobDesc, currentSummary){
-  const result = await optimizeSummaryAndATS(client, resumeContext, jobDesc, currentSummary, null, []);
+async function optimizeSummary(aiService, resumeContext, jobDesc, currentSummary){
+  const result = await optimizeSummaryAndATS(aiService, resumeContext, jobDesc, currentSummary, null, []);
   return result.optimizedSummary;
 }
 
@@ -658,12 +665,12 @@ async function coreHandler(req, res){
       });
     }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Using centralized AI service (Grok with OpenAI fallback)
 
     // OPTIMIZED: Combined skills processing (6 calls → 1 call) - start in parallel
     console.time('Skills Processing');
     const skillsPromise = processAllSkills(
-      client,
+      aiService,
       resumeData,
       resumeText,
       resumeData?.projects || [],
@@ -805,11 +812,12 @@ async function coreHandler(req, res){
 
     // PARALLEL OPTIMIZATION: Start main generation call with speed optimizations
     console.time('Main Generation');
-    const generationPromise = client.chat.completions.create({
+    const generationPromise = aiService.chatCompletion([
+      { role:"system", content: system },
+      { role:"user", content: user }
+    ], {
       model: "gpt-4o-mini",
       temperature: 0.1, // Reduced temperature for more factual, less creative output
-      response_format: { type: "json_object" },
-      messages: [{ role:"system", content: system }, { role:"user", content: user }],
       // Speed optimizations
       max_tokens: userGoal === 'cv' ? 2000 : userGoal === 'cover-letter' ? 800 : 3000,
       top_p: 0.9, // Reduce response variability for faster processing
@@ -882,12 +890,12 @@ async function coreHandler(req, res){
       // Start bullet optimization if needed
       let bulletsPromise = null;
       if (allBulletsToOptimize.length > 0) {
-        bulletsPromise = rewriteBullets(client, jobDesc, resumeContext, allBulletsToOptimize);
+        bulletsPromise = rewriteBullets(aiService, jobDesc, resumeContext, allBulletsToOptimize);
         promises.push(bulletsPromise);
       }
 
       // Start summary+ATS optimization in parallel
-      const summaryPromise = optimizeSummaryAndATS(client, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
+      const summaryPromise = optimizeSummaryAndATS(aiService, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
       promises.push(summaryPromise);
 
       // Wait for both to complete

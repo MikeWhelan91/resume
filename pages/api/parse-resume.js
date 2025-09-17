@@ -3,7 +3,7 @@ import fs from "fs";
 import formidable from "formidable";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
-import OpenAI from "openai";
+import aiService from "../../lib/ai-service";
 import { normalizeResumeData } from "../../lib/normalizeResume";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
@@ -113,19 +113,25 @@ export default async function handler(req,res){
       resumeText = await extractTextFromFile(files?.resume || files?.file);
     }
     if (!resumeText) return res.status(400).json({ error:"No readable file" });
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Using centralized AI service (Grok with OpenAI fallback)
     const system = `Extract as JSON: {"resumeData":{name,title?,email?,phone?,location?,summary?,links[],skills[],experience[],education[],projects[]}}
 Experience: company,title,start,end,location?,bullets[]. Education: school,degree,start,end,grade?. Projects: name,description?,start?,end?,present?,url?,demo?,bullets[].`;
     const user = `${resumeText.slice(0, 15000)}`; // Limit input text for faster processing
-    const resp = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [{ role:"system", content: system }, { role:"user", content: user }],
-      max_tokens: 2000
-    });
-    const json = safeJSON(resp.choices?.[0]?.message?.content || "");
-    if (!json) return res.status(502).json({ error:"Bad model output" });
+    const resp = await aiService.chatCompletion([
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ], {
+        model: "grok-3-mini",
+        temperature: 0,
+        max_tokens: 4000
+      });
+    const rawContent = resp.choices?.[0]?.message?.content || "";
+    console.log('🔍 Raw AI response:', rawContent);
+    const json = safeJSON(rawContent);
+    if (!json) {
+      console.error('❌ Failed to parse JSON from AI response:', rawContent);
+      return res.status(502).json({ error:"Bad model output", raw: rawContent.substring(0, 500) });
+    }
     const rd = normalizeResumeData(json.resumeData || json);
     
     // Consume trial usage for anonymous users after successful processing

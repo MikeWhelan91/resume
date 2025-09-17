@@ -77,10 +77,8 @@ export const authOptions = {
           if (existingUser && !existingUser.entitlement) {
             await prisma.entitlement.create({
               data: {
-                userId: existingUser.id,
-                plan: 'free',
-                status: 'active',
-                freeWeeklyCreditsRemaining: 10
+                userId: existingUser.id
+                // plan/status/default credits are set by Prisma schema defaults
               }
             });
           }

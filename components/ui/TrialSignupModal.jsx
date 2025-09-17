@@ -57,10 +57,10 @@ export default function TrialSignupModal({
           </div>
           
           <div className="bg-surface rounded-lg p-4 border-2 border-green-300">
-            <div className="font-medium text-green-700 mb-2">📈 Free Account</div>
+            <div className="font-medium text-green-700 mb-2">📈 Standard Account</div>
             <ul className="space-y-1 text-green-600">
-              <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> <strong>10 generations/week</strong></li>
-              <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> PDF + DOCX downloads</li>
+              <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> <strong>6 free credits/month</strong></li>
+              <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> PDF downloads included</li>
               <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> Professional template</li>
               <li className="flex items-center"><Check className="w-3 h-3 mr-1" /> Save unlimited {terms.resumePlural}</li>
             </ul>
@@ -69,7 +69,7 @@ export default function TrialSignupModal({
       </div>
 
       <div className="text-center text-xs text-muted mb-6">
-        💡 <strong>Pro tip:</strong> Most users apply to 5-10 jobs per week. Free accounts give you enough generations for serious job hunting!
+        💡 <strong>Pro tip:</strong> Most users apply to 5-10 jobs per month. Standard Accounts give you enough generations for serious job hunting!
       </div>
     </>
   );
@@ -85,14 +85,14 @@ export default function TrialSignupModal({
           Trial credits used up
         </h2>
         <p className="text-muted mb-4">
-          You've used all <strong>2 trial generations</strong>. Sign up to continue with 10 free generations per week!
+          You've used all <strong>2 trial generations</strong>. Sign up to continue with 6 free credits per month!
         </p>
       </div>
 
       {/* Value proposition */}
       <div className="bg-blue-50 rounded-xl p-6 mb-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-center">
-          Continue your job search with a free account 🚀
+          Continue your job search with a Standard Account 🚀
         </h3>
         
         <div className="space-y-3 text-sm">
@@ -101,8 +101,8 @@ export default function TrialSignupModal({
               <Check className="w-4 h-4 text-blue-600" />
             </div>
             <div>
-              <div className="font-medium text-gray-900 dark:text-white">10 personalized {terms.resumePlural} per week</div>
-              <div className="text-muted">5x more than your trial - enough for serious job hunting</div>
+              <div className="font-medium text-gray-900 dark:text-white">6 free credits per month</div>
+              <div className="text-muted">Enough to create multiple tailored documents</div>
             </div>
           </div>
           
@@ -111,7 +111,7 @@ export default function TrialSignupModal({
               <Check className="w-4 h-4 text-green-600" />
             </div>
             <div>
-              <div className="font-medium text-gray-900 dark:text-white">PDF + DOCX downloads</div>
+              <div className="font-medium text-gray-900 dark:text-white">PDF downloads included</div>
               <div className="text-muted">Professional formats accepted everywhere</div>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function TrialSignupModal({
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {isSigningIn ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@ export default function TrialSignupModal({
               className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {isSigningIn ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -218,3 +218,4 @@ export default function TrialSignupModal({
     </div>
   );
 }
+

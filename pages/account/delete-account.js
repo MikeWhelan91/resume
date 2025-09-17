@@ -125,7 +125,7 @@ export default function DeleteAccount() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-4 border-gray-200 border-t-indigo-600"></div>
       </div>
     );
   }
@@ -133,10 +133,10 @@ export default function DeleteAccount() {
   if (!session) return null;
 
   const planDisplayNames = {
-    free: 'Free Plan',
+    standard: 'Standard User',
+    free: 'Standard User',
     pro_monthly: 'Pro Monthly',
-    pro_annual: 'Pro Annual', 
-    day_pass: 'Day Pass'
+    pro_annual: 'Pro Annual'
   };
 
   // If account deletion is pending
@@ -189,7 +189,7 @@ export default function DeleteAccount() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Current plan:</span>
-                      <span>{planDisplayNames[entitlement?.plan] || 'Free Plan'}</span>
+                      <span>{planDisplayNames[entitlement?.plan] || 'Standard User'}</span>
                     </div>
                   </div>
                 </div>
@@ -313,12 +313,12 @@ export default function DeleteAccount() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted">Current Plan</label>
-                      <div className="text-text">{planDisplayNames[entitlement?.plan] || 'Free Plan'}</div>
+                      <div className="text-text">{planDisplayNames[entitlement?.plan] || 'Standard User'}</div>
                     </div>
-                    {entitlement?.plan === 'free' && (
+                    {(entitlement?.plan === 'standard' || entitlement?.plan === 'free') && (
                       <div>
                         <label className="text-sm font-medium text-muted">Credits Remaining</label>
-                        <div className="text-text">{entitlement.freeWeeklyCreditsRemaining || 0} remaining</div>
+                        <div className="text-text">{(entitlement.freeCreditsThisMonth ?? 0) + (entitlement.creditBalance ?? 0)} remaining</div>
                       </div>
                     )}
                   </div>

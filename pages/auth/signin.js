@@ -47,7 +47,7 @@ export default function SignIn({ csrfToken }) {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
+          <input name="csrfToken" type="hidden" defaultValue={csrfToken || ''} />
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -157,7 +157,14 @@ export async function getServerSideProps(context) {
 
   return {
     props: {
-      csrfToken: await getCsrfToken(context),
+      // Ensure we never return undefined to avoid Next.js serialization error
+      csrfToken: await (async () => {
+        try {
+          return (await getCsrfToken(context)) ?? null
+        } catch (e) {
+          return null
+        }
+      })(),
     },
   }
 }

@@ -71,7 +71,7 @@ export default function Account() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-4 border-gray-200 border-t-primary"></div>
       </div>
     );
   }
@@ -79,10 +79,10 @@ export default function Account() {
   if (!session) return null;
 
   const planDisplayNames = {
-    free: 'Free Plan',
+    standard: 'Standard User',
+    free: 'Standard User',
     pro_monthly: 'Pro Monthly',
-    pro_yearly: 'Pro Yearly', 
-    day_pass: 'Day Pass'
+    pro_annual: 'Pro Annual'
   };
 
   return (

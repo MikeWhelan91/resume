@@ -30,8 +30,8 @@ export default function CancelSubscription() {
         const data = await response.json();
         setEntitlement(data);
         
-        // Redirect free users back to account page
-        if (data.plan === 'free') {
+        // Redirect standard users back to account page (no active subscription)
+        if (data.plan === 'standard' || data.plan === 'free') {
           router.push('/account');
           return;
         }
@@ -70,7 +70,7 @@ export default function CancelSubscription() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-4 border-gray-200 border-t-indigo-600"></div>
       </div>
     );
   }
@@ -79,8 +79,7 @@ export default function CancelSubscription() {
 
   const planDisplayNames = {
     pro_monthly: 'Pro Monthly',
-    pro_yearly: 'Pro Yearly', 
-    day_pass: 'Day Pass'
+    pro_annual: 'Pro Annual'
   };
 
   return (
@@ -135,7 +134,7 @@ export default function CancelSubscription() {
                   <div className="text-right">
                     <p className="text-sm text-muted">Next billing</p>
                     <p className="text-sm font-medium text-text">
-                      {entitlement?.plan?.includes('yearly') ? 'Annual' : 'Monthly'}
+                      {entitlement?.plan === 'pro_annual' ? 'Annual' : 'Monthly'}
                     </p>
                   </div>
                 </div>
@@ -151,7 +150,7 @@ export default function CancelSubscription() {
                   <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                   <div>
                     <p className="text-text font-medium">Unlimited document generations</p>
-                    <p className="text-sm text-muted">You'll be limited to 15 free generations per week</p>
+                    <p className="text-sm text-muted">You'll return to the Standard plan with monthly free credits and paid credit packs.</p>
                   </div>
                 </div>
                 
@@ -252,7 +251,7 @@ export default function CancelSubscription() {
                 >
                   {cancelling ? (
                     <>
-                      <div className="animate-spin -ml-1 mr-3 h-5 w-5 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                      <div className="animate-spin -ml-1 mr-3 h-5 w-5 border-2 border-red-300 border-t-red-500 rounded-full"></div>
                       Opening Billing Portal...
                     </>
                   ) : (

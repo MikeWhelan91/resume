@@ -83,11 +83,11 @@ export default function Dashboard() {
 
   const getPlanDisplayName = (plan) => {
     switch (plan) {
-      case 'free': return 'Free Plan';
-      case 'day_pass': return 'Day Pass';
+      case 'free':
+      case 'standard': return 'Standard User';
       case 'pro_monthly': return 'Pro Monthly';
-      case 'pro_yearly': return 'Pro Yearly';
-      default: return 'Free Plan';
+      case 'pro_annual': return 'Pro Annual';
+      default: return 'Standard User';
     }
   };
 
@@ -141,7 +141,7 @@ export default function Dashboard() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-4 border-gray-200 border-t-primary"></div>
       </div>
     );
   }
@@ -224,7 +224,7 @@ export default function Dashboard() {
                   <p className="text-lg font-bold text-text">{getPlanDisplayName(entitlement?.plan)}</p>
                 </div>
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
-                  {entitlement?.plan === 'free' ? (
+                  {(entitlement?.plan === 'standard' || entitlement?.plan === 'free') ? (
                     <Users className="w-6 h-6 text-indigo-600" />
                   ) : (
                     <Crown className="w-6 h-6 text-indigo-600" />
@@ -232,7 +232,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-4">
-                {entitlement?.plan === 'free' ? (
+                {(entitlement?.plan === 'standard' || entitlement?.plan === 'free') ? (
                   <Link href="/pricing" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
                     Upgrade Plan →
                   </Link>
@@ -371,7 +371,7 @@ export default function Dashboard() {
 
 
               {/* Pro Features */}
-              {entitlement?.plan === 'free' && (
+              {(entitlement?.plan === 'standard') && (
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg p-6 text-white">
                   <div className="flex items-center mb-3">
                     <Crown className="w-6 h-6 mr-2" />
@@ -388,7 +388,7 @@ export default function Dashboard() {
                     </li>
                     <li className="flex items-center">
                       <Target className="w-4 h-4 mr-2" />
-                      Advanced ATS optimization
+                      Smart job matching
                     </li>
                     <li className="flex items-center">
                       <FileText className="w-4 h-4 mr-2" />
@@ -408,7 +408,7 @@ export default function Dashboard() {
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">💡 Pro Tip</h3>
                 <p className="text-sm text-blue-700 dark:text-blue-200">
-                  Use the ATS optimizer to improve your {terms.resume}'s compatibility with applicant tracking systems and increase your chances of getting noticed.
+                  Use our AI job matcher to optimize your {terms.resume}'s content and keywords for specific job requirements and increase your chances of getting noticed.
                 </p>
               </div>
 
@@ -420,3 +420,5 @@ export default function Dashboard() {
     </>
   );
 }
+
+

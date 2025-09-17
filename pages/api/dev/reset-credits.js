@@ -18,18 +18,18 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Authentication required' })
     }
 
-    // Reset credits to 5
+    // Reset monthly free credits to 6
     const updated = await prisma.entitlement.update({
       where: { userId: session.user.id },
       data: {
-        freeWeeklyCreditsRemaining: 5,
-        lastWeeklyReset: new Date()
+        freeCreditsThisMonth: 6,
+        lastMonthlyReset: new Date()
       }
     })
 
     return res.status(200).json({ 
-      message: 'Credits reset successfully',
-      credits: updated.freeWeeklyCreditsRemaining 
+      message: 'Monthly credits reset successfully',
+      credits: updated.freeCreditsThisMonth 
     })
   } catch (error) {
     console.error('Error resetting credits:', error)

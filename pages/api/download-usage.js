@@ -4,22 +4,12 @@ import { authOptions } from './auth/[...nextauth]'
 import { getEffectivePlan } from '../../lib/credit-system'
 import { getUserEntitlement } from '../../lib/credit-purchase-system'
 
-// Get the start of the current week (Monday)
-function getWeekStart() {
+// Get the start of the current month
+function getMonthStart() {
   const now = new Date()
-  const dayOfWeek = now.getDay()
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Sunday = 0, so adjust
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday)
-  weekStart.setHours(0, 0, 0, 0)
-  return weekStart
-}
-
-// Get the start of the current day
-function getDayStart() {
-  const now = new Date()
-  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  dayStart.setHours(0, 0, 0, 0)
-  return dayStart
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  monthStart.setHours(0, 0, 0, 0)
+  return monthStart
 }
 
 export default async function handler(req, res) {
@@ -38,9 +28,8 @@ export default async function handler(req, res) {
     const entitlement = await getUserEntitlement(userId)
     const userPlan = getEffectivePlan(entitlement)
     
-    // Use daily limits for day pass users, weekly for others
-    const isDayPass = userPlan === 'day_pass'
-    const timeStart = isDayPass ? getDayStart() : getWeekStart()
+    // Track downloads from the start of the current month
+    const timeStart = getMonthStart()
     
     // Count PDF downloads
     const pdfDownloads = await prisma.apiUsage.count({
@@ -67,7 +56,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       pdfDownloads,
       docxDownloads,
-      period: isDayPass ? 'day' : 'week',
+      period: 'month',
       userPlan
     })
   } catch (error) {

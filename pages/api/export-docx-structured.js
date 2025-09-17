@@ -1,8 +1,8 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-import { getUserEntitlement } from '../../lib/credit-purchase-system';
-import { getEffectivePlan, checkCreditAvailability, consumeCredit, trackApiUsage } from '../../lib/credit-system';
+import { getUserEntitlement, trackApiUsage } from '../../lib/credit-purchase-system';
+import { getEffectivePlan } from '../../lib/credit-system';
 
 function h(text, level = HeadingLevel.HEADING_2) {
   return new Paragraph({ heading: level, children: [new TextRun(text)] });
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     if (!data || !data.name) return res.status(400).json({ error: "Missing data" });
 
     // Get user session and entitlement
-    let userPlan = 'free';
+    let userPlan = 'standard';
     let userId = null;
     try {
       const session = await getServerSession(req, res, authOptions);
@@ -31,25 +31,12 @@ export default async function handler(req, res) {
       console.error('Error fetching user entitlement:', error);
     }
 
-    // DOCX is not available for free users
-    if (userPlan === 'free') {
+    // DOCX available only for Pro plans
+    if (!String(userPlan || '').startsWith('pro')) {
       return res.status(402).json({ 
         error: 'Upgrade required',
         message: 'DOCX downloads are only available for Pro users. Upgrade to access this feature.'
       });
-    }
-
-    // Check credit availability for downloads
-    if (userId) {
-      const creditCheck = await checkCreditAvailability(userId, 'download');
-      if (!creditCheck.allowed) {
-        return res.status(429).json({ 
-          error: 'Limit exceeded', 
-          message: creditCheck.message,
-          credits: creditCheck.credits,
-          plan: creditCheck.plan
-        });
-      }
     }
 
     const docChildren = [];
@@ -90,9 +77,8 @@ export default async function handler(req, res) {
     const doc = new Document({ sections: [{ properties: {}, children: docChildren }] });
     const buffer = await Packer.toBuffer(doc);
 
-    // Track usage and consume credit after successful generation
+    // Track usage after successful generation
     if (userId) {
-      await consumeCredit(userId, 'download');
       await trackApiUsage(userId, 'docx-download');
     }
 

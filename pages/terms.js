@@ -81,9 +81,9 @@ export default function TermsOfService() {
                 4. Subscription and Billing
               </h2>
               
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Free Plan</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Standard Plan</h3>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Our free plan provides limited access with 10 credits per week. Credits reset every Monday at midnight Dublin time.
+                The Standard plan includes limited access with monthly free credits. Free credits reset on a monthly basis.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Paid Plans</h3>

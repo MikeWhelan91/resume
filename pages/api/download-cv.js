@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   // Get user session and entitlement, or handle trial user
-  let userPlan = 'free';
+  let userPlan = 'standard';
   let userId = null;
   let entitlement = null;
   let isTrialUser = false;
@@ -80,9 +80,10 @@ export default async function handler(req, res) {
     }
   }
 
-  // Free plan users and trial users are restricted to default color and professional template
-  const effectiveAccent = (userPlan === 'free' || isTrialUser) ? '#6b7280' : accent;
-  const effectiveTemplate = (userPlan === 'free' || isTrialUser) ? 'professional' : template;
+  // Standard and trial users are restricted to default color and professional template
+  const isPro = String(userPlan || '').startsWith('pro');
+  const effectiveAccent = (!isPro || isTrialUser) ? '#6b7280' : accent;
+  const effectiveTemplate = (!isPro || isTrialUser) ? 'professional' : template;
 
   const effectiveUserPlan = isTrialUser ? 'free' : userPlan;
   const html = generateCVHTML(data, effectiveTemplate, effectiveAccent, effectiveUserPlan);
@@ -128,7 +129,7 @@ export default async function handler(req, res) {
   }
 }
 
-function generateCVHTML(userData, template, accent, userPlan = 'free') {
+function generateCVHTML(userData, template, accent, userPlan = 'standard') {
   const content = ReactDOMServer.renderToStaticMarkup(
     <ResumeTemplate userData={userData} template={template} accent={accent} isPDF={true} userPlan={userPlan} />
   );

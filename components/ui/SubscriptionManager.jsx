@@ -11,7 +11,7 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
   }, [entitlement]);
 
   const fetchSubscriptionInfo = async () => {
-    if (!entitlement || entitlement.plan === 'free') return;
+    if (!entitlement || !String(entitlement.plan || '').startsWith('pro_')) return;
     
     try {
       const response = await fetch('/api/stripe/subscription-info');
@@ -38,17 +38,11 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
 
   const getPlanDetails = (plan) => {
     const plans = {
-      free: {
-        name: 'Free',
+      standard: {
+        name: 'Standard',
         price: 'Free',
-        features: ['10 resumes/week', 'PDF downloads only', 'Basic templates'],
+        features: ['6 free credits/month', 'PDF downloads', 'Basic templates'],
         color: 'gray'
-      },
-      day_pass: {
-        name: 'Day Pass',
-        price: '€2.99/24h',
-        features: ['30 resumes/day', 'PDF & DOCX downloads', 'All templates'],
-        color: 'blue'
       },
       pro_monthly: {
         name: 'Pro Monthly',
@@ -63,7 +57,7 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
         color: 'green'
       }
     };
-    return plans[plan] || plans.free;
+    return plans[plan] || plans.standard;
   };
 
   const formatExpiryDate = (expiresAt) => {
@@ -139,9 +133,9 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
     );
   }
 
-  const planDetails = getPlanDetails(entitlement.plan);
-  const isFreePlan = entitlement.plan === 'free';
-  const isDayPass = entitlement.plan === 'day_pass';
+  const planDetails = getPlanDetails(entitlement.plan === 'free' ? 'standard' : entitlement.plan);
+  const isFreePlan = (entitlement.plan === 'standard' || entitlement.plan === 'free');
+  const isDayPass = false;
   const isProPlan = entitlement.plan?.startsWith('pro_');
 
   return (
@@ -181,24 +175,24 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
           <div className="flex items-center space-x-2 mb-2">
             <Clock className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">Weekly Usage</span>
+            <span className="text-sm font-medium text-blue-900">Monthly Free Credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-blue-800">Credits Used:</span>
+            <span className="text-blue-800">Used:</span>
             <span className="font-medium text-blue-900">
-              {10 - (entitlement.freeWeeklyCreditsRemaining || 0)}/10
+              {Math.max(0, 6 - (entitlement.freeCreditsThisMonth ?? 0))}/6
             </span>
           </div>
           <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ 
-                width: `${((10 - (entitlement.freeWeeklyCreditsRemaining || 0)) / 10) * 100}%` 
+                width: `${((Math.max(0, 6 - (entitlement.freeCreditsThisMonth ?? 0))) / 6) * 100}%` 
               }}
             />
           </div>
           <p className="text-xs text-blue-700 mt-2">
-            Credits reset every Monday at midnight Dublin time
+            Free credits reset monthly
           </p>
         </div>
       )}
@@ -282,12 +276,6 @@ export default function SubscriptionManager({ entitlement, onUpdate }) {
         {/* Quick upgrade options for free users */}
         {isFreePlan && (
           <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200">
-            <button
-              onClick={() => handleUpgrade('day_pass')}
-              className="btn btn-ghost btn-sm text-blue-600 hover:bg-blue-50"
-            >
-              Day Pass €2.99
-            </button>
             <button
               onClick={() => handleUpgrade('pro_monthly')}
               className="btn btn-ghost btn-sm text-purple-600 hover:bg-purple-50"

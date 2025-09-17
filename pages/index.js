@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import HeroUpload from '../components/ui/HeroUpload';
+import AnimatedJourney from '../components/ui/AnimatedJourney';
 import SeoHead from '../components/SeoHead';
 
 export default function Home(){
@@ -12,7 +13,7 @@ export default function Home(){
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-primary"></div>
       </div>
     );
   }
@@ -22,6 +23,7 @@ export default function Home(){
     <>
       <SeoHead canonical="https://tailoredcv.app/" />
       <HeroUpload />
+      <AnimatedJourney />
     </>
   );
 }

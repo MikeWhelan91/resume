@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import aiService from '../../lib/ai-service';
 import { normalizeResumeData } from '../../lib/normalizeResume';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
   // Check user authentication and plan
   let userId = null;
-  let userPlan = 'free';
+  let userPlan = 'standard';
   
   try {
     const session = await getServerSession(req, res, authOptions);
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   }
 
   // ATS optimization is Pro-only
-  if (userPlan === 'free') {
+  if (!String(userPlan || '').startsWith('pro')) {
     return res.status(403).json({ 
       error: 'Pro feature required', 
       message: 'ATS optimization is only available for Pro users. Please upgrade to access this feature.'
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Using centralized AI service (Grok with OpenAI fallback)
     const resumeData = userData.resumeData;
 
     // Enhanced ATS optimization system prompt
@@ -92,15 +92,14 @@ Resume Data:
 ${resumePayload}${jobDescContext}
 `.trim();
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: [
+    const response = await aiService.chatCompletion([
         { role: "system", content: system },
         { role: "user", content: user }
-      ]
-    });
+      ], {
+        model: "grok-3",
+        temperature: 0.3,
+        max_tokens: 4000
+      });
 
     const raw = response.choices?.[0]?.message?.content || "";
     const json = safeJSON(raw);

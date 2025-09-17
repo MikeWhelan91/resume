@@ -33,7 +33,14 @@
       "Bash(del \"C:\\Users\\whela\\resume\\test_cv_with_projects.txt\")",
       "WebFetch(domain:www.resumebuild.ai)",
       "Bash(del fix-schema.sql)",
-      "Bash(del fix-credits.js)"
+      "Bash(del fix-credits.js)",
+      "Bash(perl:*)",
+      "Bash(del missing_content.txt)",
+      "Bash(npx next build:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx next lint:*)",
+      "Bash(cmd /c:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

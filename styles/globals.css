@@ -6,7 +6,7 @@
 
 :root {
   /* Professional Color System - Light Mode */
-  --tc-bg: 248 250 252;           /* Soft blue-gray background */
+  --tc-bg: 255 255 255;           /* Clean white background */
   --tc-surface: 255 255 255;      /* Clean white for cards */
   --tc-surface-elevated: 255 255 255; /* Elevated surface */
   --tc-text: 15 23 42;            /* Slate-900 - deep, readable text */

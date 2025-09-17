@@ -2888,7 +2888,7 @@ export default async function handler(req, res) {
     }
 
     // Get user session and entitlement
-    let userPlan = 'free';
+    let userPlan = 'standard';
     let userId = null;
     try {
       const session = await getServerSession(req, res, authOptions);
@@ -2901,8 +2901,8 @@ export default async function handler(req, res) {
       console.error('Error fetching user entitlement:', error);
     }
 
-    // DOCX is not available for free users
-    if (userPlan === 'free') {
+    // DOCX export is a Pro-only feature
+    if (!String(userPlan || '').startsWith('pro')) {
       return res.status(402).json({ 
         error: 'Upgrade required',
         message: 'DOCX export is only available for Pro users. Please upgrade your plan.'
@@ -2935,9 +2935,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // Free users can only use Professional template and default color
-    const effectiveTemplate = userPlan === 'free' ? 'professional' : template;
-    const effectiveAccent = userPlan === 'free' ? '#6b7280' : accent;
+    // Non-Pro users can only use Professional template and default color
+    const isPro = String(userPlan || '').startsWith('pro');
+    const effectiveTemplate = !isPro ? 'professional' : template;
+    const effectiveAccent = !isPro ? '#6b7280' : accent;
 
     let documentChildren;
     

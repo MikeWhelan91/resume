@@ -1,12 +1,25 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import { Upload, Sparkles, ArrowRight, Zap, Shield, Star, Clock, Info, X } from 'lucide-react';
+import {
+  Upload,
+  Sparkles,
+  ArrowRight,
+  Target,
+  Zap,
+  Shield,
+  Star,
+  Clock,
+  Info,
+  X
+} from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useError } from '../../contexts/ErrorContext';
+import { useCreditContext } from '../../contexts/CreditContext';
 import { InfoTooltip } from './TooltipPortal';
 import OnboardingTourFixed from './OnboardingTourFixed';
 import FirstTimeUserGuide from './FirstTimeUserGuide';
+import { motion } from 'framer-motion';
 
 // Single Carousel Component
 function SingleCarousel({ features, offset = 0, colorTheme = 'default' }) {
@@ -68,7 +81,14 @@ function SingleCarousel({ features, offset = 0, colorTheme = 'default' }) {
       {/* Background glow effect */}
       <div className={`absolute inset-0 bg-gradient-to-r ${theme.glow} rounded-xl blur-xl`}></div>
 
-      <div className={`relative text-center overflow-hidden h-16 sm:h-10 bg-surface/30 backdrop-blur-sm rounded-lg ${theme.border} shadow-lg`}>
+      <div
+        className={`relative text-center bg-surface/30 backdrop-blur-sm rounded-lg ${theme.border} shadow-lg`}
+        style={{
+          overflow: 'hidden',
+          height: isMobile ? '64px' : '40px',
+          clipPath: 'inset(0px 0px 0px 0px)'
+        }}
+      >
         <div
           className="transition-transform duration-1000 ease-in-out"
           style={{
@@ -78,15 +98,15 @@ function SingleCarousel({ features, offset = 0, colorTheme = 'default' }) {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="h-16 sm:h-10 flex items-center justify-center px-6 relative group"
+              style={{ height: `${itemHeight}px` }}
+              className="flex items-center justify-center px-6 relative"
             >
-              <div className="flex items-center justify-center relative z-10">
-                {/* Text without gradient effect */}
-                <div className="text-center">
+              <div className="flex items-center justify-center text-center">
+                <div>
                   <div className={`text-sm sm:text-base font-bold ${theme.text} transition-all duration-500`}>
                     {feature.text}
                   </div>
-                  <div className="text-sm text-muted/80 hidden sm:block">
+                  <div className="text-sm text-muted/80 hidden sm:block mt-0.5">
                     {feature.subtext}
                   </div>
                 </div>
@@ -102,12 +122,12 @@ function SingleCarousel({ features, offset = 0, colorTheme = 'default' }) {
 // Triple Rotating Features Component
 function RotatingFeatures() {
   const features = [
-    { text: 'ATS-Optimized', subtext: 'Beats applicant tracking systems' },
+    { text: 'AI-Tailored Content', subtext: 'Matches job requirements perfectly' },
     { text: '5+ Premium Templates', subtext: 'Professional to creative designs' },
     { text: 'DOCX + PDF Downloads', subtext: 'Multiple format support' },
     { text: 'Cover Letter Generation', subtext: 'Perfectly matched to your resume' },
-    { text: 'Skill Cross-Referencing', subtext: 'No fabricated experience' },
-    { text: '24-Hour Day Pass', subtext: 'Perfect for urgent applications' }
+    { text: 'Smart Keyword Optimization', subtext: 'Highlights relevant experience' },
+    { text: 'Credit Packs Available', subtext: 'Buy more when you need them' }
   ];
 
   return (
@@ -135,6 +155,7 @@ export default function HeroUpload() {
   const { data: session } = useSession();
   const { getTerminology } = useLanguage();
   const { showError } = useError();
+  const { creditStatus } = useCreditContext();
   const terms = getTerminology();
   const fileRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -146,6 +167,8 @@ export default function HeroUpload() {
   const [trialUsageLoading, setTrialUsageLoading] = useState(true);
   const [authCheck, setAuthCheck] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  const [secondaryImageLoaded, setSecondaryImageLoaded] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -154,10 +177,23 @@ export default function HeroUpload() {
       // Fetch trial usage for anonymous users
       fetchTrialUsage();
     }
-    
+
     // Check authentication and access status
     checkAuthStatus();
-    
+
+    // Preload hero images for better performance
+    const preloadImages = () => {
+      const img1 = new window.Image();
+      img1.onload = () => setHeroImageLoaded(true);
+      img1.src = '/herocyber.jpg';
+
+      const img2 = new window.Image();
+      img2.onload = () => setSecondaryImageLoaded(true);
+      img2.src = '/2herobg.jpg';
+    };
+
+    preloadImages();
+
   }, [session]);
 
   const checkForLatestResume = async () => {
@@ -308,12 +344,59 @@ export default function HeroUpload() {
     return false;
   };
 
+  const showCreditModal = () => {
+    const creditsRemaining = creditStatus?.credits?.total || 0;
+
+    const modalContent = `
+      <div class="text-center p-6">
+        <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Credits Remaining</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">You have ${creditsRemaining} credits left. You need credits to create tailored resumes and cover letters.</p>
+        <div class="space-y-3">
+          <button onclick="window.location.href='/pricing'" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            Buy More Credits
+          </button>
+          <button onclick="this.closest('.fixed').remove()" class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-medium transition-colors">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Create and show modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+    modal.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4">
+        ${modalContent}
+      </div>
+    `;
+
+    // Add click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+
+    document.body.appendChild(modal);
+  };
+
   function handleCreateNew(){
     // Check if user can generate new resumes
     if (!canGenerate()) {
       if (authCheck) {
         if (authCheck.authenticated) {
-          showError(authCheck.reason || 'You do not have access to create new resumes. Please upgrade your plan.', 'Access Denied');
+          // Check if it's a credit issue (same logic as navbar)
+          if (creditStatus && creditStatus.needsCredits) {
+            showCreditModal();
+          } else {
+            showError(authCheck.reason || 'You do not have access to create new resumes. Please upgrade your plan.', 'Access Denied');
+          }
         } else {
           showError(authCheck.reason || 'You have used all your free trials. Please sign up to create unlimited resumes!', 'Trial Limit Reached');
         }
@@ -329,7 +412,7 @@ export default function HeroUpload() {
   }
 
   return (
-    <div className="relative">
+    <><div className="relative">
       {/* Trial Exhausted Banner */}
       {!session && authCheck && !authCheck.canAccess && (
         <div className="bg-yellow-50 border-b border-yellow-200 text-yellow-800 px-4 py-3 text-center">
@@ -340,7 +423,7 @@ export default function HeroUpload() {
             <span className="ml-2">
               <a href="/auth/signup" className="text-blue-600 hover:text-blue-700 underline font-semibold">
                 Sign up free
-              </a> for 10 generations per week, or{' '}
+              </a> for monthly free credits, or{' '}
               <a href="/pricing" className="text-blue-600 hover:text-blue-700 underline font-semibold">
                 upgrade to Pro
               </a> for unlimited access!
@@ -353,20 +436,23 @@ export default function HeroUpload() {
       <div className="relative bg-bg">
         {/* Hero background image with color accents */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Main background image with reduced greyscale */}
+          {/* Loading placeholder */}
+          {!heroImageLoaded && (
+            <div className="absolute inset-0 bg-white dark:bg-gray-900 animate-pulse"></div>
+          )}
+
+          {/* Main background image with dark overlay */}
           <div
-            className="absolute inset-0"
+            className={`absolute inset-0 transition-opacity duration-700 ${heroImageLoaded ? 'opacity-100' : 'opacity-0'}`}
             style={{
-              backgroundImage: 'url(/heroalt3.jpg)',
+              backgroundImage: heroImageLoaded ? 'url(/herocyber.jpg)' : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              filter: 'grayscale(15%)',
             }}
           ></div>
-          {/* Brand color overlay removed per user request */}
-          {/* Subtle readability overlay */}
-          <div className="absolute inset-0 bg-bg/25"></div>
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/50"></div>
           {/* Enhanced brand color accents */}
           <div className="absolute top-16 right-0 w-[500px] h-[500px] bg-primary/8 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/12 rounded-full blur-3xl"></div>
@@ -375,231 +461,97 @@ export default function HeroUpload() {
         </div>
 
         <div className="relative tc-container">
-          <div className="flex flex-col lg:flex-row items-center lg:items-start py-4 lg:py-6">
+            <div className="flex flex-col items-center text-center py-6 lg:py-8">
 
-            {/* Left Column - Content */}
-            <div className="flex-1 lg:pr-20 text-center max-w-2xl lg:max-w-none">
-              {/* Content container with shared background */}
-              <div className="bg-surface/70 backdrop-blur-sm rounded-2xl p-8 border border-border/20">
-                {/* Clean headline */}
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text leading-tight mb-8">
-                  Your {terms.resume},
+            {/* Centered Content */}
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="space-y-8"
+              >
+                {/* Modern badge */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="inline-flex items-center space-x-2 bg-blue-600/20 backdrop-blur-sm border border-blue-400/30 rounded-full px-4 py-2 text-sm font-medium text-white"
+                >
+                  <span>AI-Powered Resume Tailoring</span>
+                </motion.div>
+
+                {/* Clean headline with better typography */}
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight"
+                >
+                  Your {terms.resume},{' '}
                   <br />
-                  <span style={{color: '#2840A7'}}>perfectly matched</span>
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                    className="text-blue-600 dark:text-blue-400"
+                  >
+                    Perfectly Matched
+                  </motion.span>
                   <br />
-                  to every job
-                </h1>
+                  To Every Job
+                </motion.h1>
 
-                {/* Clear value prop */}
-                <p className="text-xl text-text font-medium leading-relaxed mb-12 max-w-2xl mx-auto">
-                  Upload your {terms.resume}, paste any job description, and get a tailored application package that beats ATS systems and lands interviews.
-                </p>
-              </div>
+                {/* Enhanced value prop */}
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                  className="text-xl text-gray-200 font-medium leading-relaxed max-w-2xl mx-auto"
+                >
+                  Transform your job applications with AI. Upload your {terms.resume}, paste any job description, and get a perfectly tailored application package that matches job requirements and lands interviews.
+                </motion.p>
 
+                {/* Enhanced CTA buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.8 }}
+                  className="flex flex-col sm:flex-row items-center justify-center gap-4"
+                >
+                  <div className="flex items-center space-x-1 text-sm text-gray-300">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span>No credit card required</span>
+                  </div>
+
+                  <button
+                    className={`group relative overflow-hidden bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${(loading || checkingResume || checkingAuth) ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''}`}
+                    onClick={handleCreateNew}
+                    disabled={loading || checkingResume || checkingAuth}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center space-x-2">
+                      <span>Start for Free</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </button>
+
+                  <div className="flex items-center space-x-1 text-sm text-gray-300">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span>2 free generations</span>
+                  </div>
+                </motion.div>
+              </motion.div>
 
               <div className="mb-16">
                 <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFile} className="hidden" />
               </div>
             </div>
 
-            {/* Right Column - Visual */}
-            <div className="flex-1 lg:pl-20 max-w-xl lg:max-w-none mt-12 lg:mt-0">
-              <div className="relative">
-                {/* Main demo card */}
-                <div className="tc-card-elevated tc-card-hover relative z-10">
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center">
-                        <Upload className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-lg text-text">{terms.Resume} Upload</div>
-                        <div className="text-sm text-muted">Instant AI Analysis</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Clickable upload interface */}
-                  <div 
-                    className={`border-2 border-dashed rounded-lg p-8 transition-all duration-250 flex items-center justify-center min-h-[120px] ${
-                      canGenerate() 
-                        ? "border-border dark:border-border-strong cursor-pointer hover:border-primary hover:bg-primary/5 group" 
-                        : "border-gray-300 dark:border-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800 opacity-60"
-                    }`}
-                    onClick={() => canGenerate() && router.push('/wizard')}
-                  >
-                    <div className="flex items-center space-x-6">
-                      <div className="space-y-2">
-                        <div className={`text-base font-medium transition-colors duration-250 ${
-                          canGenerate() 
-                            ? "text-text group-hover:text-primary" 
-                            : "text-gray-500 dark:text-gray-400"
-                        }`}>
-                          {canGenerate() ? 'Click to Start' : `Upload ${authCheck?.authenticated ? 'Disabled' : 'Limited'}`}
-                        </div>
-                        <div className={`text-sm transition-colors duration-250 ${
-                          canGenerate() 
-                            ? "text-muted group-hover:text-primary/80" 
-                            : "text-gray-400 dark:text-gray-500"
-                        }`}>
-                          {canGenerate()
-                            ? "Start your tailored application"
-                            : authCheck?.authenticated
-                              ? "Please upgrade to get started"
-                              : "Sign up for free access"
-                          }
-                        </div>
-                      </div>
-                      <Upload className={`w-10 h-10 transition-colors duration-250 flex-shrink-0 ${
-                        canGenerate() 
-                          ? "text-muted group-hover:text-primary" 
-                          : "text-gray-400 dark:text-gray-500"
-                      }`} />
-                    </div>
-                  </div>
-                  
-                  {/* Steps preview */}
-                  <div className="mt-8 space-y-4">
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="w-8 h-8 bg-success-light rounded-full flex items-center justify-center">
-                        <div className="w-3 h-3 bg-success rounded-full"></div>
-                      </div>
-                      <span className="text-muted">AI extracts your information</span>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center">
-                        <div className="w-3 h-3 bg-primary rounded-full"></div>
-                      </div>
-                      <span className="text-muted">Paste job description</span>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                        <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-                      </div>
-                      <span className="text-muted">Get tailored documents</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <InfoTooltip
-                    content="Start creating your tailored resume and cover letter with our step-by-step wizard."
-                    position="bottom"
-                  >
-                    <button
-                      className="btn btn-primary btn-xl w-full sm:w-auto group"
-                      onClick={handleCreateNew}
-                      disabled={loading || checkingResume || !canGenerate()}
-                    >
-                      <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                      Start Now
-                    </button>
-                  </InfoTooltip>
-
-                </div>
-
-                {/* Subtle accent elements */}
-                <div className="absolute top-8 -right-8 w-24 h-24 bg-primary/5 rounded-full -z-10"></div>
-                <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-primary/8 rounded-full -z-10"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-      </div>
-
-      {/* Section Break - Rotating Features */}
-      <div className="py-6 bg-bg">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RotatingFeatures />
-        </div>
-      </div>
-
-      {/* Call-to-Action Section */}
-      <div className="relative py-20 bg-surface overflow-hidden">
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage: 'url(/2herobg.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            filter: 'grayscale(30%)',
-          }}
-        ></div>
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center space-x-2 bg-surface/80 backdrop-blur-sm border border-border/50 rounded-full px-4 py-2 mb-6">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-text">Apply to Multiple Jobs</span>
-          </div>
-          
-          <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-8 border border-border/20 max-w-4xl mx-auto mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-text mb-6">
-              One {terms.Resume}, <span style={{color: '#2840A7'}}>Unlimited Tailored Versions</span>
-            </h2>
-
-            <p className="text-xl text-muted">
-              Stop sending the same generic {terms.resume} to every job. Create a perfectly matched application for each position by simply pasting the job description. The more jobs you apply to, the better your chances!
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.1s'}}>
-              <div className="text-2xl font-bold text-blue-600 mb-2">AI</div>
-              <div className="text-sm text-muted">Powered Customization</div>
-              <InfoTooltip
-                content="Our AI analyzes keywords, required skills, and company culture from the job posting to customize your documents perfectly. The more detailed the job description, the better the results!"
-                position="bottom"
-                size="xl"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ How does AI tailoring work?
-                </span>
-              </InfoTooltip>
-            </div>
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.2s'}}>
-              <div className="text-2xl font-bold text-purple-600 mb-2">ATS</div>
-              <div className="text-sm text-muted">Optimized Format</div>
-              <InfoTooltip
-                content="Each tailored version highlights relevant experience, adjusts keywords for ATS compatibility, and includes a custom cover letter. Apply to multiple jobs with confidence!"
-                position="bottom"
-                size="xl"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ What makes it ATS-friendly?
-                </span>
-              </InfoTooltip>
-            </div>
-            <div className="bg-surface/60 backdrop-blur-sm rounded-xl p-6 border border-border/20 animate-slide-up hover:scale-105 transition-transform duration-200" style={{animationDelay: '0.3s'}}>
-              <div className="text-2xl font-bold text-green-600 mb-2">PDF</div>
-              <div className="text-sm text-muted">Professional Output</div>
-              <InfoTooltip
-                content="We support PDF, DOCX, and TXT files. Our AI will automatically extract all your information including work experience, education, and skills."
-                position="bottom"
-                size="lg"
-              >
-                <span className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-700 cursor-help">
-                  ℹ️ What formats are supported?
-                </span>
-              </InfoTooltip>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              className="btn btn-primary btn-lg group"
-              onClick={() => router.push('/wizard')}
-              disabled={loading || !canGenerate()}
-            >
-              <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              Start Now
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </button>
           </div>
         </div>
       </div>
+    </div>
 
       {/* Modern Loading Screen */}
       {(loading || checkingResume) && (
@@ -608,7 +560,7 @@ export default function HeroUpload() {
             <div className="loading-spinner w-12 h-12 mx-auto"></div>
             <div className="space-y-2">
               <h3 className="text-xl font-semibold text-text">
-                {checkingResume ? `Loading Your ${terms.Resume}` : `Processing Your ${terms.Resume}`}
+                {checkingResume ? `Loading Your ${terms.resume}` : `Processing Your ${terms.resume}`}
               </h3>
               <p className="text-muted">{loadingMessage}</p>
             </div>
@@ -630,7 +582,8 @@ export default function HeroUpload() {
         onComplete={() => console.log('Tour completed')}
         storageKey="hero_onboarding_completed"
       />
-
-    </div>
+    
+    </>
   );
 }
+

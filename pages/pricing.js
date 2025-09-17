@@ -9,6 +9,7 @@ export default function PricingPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState('');
   const [creditLoading, setCreditLoading] = useState('');
+  const [showSubscriptions, setShowSubscriptions] = useState(false);
 
  const handleUpgrade = async (planType) => {
   if (!session) {
@@ -95,7 +96,7 @@ export default function PricingPage() {
         'All color themes',
         'Priority support',
         'Advanced customization',
-        'ATS optimization'
+        'Smart job matching'
       ],
       buttonText: 'Start Pro Monthly',
       buttonVariant: 'primary',
@@ -116,7 +117,7 @@ export default function PricingPage() {
         'All color themes',
         'Priority support',
         'Advanced customization',
-        'ATS optimization',
+        'Smart job matching',
         '42% savings vs monthly'
       ],
       buttonText: 'Start Pro Annual - €69/year',
@@ -134,60 +135,90 @@ export default function PricingPage() {
         canonical="https://tailoredcv.app/pricing"
       />
 
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-blue-600/10"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-6 h-6 text-white" />
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-4xl font-bold text-gradient">TailoredCV Pricing</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  TailoredCV Pricing
+                </h1>
               </div>
-              <p className="text-xl text-muted max-w-3xl mx-auto mb-4">
-                Choose the perfect plan to create professional, ATS-friendly resumes and cover letters
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6">
+                Choose the perfect plan to create professional, job-matched resumes and cover letters
               </p>
-              <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 max-w-3xl mx-auto mb-8">
-                <div className="text-center space-y-2">
-                  <div className="flex items-center justify-center space-x-2 text-sm text-blue-800">
-                    <Info className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-semibold">New here? Start your journey:</span>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-blue-100 rounded-lg p-3">
-                      <div className="font-medium text-blue-900">🚀 Try Immediately</div>
-                      <div className="text-blue-700">Upload & transform your resume - no signup needed</div>
-                    </div>
-                    <div className="bg-green-100 rounded-lg p-3">
-                      <div className="font-medium text-green-900">📈 Sign Up for More</div>
-                      <div className="text-green-700">Get 10 personalized CVs & cover letters/week + all templates</div>
-                    </div>
-                  </div>
+              {/* Toggle between Subscriptions and Credit Packs */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex border border-gray-200 dark:border-gray-600">
+                  <button
+                    onClick={() => setShowSubscriptions(true)}
+                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                      showSubscriptions
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                    }`}
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>Subscription Plans</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSubscriptions(false)}
+                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                      !showSubscriptions
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400'
+                    }`}
+                  >
+                    <Zap className="w-4 h-4" />
+                    <span>Credit Packs</span>
+                  </button>
                 </div>
+              </div>
+
+              {/* Dynamic descriptions based on selection */}
+              <div className="text-center mb-8 px-4">
+                {showSubscriptions ? (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-3xl mx-auto">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Monthly & Annual Subscriptions</h2>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Unlimited access with recurring billing. Perfect for ongoing job searching.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 max-w-3xl mx-auto">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">One-Time Credit Packs</h2>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Pay-as-you-go credits that never expire. Great for occasional use.
+                    </p>
+                  </div>
+                )}
               </div>
               
             </div>
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="grid lg:grid-cols-4 gap-6">
+        {/* Subscription Plans */}
+        {showSubscriptions && (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 justify-items-center">
             {plans.map((plan, index) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl border-2 p-8 shadow-lg transition-all duration-300 hover:shadow-xl ${
+                className={`relative w-full max-w-sm rounded-lg p-6 transition-all duration-300 hover:shadow-lg ${
                   plan.popular
-                    ? 'border-blue-500 bg-surface scale-105'
-                    : 'border-border bg-surface hover:border-border'
+                    ? 'bg-blue-50 dark:bg-blue-900/40 border-2 border-blue-500 shadow-lg scale-105'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow-lg">
-                      <Crown className="w-4 h-4 mr-2" />
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-600 text-white shadow-lg whitespace-nowrap">
+                      <Crown className="w-3 h-3 mr-1" />
                       Most Popular
                     </span>
                   </div>
@@ -270,8 +301,8 @@ export default function PricingPage() {
                   disabled={loading === plan.planType}
                   className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                     plan.buttonVariant === 'primary'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
-                      : 'bg-surface text-text hover:bg-bg border border-border'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
                   } ${loading === plan.planType ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading === plan.planType ? (
@@ -291,19 +322,14 @@ export default function PricingPage() {
                 )}
               </div>
             ))}
+            </div>
           </div>
+        )}
 
-          {/* Credit Packs Section */}
-          {session && (
-            <div className="mt-20">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-text mb-4">Credit Packs</h2>
-                <p className="text-muted max-w-2xl mx-auto">
-                  Need more credits? Purchase credit packs to generate more resumes and cover letters.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        {/* Credit Packs Section */}
+        {!showSubscriptions && (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center">
                 {[
                   { id: 'starter', name: 'Starter Pack', credits: 6, price: 5, description: 'Perfect for trying out our service' },
                   { id: 'standard', name: 'Standard Pack', credits: 20, price: 15, description: 'Great for regular job searching', popular: true },
@@ -312,13 +338,16 @@ export default function PricingPage() {
                 ].map((pack, index) => (
                   <div
                     key={index}
-                    className={`relative bg-surface rounded-2xl p-6 border-2 transition-all duration-300 hover:shadow-lg ${
-                      pack.popular ? 'border-primary shadow-lg scale-105' : 'border-border hover:border-primary/50'
+                    className={`relative w-full max-w-xs rounded-lg p-6 transition-all duration-300 hover:shadow-lg ${
+                      pack.popular
+                        ? 'bg-emerald-50 dark:bg-emerald-900/40 border-2 border-emerald-500 shadow-lg scale-105'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:border-emerald-300 dark:hover:border-emerald-600'
                     }`}
                   >
                     {pack.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-primary text-white px-3 py-1 rounded-full text-xs font-medium">
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-lg whitespace-nowrap">
+                          <Sparkles className="w-3 h-3 mr-1" />
                           Most Popular
                         </span>
                       </div>
@@ -350,22 +379,30 @@ export default function PricingPage() {
                       <button
                         onClick={() => handleCreditPurchase(pack.id)}
                         disabled={creditLoading === pack.id}
-                        className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
+                        className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                           pack.popular
-                            ? 'bg-primary text-white hover:bg-primary/90 shadow-lg'
-                            : 'bg-gray-100 dark:bg-gray-800 text-text hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
                         } ${creditLoading === pack.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {creditLoading === pack.id ? 'Processing...' : 'Buy Credits'}
+                        {creditLoading === pack.id ? (
+                          <div className="loading-spinner w-5 h-5"></div>
+                        ) : (
+                          <>
+                            <span>{creditLoading === pack.id ? 'Processing...' : 'Buy Credits'}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
                 ))}
-              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* FAQ Section */}
+        {/* FAQ Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mt-20">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-text mb-4">Frequently Asked Questions</h2>
@@ -405,20 +442,25 @@ export default function PricingPage() {
 
             </div>
           </div>
+        </div>
 
-          {/* CTA Section */}
+        {/* CTA Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mt-20 text-center">
-            <div className="bg-blue-600 rounded-2xl p-8 text-white">
-              <h2 className="text-3xl font-bold mb-4">Ready to create your perfect resume?</h2>
+            <div className="bg-blue-600 rounded-lg p-8 text-white shadow-lg">
+              <h2 className="text-3xl font-bold mb-4 text-white">
+                Ready to create your perfect resume?
+              </h2>
               <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
                 Join thousands of professionals who've landed their dream jobs with TailoredCV
               </p>
-              <Link 
-                href={session ? '/wizard' : '/auth/signup'} 
-                className="inline-flex items-center space-x-2 bg-surface text-primary px-8 py-4 rounded-lg font-medium hover:bg-surface-elevated transition-colors"
+              <Link
+                href={session ? '/wizard' : '/auth/signup'}
+                className="inline-flex items-center space-x-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 <Zap className="w-5 h-5" />
                 <span>Get Started Now</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>

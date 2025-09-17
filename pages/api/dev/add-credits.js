@@ -20,23 +20,23 @@ export default async function handler(req, res) {
 
     const { credits = 5 } = req.body;
 
-    // Add credits to current amount
+    // Add credits to purchased credit balance
     const current = await prisma.entitlement.findUnique({
       where: { userId: session.user.id }
     });
 
-    const newAmount = (current?.freeWeeklyCreditsRemaining || 0) + parseInt(credits);
+    const newAmount = (current?.creditBalance || 0) + parseInt(credits);
 
     const updated = await prisma.entitlement.upsert({
       where: { userId: session.user.id },
       update: {
-        freeWeeklyCreditsRemaining: newAmount
+        creditBalance: newAmount
       },
       create: {
         userId: session.user.id,
-        plan: 'free',
+        plan: 'standard',
         status: 'active',
-        freeWeeklyCreditsRemaining: newAmount,
+        creditBalance: newAmount,
         features: {
           docx: false,
           cover_letter: true,
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ 
       message: `Added ${credits} credits successfully`,
-      totalCredits: updated.freeWeeklyCreditsRemaining,
+      totalCredits: updated.creditBalance,
       added: credits
     })
   } catch (error) {

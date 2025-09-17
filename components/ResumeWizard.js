@@ -12,8 +12,8 @@ import { AnimatePresence } from 'framer-motion';
 import StepNav from './ui/StepNav';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useError } from '../contexts/ErrorContext';
+import { useCreditContext } from '../contexts/CreditContext';
 import { InfoTooltip } from './ui/TooltipPortal';
-import { Upload } from 'lucide-react';
 
 const emptyResume = {
   name: '',
@@ -86,10 +86,13 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   const { language, getTerminology } = useLanguage();
   const { showError } = useError();
   const terms = getTerminology();
-  const [step, setStep] = useState(0);
+  const { entitlement, userPlan, dayPassUsage } = useCreditContext();
   const stepIds = ['goal', 'basics', 'skills', 'work', 'projects', 'education', 'review'];
   const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects (Optional)','Education','Review'];
   const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
+  const [step, setStep] = useState(0);
+
+  const isStandardPlan = (plan) => plan === 'standard' || plan === 'free';
 
   // Check if user has enough generations for specific option
   const canGenerateOption = (requiredGenerations) => {
@@ -102,33 +105,43 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
       return generationsRemaining >= requiredGenerations;
     }
-    if (userPlan === 'free') {
-      return (entitlement?.freeWeeklyCreditsRemaining || 0) >= requiredGenerations;
-    }
-    if (userPlan === 'day_pass') {
-      if (!dayPassUsage) return false; // Still loading
-      return (dayPassUsage.generationsLimit - dayPassUsage.generationsUsed) >= requiredGenerations;
+    if (isStandardPlan(userPlan)) {
+      const free = entitlement?.freeCreditsThisMonth ?? entitlement?.freeWeeklyCreditsRemaining ?? 0;
+      const purchased = entitlement?.creditBalance ?? 0;
+      return (free + purchased) >= requiredGenerations;
     }
     return true; // Pro users have unlimited generations
   };
 
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
-  const { register, handleSubmit, watch, setValue, getValues } = methods;
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = methods;
 
   const [isValid, setIsValid] = useState(true);
   const [message, setMessage] = useState('');
+
+  // Helper function to get input class names with error styling
+  const getInputClassName = (fieldName, baseClasses = 'form-input focus:ring-2 focus:ring-blue-500 focus:border-blue-500') => {
+    const hasError = !!errors[fieldName];
+    if (hasError) {
+      return `${baseClasses.replace('focus:ring-blue-500 focus:border-blue-500', 'focus:ring-red-500 focus:border-red-500')} border-red-500 bg-red-50 dark:bg-red-900/20`;
+    }
+    return baseClasses;
+  };
+
+  const getTextareaClassName = (fieldName, baseClasses = 'form-textarea focus:ring-2 focus:ring-blue-500 focus:border-blue-500') => {
+    const hasError = !!errors[fieldName];
+    if (hasError) {
+      return `${baseClasses.replace('focus:ring-blue-500 focus:border-blue-500', 'focus:ring-red-500 focus:border-red-500')} border-red-500 bg-red-50 dark:bg-red-900/20`;
+    }
+    return baseClasses;
+  };
   const [jd, setJd] = useState('');
   const [tone, setTone] = useState('professional');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [entitlement, setEntitlement] = useState(null);
-  const [userPlan, setUserPlan] = useState('free');
-  const [dayPassUsage, setDayPassUsage] = useState(null);
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [trialUsage, setTrialUsage] = useState(null);
   const [trialUsageLoading, setTrialUsageLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef(null);
 
   // Handle userGoal logic for signed-out users and generation limits
   useEffect(() => {
@@ -170,10 +183,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           setIsValid(false);
           if (!session?.user) {
             setMessage('Sign in required to generate documents');
-          } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
-            setMessage('No credits remaining - upgrade to Pro');
-          } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
-            setMessage('Daily generation limit reached - upgrade to Pro');
+          } else if (isStandardPlan(userPlan) && getCreditsRemaining() <= 0) {
+            setMessage('No credits remaining - Upgrade to Pro or buy credits');
           }
         } else {
           setIsValid(true);
@@ -232,15 +243,14 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     };
   }, [watch, autosaveKey, session]);
 
-  // Fetch user entitlement data (authenticated) or trial usage (anonymous)
+  // Fetch trial usage for anonymous users only (authenticated users use CreditContext)
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchTrialData = async () => {
       if (session?.user?.id) {
         // Authenticated user - fetch entitlements
         try {
-          const [entitlementResponse, dayPassResponse] = await Promise.all([
-            fetch('/api/entitlements'),
-            fetch('/api/day-pass-usage')
+          const [entitlementResponse] = await Promise.all([
+            fetch('/api/entitlements')
           ]);
           
           if (entitlementResponse.ok) {
@@ -286,7 +296,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
       }
     };
 
-    fetchUserData();
+    fetchTrialData();
   }, [session]);
 
   // Check if user can generate and redirect/show error if not
@@ -304,10 +314,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     } else if (session && entitlement) {
       // Logged in user with entitlement loaded
       if (!canGenerate()) {
-        if (userPlan === 'free') {
+        if (!String(userPlan || '').startsWith('pro')) {
           showError(
-            'You\'ve used all your weekly free generations. Upgrade to Pro for unlimited access!',
-            'Weekly Limit Reached'
+            'You\'ve used all your available credits. Upgrade to Pro or buy credits for unlimited access!',
+            'Credit Limit Reached'
           );
         } else {
           showError(
@@ -322,11 +332,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
   // Credit checking functions
   const getCreditsRemaining = () => {
-    if (userPlan === 'free' && entitlement) {
-      return entitlement.freeWeeklyCreditsRemaining || 0;
-    }
-    if (userPlan === 'day_pass' && dayPassUsage) {
-      return dayPassUsage.generationsLimit - dayPassUsage.generationsUsed;
+    if (entitlement) {
+      if (String(userPlan || '').startsWith('pro')) return null;
+      const free = entitlement.freeCreditsThisMonth ?? entitlement.freeWeeklyCreditsRemaining ?? 0;
+      const purchased = entitlement.creditBalance ?? 0;
+      return Math.max(0, free + purchased);
     }
     return null;
   };
@@ -340,17 +350,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
   const canGenerate = () => {
     if (!session?.user) {
-      // Trial users - check trial usage
       return trialUsage ? trialUsage.canGenerate : false;
     }
-    if (userPlan === 'free') {
-      return (entitlement?.freeWeeklyCreditsRemaining || 0) > 0;
-    }
-    if (userPlan === 'day_pass') {
-      if (!dayPassUsage) return false; // Still loading
-      return dayPassUsage.generationsUsed < dayPassUsage.generationsLimit;
-    }
-    return true; // Pro users can generate
+    if (String(userPlan || '').startsWith('pro')) return true;
+    return (getCreditsRemaining() || 0) > 0;
   };
 
   function next() { if (step < stepIds.length -1) setStep(s => s + 1); }
@@ -437,54 +440,6 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     setValue('projects', [...projects.slice(0,i+1), { ...projects[i] }, ...projects.slice(i+1)]);
   }
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check if user can upload (reuse existing logic)
-    if (!canGenerate()) {
-      showError('You do not have access to upload resumes. Please upgrade your plan.', 'Access Denied');
-      e.target.value = '';
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('resume', file);
-
-      const response = await fetch('/api/parse-resume', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Merge the uploaded data with current form values
-        const uploadedData = data.resumeData || {};
-
-        // Update the form with the uploaded data
-        Object.keys(uploadedData).forEach(key => {
-          if (uploadedData[key] !== undefined && uploadedData[key] !== null && uploadedData[key] !== '') {
-            setValue(key, uploadedData[key]);
-          }
-        });
-
-        // Save draft after upload
-        saveDraftNow();
-
-      } else {
-        showError(data.error || 'Failed to process resume', 'Upload Failed');
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      showError('Failed to process resume. Please try again.', 'Upload Error');
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  };
 
   // Simple preview component
   const TemplatePreview = ({ data }) => (
@@ -544,11 +499,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
         console.log('Trial user exhausted, remaining:', remaining);
         setShowAccountPrompt(true);
         return;
-      } else if (userPlan === 'free' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've used all your monthly credits. Your credits reset on the 1st of each month. Upgrade to Pro for unlimited credits!`);
-        return;
-      } else if (userPlan === 'day_pass' && getCreditsRemaining() <= 0) {
-        showUpgradeAlert(`You've reached your daily credit limit. Upgrade to Pro for unlimited credits!`);
+      } else if (!String(userPlan || '').startsWith('pro') && (getCreditsRemaining() || 0) <= 0) {
+        showUpgradeAlert(`You've used all your monthly credits. Your credits reset on the 1st of each month. Upgrade to Pro or buy credits for unlimited credits!`);
         return;
       }
     }
@@ -658,8 +610,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       {userPlan === 'standard' && (
                         <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 credit</div>
                       )}
-                      {(userPlan === 'free' || userPlan === 'day_pass') && (
-                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 generation</div>
+                      {!session && (
+                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 trial generation</div>
                       )}
                       {!session && !canGenerateOption(1) && (
                         <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
@@ -689,8 +641,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       {userPlan === 'standard' && (
                         <div className="text-xs text-purple-600 font-bold">Uses 1 credit</div>
                       )}
-                      {(userPlan === 'free' || userPlan === 'day_pass') && (
-                        <div className="text-xs text-purple-600 font-bold">Uses 1 generation</div>
+                      {!session && (
+                        <div className="text-xs text-purple-600 font-bold">Uses 1 trial generation</div>
                       )}
                       {!session && !canGenerateOption(1) && (
                         <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
@@ -729,11 +681,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
                       {userPlan === 'standard' && (
                         <div className="text-xs text-green-600 font-bold">Uses 2 credits</div>
                       )}
-                      {(userPlan === 'free' || userPlan === 'day_pass') && (
-                        <div className="text-xs text-green-600 font-bold">
-                          {session ? 'Uses 2 generations' : '🎯 FREE TRIAL - 2 generations included'}
-                        </div>
+                      {!session && (
+                        <div className="text-xs text-green-600 font-bold">dYZ_ FREE TRIAL - 2 generations included</div>
                       )}
+
+
                       {!session && (
                         <div className="text-xs text-green-600 font-bold mt-1">Try before you sign up!</div>
                       )}
@@ -755,95 +707,53 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 1 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <div className="flex items-center justify-center">
-                <h2 className="text-2xl font-bold text-text">Basic Information</h2>
-              </div>
-              <p className="text-muted">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Basic Information</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Tell us who you are and how to reach you. This information appears at the top of your resume.</p>
             </header>
 
-            {/* Upload Box */}
-            <div className="bg-surface/60 border border-border/50 rounded-lg p-4">
-              <div className="text-center">
-                <h3 className="text-sm font-medium text-text mb-2">
-                  Import Resume
-                </h3>
-                <p className="text-xs text-muted mb-3">
-                  Upload your existing resume to automatically fill in your information
-                </p>
-
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading || !canGenerate()}
-                  className={`inline-flex items-center px-4 py-2 border border-dashed rounded-lg text-sm transition-all duration-200 ${
-                    uploading || !canGenerate()
-                      ? 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-primary bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary-hover cursor-pointer'
-                  }`}
-                >
-                  {uploading ? (
-                    <>
-                      <div className="loading-spinner w-4 h-4 mr-2"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      {!canGenerate() ? 'Upload Disabled' : 'Upload Resume'}
-                    </>
-                  )}
-                </button>
-
-                <p className="text-xs text-muted mt-2">
-                  {!canGenerate()
-                    ? 'Please upgrade to upload resumes'
-                    : 'Supports PDF, DOCX, and TXT files'
-                  }
-                </p>
-              </div>
-            </div>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2 md:col-span-1 col-span-2">
-                <label className="text-sm font-bold text-muted">Name*</label>
-                <input {...register('name')} className="form-input" placeholder="Jane Doe" />
+              <div className="space-y-3 md:col-span-1 col-span-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center">
+                  Name*
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input {...register('name')} className={getInputClassName('name')} placeholder="" />
+                {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Title / Headline</label>
-                <input {...register('title')} className="form-input" placeholder="Software Engineer" />
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Title / Headline</label>
+                <input {...register('title')} className={getInputClassName('title')} placeholder="" />
+                {errors.title && <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Email</label>
-                <input {...register('email')} type="email" className="form-input" placeholder="you@example.com" />
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Email</label>
+                <input {...register('email')} type="email" className={getInputClassName('email')} placeholder="" />
+                {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Phone</label>
-                <input {...register('phone')} className="form-input" placeholder="555-123-4567" />
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Phone</label>
+                <input {...register('phone')} className={getInputClassName('phone')} placeholder="" />
+                {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Location</label>
-                <input {...register('location')} className="form-input" placeholder="City, Country" />
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Location</label>
+                <input {...register('location')} className={getInputClassName('location')} placeholder="" />
+                {errors.location && <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>}
               </div>
-              <div className="col-span-full space-y-2">
-                <label className="text-sm font-bold text-muted">Summary</label>
-                <textarea {...register('summary')} rows={4} className="form-textarea" placeholder="3–5 lines, action-oriented" />
+              <div className="col-span-full space-y-3">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Summary</label>
+                <textarea {...register('summary')} rows={4} className={getTextareaClassName('summary')} placeholder="" />
+                {errors.summary && <p className="text-sm text-red-600 mt-1">{errors.summary.message}</p>}
               </div>
             </div>
             <div className="space-y-4">
               <div className="text-sm font-bold text-muted">Links</div>
-              {values.links.map((l, i) => (
+              {(values.links || []).map((l, i) => (
                 <div key={i} className="grid grid-cols-2 gap-2 items-center">
-                  <input {...register(`links.${i}.label`)} placeholder="Label" className="form-input" />
+                  <input {...register(`links.${i}.label`)} placeholder="" className={getInputClassName(`links.${i}.label`)} />
                   <div className="flex gap-2">
-                    <input {...register(`links.${i}.url`)} placeholder="URL" className="flex-1 form-input" />
+                    <input {...register(`links.${i}.url`)} placeholder="" className={getInputClassName(`links.${i}.url`, "flex-1 form-input focus:ring-2 focus:ring-blue-500 focus:border-blue-500")} />
                     <button type="button" onClick={() => removeLink(i)} className="btn btn-ghost text-red-600 hover:bg-red-50">×</button>
                   </div>
                 </div>
@@ -855,9 +765,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 2 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-text">Skills & Expertise</h2>
-              <p className="text-muted">Add your core skills and areas of expertise.</p>
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Skills & Expertise</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Add your core skills and areas of expertise that make you stand out.</p>
             </header>
             <SkillsInput value={values.skills} onChange={v => setValue('skills', v)} />
           </section>
@@ -865,13 +775,13 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 3 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-text">Work Experience</h2>
-              <p className="text-muted">Highlight your relevant professional experience.</p>
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Work Experience</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Highlight your relevant professional experience and achievements.</p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>
-                {values.experience.map((exp, i) => (
+                {(values.experience || []).map((exp, i) => (
                   <ExperienceCard key={i} value={exp} index={i} onChange={v => updateExp(i, v)} onRemove={() => removeExp(i)} onDuplicate={() => duplicateExp(i)} />
                 ))}
               </AnimatePresence>
@@ -882,18 +792,16 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 4 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <div className="flex items-center justify-center">
-                <h2 className="text-2xl font-bold text-text">Projects <span className="text-lg font-normal text-muted">(Optional)</span></h2>
-              </div>
-              <p className="text-muted">
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Projects <span className="text-lg font-normal text-gray-500 dark:text-gray-400">(Optional)</span></h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">
                 <strong>Optional:</strong> Showcase your personal projects, open source work, and side projects that demonstrate your skills.
-                <span className="block mt-1 text-sm">You can skip this section if you don't have relevant projects to include.</span>
+                <span className="block mt-2 text-base text-gray-500 dark:text-gray-400">You can skip this section if you don't have relevant projects to include.</span>
               </p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>
-                {values.projects.map((project, i) => (
+                {(values.projects || []).map((project, i) => (
                   <ProjectCard key={i} value={project} index={i} onChange={v => updateProject(i, v)} onRemove={() => removeProject(i)} onDuplicate={() => duplicateProject(i)} />
                 ))}
               </AnimatePresence>
@@ -904,13 +812,13 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 5 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-text">Education</h2>
-              <p className="text-muted">Your academic background and qualifications.</p>
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Education</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Your academic background and qualifications that support your career goals.</p>
             </header>
             <div className="space-y-4">
               <AnimatePresence>
-                {values.education.map((edu, i) => (
+                {(values.education || []).map((edu, i) => (
                   <EducationCard key={i} value={edu} index={i} onChange={v => updateEdu(i, v)} onRemove={() => removeEdu(i)} onDuplicate={() => duplicateEdu(i)} />
                 ))}
               </AnimatePresence>
@@ -921,27 +829,30 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
         {step === 6 && (
           <section className="space-y-8">
-            <header className="text-center space-y-3">
-              <h2 className="text-2xl font-bold text-text">Job Description</h2>
-              <p className="text-muted">Tailor your documents to the job description.</p>
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Job Description</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Tailor your documents to match the specific job requirements and get noticed by recruiters.</p>
             </header>
             {userGoal !== 'cv' && (
               <div className="mb-6">
-                <label className="text-sm font-bold text-muted block mb-3">Cover Letter Tone</label>
-                <select className="form-select w-48" value={tone} onChange={e=>setTone(e.target.value)}>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 block mb-3">Cover Letter Tone</label>
+                <select className="form-select w-48 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" value={tone} onChange={e=>setTone(e.target.value)}>
                   <option value="professional">Professional</option>
                   <option value="friendly">Friendly</option>
                   <option value="concise">Concise</option>
                 </select>
               </div>
             )}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted">Job Description*</label>
-              <textarea 
-                className="form-textarea h-48 resize-vertical w-full" 
-                value={jd} 
-                onChange={e=>setJd(e.target.value)} 
-                placeholder="Paste the job description here..."
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center">
+                Job Description*
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <textarea
+                className="form-textarea h-48 resize-vertical w-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                value={jd}
+                onChange={e=>setJd(e.target.value)}
+                placeholder="Paste the complete job description here..."
               />
             </div>
           </section>
@@ -989,11 +900,11 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
               <h3 className="text-xl font-semibold text-text">Trial Credits Used Up</h3>
               <p className="text-muted">
                 You've used all your trial generations. 
-                Sign up now and get <strong>10 free generations per week</strong> to continue creating tailored resumes and cover letters!
+                Sign up now and get <strong>6 free credits per month</strong> to continue creating tailored resumes and cover letters!
               </p>
               <div className="text-sm text-muted space-y-1">
-                <div>✓ 10 free generations weekly</div>
-                <div>✓ 10 PDF downloads weekly</div>
+                <div>✓ 6 free credits monthly</div>
+                <div>✓ PDF downloads included</div>
                 <div>✓ Save your progress</div>
                 <div>✓ Professional template</div>
               </div>
@@ -1024,3 +935,4 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     </div>
   );
 }
+

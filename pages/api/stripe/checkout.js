@@ -36,18 +36,15 @@ export default async function handler(req, res) {
     // Choose the correct live price server-side
     let priceId;
     let mode = 'subscription';
-    
+
     if (planType === 'pro_annual') {
       priceId = process.env.STRIPE_PRICE_PRO_ANNUAL;
     } else if (planType === 'pro_monthly') {
       priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
-    } else if (planType === 'day_pass') {
-      priceId = process.env.STRIPE_PRICE_DAY_PASS;
-      mode = 'payment'; // One-time payment for day pass
     }
 
     if (!priceId) {
-      return res.status(500).json({ error: 'Price not configured' })
+      return res.status(400).json({ error: 'Unsupported plan type' })
     }
 
     // Ensure a live Stripe customer exists and is saved on the user

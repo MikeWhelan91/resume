@@ -1,7 +1,8 @@
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../auth/[...nextauth]'
 import { prisma } from '../../../lib/prisma.js'
-import { getUserEntitlementWithCredits, checkResumeStorageLimit, calculateResumeExpiryDate } from '../../../lib/credit-system.js'
+import { getUserEntitlement } from '../../../lib/credit-purchase-system.js'
+import { calculateResumeExpiryDate } from '../../../lib/credit-system.js'
 
 export default async function handler(req, res) {
   try {
@@ -46,11 +47,13 @@ export default async function handler(req, res) {
       }
 
       // Get user entitlement to check storage limits
-      const entitlement = await getUserEntitlementWithCredits(userId)
+      const entitlement = await getUserEntitlement(userId)
       
       // Check storage limits
-      const storageCheck = await checkResumeStorageLimit(userId, entitlement)
-      if (!storageCheck.allowed) {
+      // Basic storage policy: keep max N recent resumes based on plan
+      const maxSaved = entitlement.plan && entitlement.plan.startsWith('pro_') ? 50 : 5
+      const currentCount = await prisma.savedResume.count({ where: { userId } })
+      if (currentCount >= maxSaved) {
         // If at limit, delete oldest resume to make space
         const oldestResume = await prisma.savedResume.findFirst({
           where: {

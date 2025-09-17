@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next'
 import NextAuth from '../auth/[...nextauth]'
-import { getUserEntitlementWithCredits } from '../../../lib/credit-system.js'
+import { getUserEntitlement } from '../../../lib/credit-purchase-system.js'
 
 export default async function handler(req, res) {
   if (process.env.NODE_ENV !== 'development') {
@@ -18,16 +18,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Authentication required' })
     }
 
-    const entitlement = await getUserEntitlementWithCredits(session.user.id)
+    const entitlement = await getUserEntitlement(session.user.id)
     const dublinTime = new Date().toLocaleString("en-US", {timeZone: "Europe/Dublin"})
     
     return res.status(200).json({ 
       userId: session.user.id,
       plan: entitlement.plan,
-      creditsRemaining: entitlement.freeWeeklyCreditsRemaining,
-      lastReset: entitlement.lastWeeklyReset,
+      creditsRemaining: (entitlement.freeCreditsThisMonth ?? 0) + (entitlement.creditBalance ?? 0),
+      lastReset: entitlement.lastMonthlyReset,
       dublinTime,
-      nextReset: 'Next Monday 00:00 Dublin time'
+      nextReset: '1st of next month 00:00 Dublin time'
     })
   } catch (error) {
     console.error('Error checking credits:', error)
