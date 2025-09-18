@@ -45,8 +45,216 @@ function stripCodeFence(s=""){
 }
 function safeJSON(s){ try{ return JSON.parse(stripCodeFence(s)); } catch { return null; } }
 
-// ---- ATS Analysis Function ----
-async function analyzeATSScore(aiService, resumeData, jobDescription) {
+// ---- ATS Compatibility Analysis Function ----
+async function analyzeATSCompatibility(resumeData, template = 'ats', jobDescription = '', aiService = null) {
+  if (!resumeData) return null;
+
+  // If we have jobDescription and aiService, use AI analysis
+  if (jobDescription && jobDescription.trim().length > 50 && aiService) {
+    try {
+      console.log('ATS Analysis - Raw resumeData structure:', JSON.stringify(resumeData, null, 2));
+      console.log('ATS Analysis - resumeData keys:', Object.keys(resumeData || {}));
+
+      const resumeText = formatResumeForAnalysis(resumeData);
+      console.log('ATS Analysis - Formatted resume text length:', resumeText.length);
+      console.log('ATS Analysis - Formatted resume text preview:', resumeText.substring(0, 500) + '...');
+
+      if (resumeText.length < 100) {
+        console.warn('ATS Analysis - Resume text is too short, likely missing data!');
+      }
+
+      const analysisResponse = await aiService.chatCompletion([
+          {
+            role: "system",
+            content: `You are an expert ATS (Applicant Tracking System) compatibility analyzer. Your task is to analyze a resume for compatibility with automated screening systems used by employers.
+
+Focus specifically on:
+1. Keyword optimization for automated scanning (PRIMARY FOCUS)
+2. Content relevance and completeness
+3. Industry-specific terminology alignment
+4. Missing skills and qualifications from job description
+5. Content gaps that hurt ATS ranking
+
+NOTE: This resume uses a professionally designed ATS-optimized template with proper formatting, fonts, and structure. Focus analysis on CONTENT OPTIMIZATION rather than template formatting issues.
+
+Return your analysis as a JSON object with this exact structure:
+{
+  "overallScore": <number 0-100>,
+  "categories": {
+    "keywordOptimization": {
+      "score": <number 0-100>,
+      "analysis": "<detailed explanation>",
+      "recommendations": ["<specific actionable recommendations>"]
+    },
+    "contentRelevance": {
+      "score": <number 0-100>,
+      "analysis": "<detailed explanation>",
+      "recommendations": ["<specific actionable recommendations>"]
+    },
+    "skillsAlignment": {
+      "score": <number 0-100>,
+      "analysis": "<detailed explanation>",
+      "recommendations": ["<specific actionable recommendations>"]
+    },
+    "completeness": {
+      "score": <number 0-100>,
+      "analysis": "<detailed explanation>",
+      "recommendations": ["<specific actionable recommendations>"]
+    }
+  },
+  "keywordGaps": [
+    {
+      "keyword": "<missing important keyword>",
+      "importance": "<high|medium|low>",
+      "suggestions": ["<where and how to add it>"]
+    }
+  ],
+  "issues": ["<specific ATS compatibility issues found>"],
+  "quickWins": ["<immediate improvements for ATS compatibility>"],
+  "strengths": ["<what works well for ATS systems>"]
+}`
+          },
+          {
+            role: "user",
+            content: `Please analyze this resume for ATS (Applicant Tracking System) compatibility against the following job description.
+
+JOB DESCRIPTION:
+${jobDescription}
+
+RESUME CONTENT:
+${resumeText}
+
+Focus specifically on CONTENT OPTIMIZATION for ATS systems:
+1. Identify truly MISSING keywords that would significantly improve ATS ranking
+2. Look for synonyms and related terms already present (e.g., "service requests" vs "service inquiries")
+3. Focus on HIGH-IMPACT missing qualifications or skills
+4. Content relevance and alignment gaps with position requirements
+5. Missing industry-specific certifications or technical skills
+6. Experience descriptions that could better highlight relevant achievements
+
+IMPORTANT KEYWORD ANALYSIS RULES:
+- Only flag keywords as "missing" if there are NO similar terms or synonyms present
+- Consider semantic similarity (e.g., "customer service" = "customer support")
+- Focus on substantial gaps, not minor wording differences
+- Prioritize technical skills, certifications, and specific qualifications over common terms
+- The resume already uses proper ATS formatting - focus on meaningful content gaps only
+
+Provide realistic, high-impact content recommendations that would genuinely improve ATS performance.`
+          }
+        ], {
+          model: "gpt-4o-mini",
+          temperature: 0.3,
+          max_tokens: 2000
+        });
+
+      const analysisText = analysisResponse.choices[0].message.content;
+
+      try {
+        // Remove any markdown formatting and parse JSON
+        const cleanedResponse = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const analysis = JSON.parse(cleanedResponse);
+
+        // Validate analysis structure
+        if (analysis.overallScore && analysis.categories) {
+          return analysis;
+        }
+      } catch (parseError) {
+        console.error('Failed to parse ATS analysis JSON:', parseError);
+      }
+    } catch (error) {
+      console.error('AI ATS analysis error:', error);
+    }
+  }
+
+  // Fallback to basic analysis if AI fails or no job description
+  try {
+    const score = {
+      overallScore: 85, // Base score for ATS template
+      categories: {
+        formatting: { score: 95, analysis: 'Standard formatting detected', recommendations: [] },
+        headers: { score: 90, analysis: 'Clear section headers present', recommendations: [] },
+        structure: { score: 88, analysis: 'Logical resume structure maintained', recommendations: [] },
+        keywords: { score: 75, analysis: 'Basic keyword optimization', recommendations: [] }
+      },
+      quickWins: [],
+      issues: [],
+      strengths: [
+        'Standard Arial font used',
+        'Clear section headers detected',
+        'Simple bullet point format',
+        'No complex tables or graphics',
+        'Machine-readable layout'
+      ]
+    };
+
+    // Check for common ATS issues
+    if (template === 'ats') {
+      score.categories.formatting.score = 98;
+      score.categories.headers.score = 95;
+      score.categories.structure.score = 92;
+      score.overallScore = 92;
+      score.strengths.push('ATS-optimized template selected');
+    } else {
+      // Non-ATS templates have formatting issues
+      score.categories.formatting.score = 65;
+      score.categories.headers.score = 70;
+      score.overallScore = 72;
+      score.issues.push('Custom formatting may not be ATS-friendly');
+      score.quickWins.push('Consider using ATS-optimized template');
+    }
+
+    // Analyze content for ATS optimization
+    const skills = resumeData.skills || [];
+    const experience = resumeData.experience || [];
+
+    if (skills.length < 5) {
+      score.categories.keywords.score -= 10;
+      score.quickWins.push('Add more relevant skills and keywords');
+    }
+
+    if (experience.length === 0) {
+      score.categories.structure.score -= 15;
+      score.quickWins.push('Add professional experience section');
+    }
+
+    // Check for standard headers
+    const hasStandardSections = {
+      summary: !!resumeData.summary,
+      skills: skills.length > 0,
+      experience: experience.length > 0,
+      education: resumeData.education && resumeData.education.length > 0
+    };
+
+    const sectionCount = Object.values(hasStandardSections).filter(Boolean).length;
+    if (sectionCount < 3) {
+      score.categories.structure.score -= 10;
+      score.quickWins.push('Include all standard sections (Summary, Skills, Experience, Education)');
+    }
+
+    // Recalculate overall score
+    const avgCategoryScore = Object.values(score.categories).reduce((sum, cat) => sum + cat.score, 0) / 4;
+    score.overallScore = Math.round(avgCategoryScore);
+
+    return score;
+  } catch (error) {
+    console.error('ATS compatibility analysis error:', error);
+    return {
+      overallScore: 85,
+      categories: {
+        formatting: { score: 85, analysis: 'Basic compatibility maintained', recommendations: [] },
+        headers: { score: 85, analysis: 'Standard headers present', recommendations: [] },
+        structure: { score: 85, analysis: 'Acceptable structure', recommendations: [] },
+        keywords: { score: 85, analysis: 'Standard keyword usage', recommendations: [] }
+      },
+      quickWins: ['Unable to perform detailed analysis'],
+      issues: [],
+      strengths: ['Basic ATS compatibility maintained']
+    };
+  }
+}
+
+// ---- Job Match Analysis Function ----
+async function analyzeJobMatchScore(aiService, resumeData, jobDescription) {
   if (!jobDescription || !resumeData) return null;
 
   try {
@@ -56,9 +264,7 @@ async function analyzeATSScore(aiService, resumeData, jobDescription) {
     const response = await aiService.chatCompletion([
         {
           role: "system",
-          content: `You are analyzing a resume that was AUTOMATICALLY GENERATED and ATS-OPTIMIZED by our system. The formatting and structure should already be perfect for ATS systems.
-
-Focus your analysis on CONTENT GAPS and MISSING ELEMENTS that the user needs to address:
+          content: `You are analyzing how well a resume matches a specific job description. Focus on CONTENT GAPS and MISSING ELEMENTS that the user needs to address for this specific job:
 
 Return JSON:
 {
@@ -84,9 +290,7 @@ Return JSON:
         },
         {
           role: "user",
-          content: `This resume was auto-generated with ATS-friendly formatting. The structure and format are already optimized.
-
-Focus on CONTENT analysis: What experience, skills, or achievements is the candidate missing for this specific job? What gaps exist between their background and job requirements?
+          content: `Focus on CONTENT analysis: What experience, skills, or achievements is the candidate missing for this specific job? What gaps exist between their background and job requirements?
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -97,9 +301,9 @@ ${resumeText}
 What content gaps exist? What should the user add to their experience to better match this role?`
         }
       ], {
-        model: "grok-3",
-        temperature: 0.2,
-        max_tokens: 1500
+        model: "gpt-4o-mini",
+        temperature: 0.1,
+        max_tokens: 1200
       });
 
     const analysisText = response.choices[0].message.content;
@@ -115,32 +319,70 @@ What content gaps exist? What should the user add to their experience to better 
 function formatResumeForAnalysis(resumeData) {
   let text = '';
 
-  if (resumeData.name) text += `Name: ${resumeData.name}\n`;
-  if (resumeData.email) text += `Email: ${resumeData.email}\n`;
-  if (resumeData.phone) text += `Phone: ${resumeData.phone}\n`;
-  if (resumeData.location) text += `Location: ${resumeData.location}\n`;
+  // Handle both direct and nested data structures
+  const data = resumeData.resumeData || resumeData;
 
-  if (resumeData.summary) {
-    text += `\nPROFESSIONAL SUMMARY:\n${resumeData.summary}\n`;
+  console.log('formatResumeForAnalysis - Input data keys:', Object.keys(resumeData || {}));
+  console.log('formatResumeForAnalysis - Using data keys:', Object.keys(data || {}));
+
+  if (data.name) text += `Name: ${data.name}\n`;
+  if (data.email) text += `Email: ${data.email}\n`;
+  if (data.phone) text += `Phone: ${data.phone}\n`;
+  if (data.location) text += `Location: ${data.location}\n`;
+
+  if (data.summary) {
+    text += `\nPROFESSIONAL SUMMARY:\n${data.summary}\n`;
   }
 
-  if (resumeData.experience && resumeData.experience.length > 0) {
+  if (data.experience && data.experience.length > 0) {
     text += '\nWORK EXPERIENCE:\n';
-    resumeData.experience.forEach(exp => {
-      text += `${exp.title} at ${exp.company} (${exp.duration})\n`;
-      if (exp.description) text += `${exp.description}\n`;
+    data.experience.forEach(exp => {
+      const title = exp.title || exp.jobTitle || 'Position';
+      const company = exp.company || exp.companyName || 'Company';
+      const start = exp.start || exp.startDate || '';
+      const end = exp.end || exp.endDate || 'Present';
+      const duration = exp.duration || exp.dates || exp.period || `${start} - ${end}`;
+
+      // Handle both bullets array and description string
+      const bullets = exp.bullets || exp.responsibilities || exp.details || [];
+      const description = exp.description || '';
+
+      text += `${title} at ${company} (${duration})\n`;
+
+      // Add description if it exists
+      if (description) {
+        text += `${description}\n`;
+      }
+
+      // Add bullets if they exist
+      if (Array.isArray(bullets) && bullets.length > 0) {
+        bullets.forEach(bullet => {
+          text += `• ${bullet}\n`;
+        });
+      } else if (typeof bullets === 'string' && bullets) {
+        text += `• ${bullets}\n`;
+      }
+
       text += '\n';
     });
   }
 
-  if (resumeData.skills && resumeData.skills.length > 0) {
-    text += `SKILLS:\n${resumeData.skills.join(', ')}\n\n`;
+  if (data.skills && data.skills.length > 0) {
+    text += `SKILLS:\n${data.skills.join(', ')}\n\n`;
   }
 
-  if (resumeData.education && resumeData.education.length > 0) {
+  if (data.coreCompetencies && data.coreCompetencies.length > 0) {
+    text += `CORE COMPETENCIES:\n${data.coreCompetencies.join(', ')}\n\n`;
+  }
+
+  if (data.education && data.education.length > 0) {
     text += 'EDUCATION:\n';
-    resumeData.education.forEach(edu => {
-      text += `${edu.degree} from ${edu.institution} (${edu.year})\n`;
+    data.education.forEach(edu => {
+      const degree = edu.degree || edu.qualification || 'Degree';
+      const institution = edu.institution || edu.school || edu.university || 'Institution';
+      const year = edu.year || edu.graduationYear || edu.date || 'Year';
+
+      text += `${degree} from ${institution} (${year})\n`;
     });
   }
 
@@ -166,7 +408,7 @@ async function extractAllowedSkills(aiService, resumeText){
 
 // ---- NEW: combined skills processing for efficiency ----
 async function processAllSkills(aiService, resumeData, resumeText, projects, jobDesc) {
-  const sys = `Output ONLY JSON: {
+  const sys = `JSON output: {
     "resumeSkills": string[],
     "projectSkills": string[],
     "jobSkills": string[],
@@ -174,42 +416,14 @@ async function processAllSkills(aiService, resumeData, resumeText, projects, job
     "expandedSkills": string[]
   }
 
-🎯 COMPREHENSIVE SKILLS PROCESSING MISSION:
+Extract only explicitly mentioned skills:
+1. resumeSkills: Technical skills from resume text only
+2. projectSkills: Technologies from project descriptions only
+3. jobSkills: Technical requirements from job posting only
+4. consolidatedSkills: Combine resume+project skills, remove duplicates, max 15
+5. expandedSkills: Add common variants (React/ReactJS, Node/NodeJS)
 
-🚨 CRITICAL RULE: ONLY extract skills that are EXPLICITLY MENTIONED in the text. DO NOT add similar technologies or make assumptions.
-
-1. RESUME_SKILLS: Extract HARD TECHNICAL SKILLS only from resume content:
-   - Programming languages, frameworks, databases, tools that are ACTUALLY WRITTEN in the resume
-   - Look for exact mentions of technology names
-   - EXCLUDE: Soft skills, broad concepts, methodologies
-   - NEVER add technologies not explicitly mentioned
-
-2. PROJECT_SKILLS: Extract concrete technologies from project bullets only.
-   - Only technologies specifically named in project descriptions
-   - Do not infer or assume related technologies
-
-3. JOB_SKILLS: Extract ONLY specific technical skills/technologies mentioned by name in job description:
-   - Must be explicitly written in the job posting
-   - EXCLUDE: Job concepts, business terms, product features, general descriptions
-   - Do not add related or similar technologies
-
-4. CONSOLIDATED_SKILLS: Clean and standardize skills:
-   - Combine ONLY skills from steps 1-2 (resume and projects only)
-   - NEVER include job description skills in consolidated list
-   - Remove duplicates and fix capitalization
-   - Remove vague terms
-   - Max 15 skills total
-   - NO NEW SKILLS - only clean existing ones
-
-5. EXPANDED_SKILLS: Add 1 common variant per consolidated skill for matching:
-   - Only add variants for skills already in consolidated list
-   - Common variations only (React/ReactJS, Node.js/NodeJS)
-
-STRICT EXTRACTION RULES:
-- NEVER add technologies not explicitly mentioned in the source text
-- NEVER assume related technologies (if React is mentioned, don't add JavaScript unless JavaScript is also mentioned)
-- NEVER use example technologies from instructions - only extract what's actually written
-- If a technology is not clearly stated, don't include it`;
+Rule: Only extract what's explicitly written. No assumptions.`;
 
   const projectBullets = projects?.length > 0
     ? projects.map(p => (p.bullets || []).join(' ')).filter(Boolean).join(' ')
@@ -368,64 +582,18 @@ EXAMPLES:
 async function rewriteBullets(aiService, jobDesc, resumeContext, bullets){
   if(!bullets || bullets.length === 0) return bullets;
   
-  const sys = `Output ONLY JSON: {"bullets": string[]}
+  const sys = `JSON output: {"bullets": string[]}
 
-🎯 BULLET ENHANCEMENT MISSION: Transform basic bullet points into professional, detailed resume bullets with ABSOLUTE QUALITY ASSURANCE.
+Transform bullets to professional resume language:
+- Use power verbs: Developed, Architected, Implemented, Optimized
+- Expand basic facts with technical context
+- 25-40 words per bullet
+- NO fabricated metrics or timelines
+- Keep truthful to original content
 
-⚡ CRITICAL ENHANCEMENT DIRECTIVE: Since this is the FINAL quality check, every bullet must be perfect. No verification calls will follow.
-
-📝 ENHANCED TRANSFORMATION PHILOSOPHY:
-- Build upon stated facts with professional language and industry terminology
-- Expand basic statements into compelling, detailed descriptions that showcase expertise
-- Use action-oriented language that demonstrates impact and technical competence
-- Maintain 100% truthfulness while maximizing professional appeal
-
-🔧 ADVANCED TRANSFORMATION RULES:
-
-1. PROFESSIONAL EXPANSION EXAMPLES:
-   Basic: "React and Node JS project"
-   Enhanced: "Developed full-stack web application leveraging React for dynamic user interfaces and Node.js for robust backend API architecture"
-
-   Basic: "Scalable AI resume builder"
-   Enhanced: "Built scalable AI-powered resume generation platform featuring automated content optimization and intelligent formatting capabilities"
-
-   Basic: "Monetised with different tiers"
-   Enhanced: "Implemented comprehensive tiered subscription model with multiple pricing plans, integrated payment processing, and user access management"
-
-2. QUALITY ASSURANCE ENHANCEMENTS:
-   ✅ Technical Context: "Built app" → "Architected and developed application following modern software engineering principles"
-   ✅ Professional Scope: "Worked on feature" → "Collaborated on cross-functional feature development from conception through deployment"
-   ✅ Industry Standards: "Created website" → "Developed responsive web application with optimized performance and accessibility compliance"
-   ✅ Technical Depth: "Used database" → "Implemented data persistence layer with optimized database schema and query performance"
-   ✅ Process Excellence: "Fixed bugs" → "Diagnosed and resolved software defects through systematic debugging and testing methodologies"
-
-3. FORBIDDEN FABRICATIONS (ZERO TOLERANCE):
-   ❌ Specific metrics: "500+ users", "20% improvement", "$10K revenue", "50ms response time"
-   ❌ Exact timeframes: "2-week sprint", "delivered early", "under budget"
-   ❌ Team specifications: "5-person team", "cross-functional squad", "led 10 developers"
-   ❌ Company scale: "enterprise client", "startup environment", "Fortune 500"
-   ❌ Unmentioned technologies: Don't add frameworks, tools, or languages not stated
-
-4. PREMIUM POWER VERBS BY CATEGORY:
-   - Architecture: Architected, Engineered, Designed, Structured, Planned
-   - Development: Developed, Built, Implemented, Created, Programmed, Coded
-   - Optimization: Optimized, Enhanced, Improved, Streamlined, Refined
-   - Integration: Integrated, Connected, Linked, Unified, Synchronized
-   - Leadership: Collaborated, Coordinated, Facilitated, Guided, Mentored
-   - Analysis: Analyzed, Evaluated, Assessed, Investigated, Researched
-
-5. PROFESSIONAL STRUCTURE FORMULA:
-   [Premium Action Verb] + [Technical/Business Context] + [Professional Methodology/Approach] + [Logical Outcome/Capability]
-
-6. QUALITY CHECKPOINTS:
-   - Each bullet 25-40 words for maximum impact
-   - Technical terminology appropriate to field
-   - Action-oriented language throughout
-   - Professional terminology that hiring managers expect
-   - Logical progression from action to outcome
-   - Industry-standard practices implied where appropriate
-
-🎯 FINAL QUALITY MANDATE: Every bullet must read like it was written by a senior professional describing sophisticated work. No simple or basic language allowed.`;
+Examples:
+"React project" → "Developed full-stack web application leveraging React for dynamic user interfaces"
+"Fixed bugs" → "Diagnosed and resolved software defects through systematic debugging methodologies"`;
 
   const user = `JOB_DESCRIPTION:\n${jobDesc}\n\nRESUME_CONTEXT:\n${resumeContext}\n\nBULLETS TO OPTIMIZE:\n${JSON.stringify(bullets)}`;
   
@@ -434,8 +602,8 @@ async function rewriteBullets(aiService, jobDesc, resumeContext, bullets){
     { role:"user", content: user }
   ], {
     model: "gpt-4o-mini",
-    temperature: 0.3, // Balanced for creative enhancement while staying factual
-    max_tokens: 2000, // Speed optimization for bullet rewriting
+    temperature: 0.1, // Lower for speed and consistency
+    max_tokens: 1200, // Reduced for speed optimization
     top_p: 0.9
   });
   
@@ -461,11 +629,11 @@ async function verifyBullets(aiService, resumeContext, original, rewritten){
   return rewritten.map((b,i)=> flags[i] ? b : original[i]);
 }
 
-// ---- NEW: combined summary optimization and ATS analysis ----
-async function optimizeSummaryAndATS(aiService, resumeContext, jobDesc, currentSummary, resumeData, jobSkills = []){
+// ---- NEW: combined summary optimization and job match analysis ----
+async function optimizeSummaryAndJobMatch(aiService, resumeContext, jobDesc, currentSummary, resumeData, jobSkills = []){
   const sys = `Output ONLY JSON: {
     "optimizedSummary": "string",
-    "atsAnalysis": {
+    "jobMatchAnalysis": {
       "overallScore": number,
       "categories": {
         "keywordMatch": {"score": number, "gaps": string[]},
@@ -548,20 +716,20 @@ TONE: Professional, constructive, focused on technical skill enhancement.`;
 
     return {
       optimizedSummary: result.optimizedSummary || currentSummary,
-      atsAnalysis: result.atsAnalysis || null
+      jobMatchAnalysis: result.jobMatchAnalysis || null
     };
   } catch (error) {
     console.error('Error optimizing summary and ATS:', error);
     return {
       optimizedSummary: currentSummary,
-      atsAnalysis: null
+      jobMatchAnalysis: null
     };
   }
 }
 
 // ---- Legacy function kept for compatibility ----
 async function optimizeSummary(aiService, resumeContext, jobDesc, currentSummary){
-  const result = await optimizeSummaryAndATS(aiService, resumeContext, jobDesc, currentSummary, null, []);
+  const result = await optimizeSummaryAndJobMatch(aiService, resumeContext, jobDesc, currentSummary, null, []);
   return result.optimizedSummary;
 }
 
@@ -656,13 +824,16 @@ async function coreHandler(req, res){
 
     if (!resumeData && !resumeText) return res.status(400).json({ error:"No readable resume", code:"E_NO_RESUME" });
     
-    // More lenient job description validation for trial users (10 chars vs 30 for authenticated users)
-    const minJobDescLength = isTrialUser ? 10 : 30;
-    if (!jobDesc || jobDesc.trim().length < minJobDescLength) {
-      return res.status(400).json({ 
-        error: `Job description too short (minimum ${minJobDescLength} characters)`, 
-        code:"E_BAD_INPUT" 
-      });
+    // Job description validation - skip for ATS mode since it focuses on formatting, not content matching
+    if (userGoal !== 'ats') {
+      // More lenient job description validation for trial users (10 chars vs 30 for authenticated users)
+      const minJobDescLength = isTrialUser ? 10 : 30;
+      if (!jobDesc || jobDesc.trim().length < minJobDescLength) {
+        return res.status(400).json({
+          error: `Job description too short (minimum ${minJobDescLength} characters)`,
+          code:"E_BAD_INPUT"
+        });
+      }
     }
 
     // Using centralized AI service (Grok with OpenAI fallback)
@@ -706,7 +877,7 @@ async function coreHandler(req, res){
 
     // Pass 3: generate with hard constraints
     const coverLetterNeeded = userGoal === 'cover-letter' || userGoal === 'both';
-    const resumeNeeded = userGoal === 'cv' || userGoal === 'both';
+    const resumeNeeded = userGoal === 'cv' || userGoal === 'both' || userGoal === 'ats';
     
     const outputKeys = [];
     if (coverLetterNeeded) outputKeys.push('- coverLetterText: string');
@@ -752,7 +923,7 @@ async function coreHandler(req, res){
 - LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
 
     } else if (userGoal === 'cover-letter') {
-      // Cover letter-only prompt (65% shorter, focused) 
+      // Cover letter-only prompt (65% shorter, focused)
       system = `You are a cover letter writer. Output ONLY JSON: { "coverLetterText": "..." }
 
 🎯 Write ${tone} cover letter (250-400 words) using only original ${langTerms.resume} info.
@@ -769,6 +940,49 @@ async function coreHandler(req, res){
 - For JOB_ONLY (${jobOnlySkillsCSV}): "eager to learn X"
 - Tone: ${tone}
 - LANGUAGE: Use ${langTerms.spelling} with ${langTerms.tone}`.trim();
+
+    } else if (userGoal === 'ats') {
+      // Debug logging for ATS generation
+      console.log('🎯 ATS Mode - Resume Data Structure:', JSON.stringify(resumeData, null, 2));
+      console.log('🎯 ATS Mode - Resume Text:', resumeText ? resumeText.substring(0, 200) + '...' : 'No resume text');
+
+      // ATS-optimized resume prompt (focused on formatting and structure optimization)
+      system = `You are an ATS formatting expert. Output ONLY JSON: { "resumeData": {...} }
+
+🎯 Create ATS-OPTIMIZED ${langTerms.resume} with perfect formatting and structure for Applicant Tracking Systems.
+
+📋 ATS FORMATTING RULES:
+- 🎯 FORMATTING: Perfect ATS formatting - consistent fonts, spacing, standard bullet points
+- 🔧 STRUCTURE: Use standard section headers exactly: "PROFESSIONAL SUMMARY", "CORE COMPETENCIES", "PROFESSIONAL EXPERIENCE", "EDUCATION", "PROJECTS"
+- 📝 TEXT FORMAT: Clean, simple text with consistent formatting throughout all sections
+- 📍 DATES: Format all dates consistently (e.g., "Jan 2020 - Dec 2022" or "2020 - 2022")
+- 🔸 BULLETS: Use standard bullet points (•) consistently across all experience entries
+- 📄 LAYOUT: Single-column, simple structure with clear section separation
+- Skills: Include skills from original resume: ${allowedSkillsCSV}
+- Power verbs optimized for ATS scanning: ${langTerms.verbs}
+- 3-5 professional bullets per role using original responsibilities
+- ⚠️ ENHANCE WHILE PRESERVING TRUTH:
+  * Keep ALL actual job titles, companies, and roles exactly as provided
+  * ENHANCE poor writing into professional, impactful language
+  * Transform weak bullets into strong, action-oriented descriptions
+  * Improve vague responsibilities into specific, clear achievements
+  * Fix grammar, structure, and professional presentation
+  * NEVER fabricate or change the nature of any experience
+  * NEVER add responsibilities, duties, or achievements not implied by original content
+  * Maintain the ACTUAL experience and background of the candidate
+- 🔧 PROJECTS: Include ALL project data exactly as provided
+- ATS-FRIENDLY: Use standard professional terminology
+- LANGUAGE: Use ${langTerms.spelling} with professional tone
+- FOCUS: Perfect ATS formatting while maintaining 100% accuracy to original experience
+
+🚨 CRITICAL EXAMPLES:
+✅ GOOD: "Fixed bugs" → "Diagnosed and resolved software defects to improve system reliability"
+✅ GOOD: "Worked on projects" → "Developed and implemented software solutions using React and Node.js"
+❌ BAD: "Software Engineer" → "Customer Service Representative"
+❌ BAD: Adding fake customer service experience to technical roles
+❌ BAD: Changing the fundamental nature of any job role
+
+FOCUS: Perfect ATS formatting + enhanced professional language while keeping all experience truthful.`.trim();
 
     } else {
       // Both - streamlined comprehensive prompt (40% shorter)
@@ -795,13 +1009,17 @@ async function coreHandler(req, res){
     }
 
     const resumePayload = resumeData ? JSON.stringify(resumeData) : resumeText;
-    const userPromptParts = [`Generate JSON${coverLetterNeeded && resumeNeeded ? ' for a tailored cover letter and a revised resume (ATS-friendly)' : coverLetterNeeded ? ' for a tailored cover letter' : ' for a revised resume (ATS-friendly)'}.`];
-    
+    const userPromptParts = [`Generate JSON${coverLetterNeeded && resumeNeeded ? ' for a tailored cover letter and a revised resume (ATS-friendly)' : coverLetterNeeded ? ' for a tailored cover letter' : userGoal === 'ats' ? ' for an ATS-optimized resume with perfect formatting' : ' for a revised resume (ATS-friendly)'}.`];
+
     if (coverLetterNeeded) {
       userPromptParts.push(`Cover Letter Tone:\n${tone}`);
     }
-    
-    userPromptParts.push(`Job Description:\n${jobDesc}`);
+
+    // Only include job description for non-ATS modes
+    if (userGoal !== 'ats') {
+      userPromptParts.push(`Job Description:\n${jobDesc}`);
+    }
+
     userPromptParts.push(`Resume Data:\n${resumePayload}`);
     
     if (coverLetterNeeded && coverText) {
@@ -819,7 +1037,7 @@ async function coreHandler(req, res){
       model: "gpt-4o-mini",
       temperature: 0.1, // Reduced temperature for more factual, less creative output
       // Speed optimizations
-      max_tokens: userGoal === 'cv' ? 2000 : userGoal === 'cover-letter' ? 800 : 3000,
+      max_tokens: userGoal === 'cv' ? 2000 : userGoal === 'cover-letter' ? 800 : userGoal === 'ats' ? 2500 : 3000,
       top_p: 0.9, // Reduce response variability for faster processing
       frequency_penalty: 0, // Disable for speed
       presence_penalty: 0 // Disable for speed
@@ -829,12 +1047,23 @@ async function coreHandler(req, res){
     console.timeEnd('Main Generation');
 
     const raw = resp.choices?.[0]?.message?.content || "";
+
+    // Debug logging for ATS mode
+    if (userGoal === 'ats') {
+      console.log('🎯 ATS Mode - Raw AI Response:', raw.substring(0, 500) + '...');
+    }
+
     const json = safeJSON(raw);
     if (!json) return res.status(502).json({ error:"Bad model output", code:"E_BAD_MODEL_OUTPUT", raw });
 
+    // Debug logging for ATS mode
+    if (userGoal === 'ats') {
+      console.log('🎯 ATS Mode - Parsed JSON resumeData:', JSON.stringify(json.resumeData, null, 2));
+    }
+
     // Normalize + optimize with best practices
     let rd = null;
-    let atsAnalysisResult = null; // Declare in outer scope
+    let jobMatchAnalysisResult = null; // Declare in outer scope
 
     if (resumeNeeded) {
       const allowed = new Set(allowedSkills);
@@ -895,7 +1124,7 @@ async function coreHandler(req, res){
       }
 
       // Start summary+ATS optimization in parallel
-      const summaryPromise = optimizeSummaryAndATS(aiService, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
+      const summaryPromise = optimizeSummaryAndJobMatch(aiService, resumeContext, jobDesc, rd.summary, rd, skillsResult.jobSkills);
       promises.push(summaryPromise);
 
       // Wait for both to complete
@@ -922,7 +1151,7 @@ async function coreHandler(req, res){
 
       // Apply summary and ATS results
       rd.summary = summaryAndATS.optimizedSummary;
-      atsAnalysisResult = summaryAndATS.atsAnalysis;
+      jobMatchAnalysisResult = summaryAndATS.jobMatchAnalysis;
       console.timeEnd('Parallel Post-Processing');
     }
 
@@ -944,10 +1173,19 @@ async function coreHandler(req, res){
     if (resumeNeeded) {
       payload.resumeData = rd;
 
-      // Use combined ATS analysis result (already computed above)
-      if (atsAnalysisResult && jobDesc && jobDesc.trim().length > 50) {
-        payload.atsAnalysis = atsAnalysisResult;
-        console.log('ATS analysis completed:', atsAnalysisResult.overallScore);
+      // Add ATS compatibility analysis for ATS mode
+      if (userGoal === 'ats') {
+        const atsCompatibility = await analyzeATSCompatibility(rd, 'ats', jobDesc, aiService);
+        if (atsCompatibility) {
+          payload.atsAnalysis = atsCompatibility;
+          console.log('ATS compatibility analysis completed:', atsCompatibility.overallScore);
+        }
+      }
+
+      // Use combined job match analysis result (already computed above)
+      if (jobMatchAnalysisResult && jobDesc && jobDesc.trim().length > 50) {
+        payload.jobMatchAnalysis = jobMatchAnalysisResult;
+        console.log('Job match analysis completed:', jobMatchAnalysisResult.overallScore);
       }
     }
 

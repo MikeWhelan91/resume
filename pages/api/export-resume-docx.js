@@ -2875,6 +2875,787 @@ function createExecutiveTemplate(userData, accent) {
   return children;
 }
 
+function createTechTemplate(userData, accent) {
+  const accentColor = hexToRgb(accent);
+  const scale = 1.4;
+
+  const children = [];
+
+  // Header with colored background effect
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: userData.resumeData?.name || userData.name || 'Your Name',
+          bold: true,
+          size: Math.round(18 * scale * 2),
+          color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+          font: "Inter"
+        })
+      ],
+      spacing: { after: Math.round(6 * scale * 20) },
+      shading: {
+        fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}15`
+      },
+      indent: { left: Math.round(16 * scale * 20), right: Math.round(16 * scale * 20) }
+    })
+  );
+
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} • ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
+          size: Math.round(9 * scale * 2),
+          color: "6B7280",
+          font: "Inter"
+        })
+      ],
+      spacing: { after: Math.round(16 * scale * 20) },
+      shading: {
+        fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}15`
+      },
+      indent: { left: Math.round(16 * scale * 20), right: Math.round(16 * scale * 20) }
+    })
+  );
+
+  // About section
+  if (userData.resumeData?.summary) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "ABOUT",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "1F2937",
+            font: "Inter"
+          })
+        ],
+        spacing: { before: Math.round(16 * scale * 20), after: Math.round(6 * scale * 20) },
+        border: {
+          bottom: {
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            space: 1,
+            size: Math.round(2 * scale),
+            style: BorderStyle.SINGLE
+          }
+        }
+      })
+    );
+
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: userData.resumeData.summary,
+            size: Math.round(10 * scale * 2),
+            color: "374151",
+            font: "Inter"
+          })
+        ],
+        spacing: { after: Math.round(16 * scale * 20) }
+      })
+    );
+  }
+
+  // Experience section
+  if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "EXPERIENCE",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "1F2937",
+            font: "Inter"
+          })
+        ],
+        spacing: { before: Math.round(16 * scale * 20), after: Math.round(6 * scale * 20) },
+        border: {
+          bottom: {
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            space: 1,
+            size: Math.round(2 * scale),
+            style: BorderStyle.SINGLE
+          }
+        }
+      })
+    );
+
+    limitExperience(userData.resumeData.experience).forEach(exp => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${safeProp(exp, 'title')} | ${safeProp(exp, 'company')}`,
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: "1F2937",
+              font: "Inter"
+            }),
+            new TextRun({
+              text: `    ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
+              size: Math.round(9 * scale * 2),
+              color: "6B7280",
+              font: "Inter"
+            })
+          ],
+          spacing: { before: Math.round(8 * scale * 20), after: Math.round(4 * scale * 20) },
+          border: {
+            left: {
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              space: 1,
+              size: Math.round(3 * scale),
+              style: BorderStyle.SINGLE
+            }
+          },
+          indent: { left: Math.round(12 * scale * 20) }
+        })
+      );
+
+      if (exp.bullets && exp.bullets.length > 0) {
+        exp.bullets.forEach(bullet => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `▶ ${bullet}`,
+                  size: Math.round(9 * scale * 2),
+                  color: "374151",
+                  font: "Inter"
+                })
+              ],
+              spacing: { after: Math.round(3 * scale * 20) },
+              indent: { left: Math.round(24 * scale * 20) }
+            })
+          );
+        });
+      }
+    });
+  }
+
+  // Skills section
+  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "SKILLS",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "1F2937",
+            font: "Inter"
+          })
+        ],
+        spacing: { before: Math.round(16 * scale * 20), after: Math.round(6 * scale * 20) }
+      })
+    );
+
+    const skillsText = userData.resumeData.skills.join(" • ");
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: skillsText,
+            size: Math.round(9 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "Inter"
+          })
+        ],
+        spacing: { after: Math.round(12 * scale * 20) },
+        shading: {
+          fill: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}10`
+        },
+        indent: { left: Math.round(8 * scale * 20), right: Math.round(8 * scale * 20) }
+      })
+    );
+  }
+
+  // Education section
+  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "EDUCATION",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "1F2937",
+            font: "Inter"
+          })
+        ],
+        spacing: { before: Math.round(16 * scale * 20), after: Math.round(6 * scale * 20) }
+      })
+    );
+
+    limitEducation(userData.resumeData.education, 2).forEach(edu => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              bold: true,
+              size: Math.round(10 * scale * 2),
+              color: "1F2937",
+              font: "Inter"
+            })
+          ],
+          spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+              size: Math.round(9 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "Inter"
+            })
+          ],
+          spacing: { after: Math.round(1 * scale * 20) }
+        })
+      );
+
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+              size: Math.round(8 * scale * 2),
+              color: "6B7280",
+              font: "Inter"
+            })
+          ],
+          spacing: { after: Math.round(8 * scale * 20) }
+        })
+      );
+    });
+  }
+
+  return children;
+}
+
+function createCompactTemplate(userData, accent) {
+  const accentColor = hexToRgb(accent);
+  const scale = 1.4;
+
+  const children = [];
+
+  // Compact header
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: userData.resumeData?.name || userData.name || 'Your Name',
+          bold: true,
+          size: Math.round(16 * scale * 2),
+          color: "000000",
+          font: "System"
+        }),
+        new TextRun({
+          text: `    ${userData.resumeData?.email || userData.email || 'your.email@example.com'} | ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
+          size: Math.round(8 * scale * 2),
+          color: "6B7280",
+          font: "System"
+        })
+      ],
+      spacing: { after: Math.round(8 * scale * 20) },
+      border: {
+        bottom: {
+          color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+          space: 1,
+          size: 4,
+          style: BorderStyle.SINGLE
+        }
+      }
+    })
+  );
+
+  // Summary in compact format
+  if (userData.resumeData?.summary) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: userData.resumeData.summary,
+            size: Math.round(9 * scale * 2),
+            italics: true,
+            color: "374151",
+            font: "System"
+          })
+        ],
+        spacing: { after: Math.round(10 * scale * 20) },
+        shading: { fill: "F8FAFC" },
+        border: {
+          left: {
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            space: 1,
+            size: Math.round(3 * scale),
+            style: BorderStyle.SINGLE
+          }
+        },
+        indent: { left: Math.round(8 * scale * 20) }
+      })
+    );
+  }
+
+  // Experience with compact layout
+  if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "EXPERIENCE",
+            bold: true,
+            size: Math.round(11 * scale * 2),
+            color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+            font: "System"
+          })
+        ],
+        spacing: { before: Math.round(8 * scale * 20), after: Math.round(4 * scale * 20) }
+      })
+    );
+
+    limitExperience(userData.resumeData.experience).forEach(exp => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${safeProp(exp, 'title')} • ${safeProp(exp, 'company')}`,
+              bold: true,
+              size: Math.round(10 * scale * 2),
+              color: "000000",
+              font: "System"
+            }),
+            new TextRun({
+              text: `    ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
+              size: Math.round(8 * scale * 2),
+              color: "6B7280",
+              font: "System"
+            })
+          ],
+          spacing: { before: Math.round(4 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      if (exp.bullets && exp.bullets.length > 0) {
+        exp.bullets.slice(0, 2).forEach(bullet => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• ${bullet}`,
+                  size: Math.round(8 * scale * 2),
+                  color: "374151",
+                  font: "System"
+                })
+              ],
+              spacing: { after: Math.round(1 * scale * 20) },
+              indent: { left: Math.round(8 * scale * 20) }
+            })
+          );
+        });
+      }
+    });
+  }
+
+  // Skills and Education side by side using table
+  if ((userData.resumeData?.skills && userData.resumeData.skills.length > 0) ||
+      (userData.resumeData?.education && userData.resumeData.education.length > 0)) {
+
+    const skillsContent = [];
+    const educationContent = [];
+
+    if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+      skillsContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "SKILLS",
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "System"
+            })
+          ],
+          spacing: { after: Math.round(4 * scale * 20) }
+        })
+      );
+
+      const skillsText = userData.resumeData.skills.join(" • ");
+      skillsContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: skillsText,
+              size: Math.round(8 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "System"
+            })
+          ]
+        })
+      );
+    }
+
+    if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+      educationContent.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "EDUCATION",
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: `${accentColor.r.toString(16).padStart(2, '0')}${accentColor.g.toString(16).padStart(2, '0')}${accentColor.b.toString(16).padStart(2, '0')}`,
+              font: "System"
+            })
+          ],
+          spacing: { after: Math.round(4 * scale * 20) }
+        })
+      );
+
+      limitEducation(userData.resumeData.education, 1).forEach(edu => {
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+                bold: true,
+                size: Math.round(9 * scale * 2),
+                color: "000000",
+                font: "System"
+              })
+            ],
+            spacing: { after: Math.round(1 * scale * 20) }
+          })
+        );
+
+        educationContent.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+                size: Math.round(8 * scale * 2),
+                color: "6B7280",
+                font: "System"
+              })
+            ]
+          })
+        );
+      });
+    }
+
+    const table = new Table({
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: skillsContent,
+              width: { size: 66, type: WidthType.PERCENTAGE }
+            }),
+            new TableCell({
+              children: educationContent,
+              width: { size: 34, type: WidthType.PERCENTAGE }
+            })
+          ]
+        })
+      ],
+      width: { size: 100, type: WidthType.PERCENTAGE }
+    });
+
+    children.push(table);
+  }
+
+  return children;
+}
+
+function createClassicTemplate(userData, accent) {
+  const accentColor = hexToRgb(accent);
+  const scale = 1.4;
+
+  const children = [];
+
+  // Traditional centered header
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: userData.resumeData?.name || userData.name || 'Your Name',
+          bold: true,
+          size: Math.round(18 * scale * 2),
+          color: "000000",
+          font: "Times New Roman",
+          allCaps: true
+        })
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: Math.round(6 * scale * 20) }
+    })
+  );
+
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `${userData.resumeData?.email || userData.email || 'your.email@example.com'} | ${userData.resumeData?.phone || userData.phone || 'Your Phone'}`,
+          size: Math.round(9 * scale * 2),
+          color: "333333",
+          font: "Times New Roman"
+        })
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: Math.round(12 * scale * 20) },
+      border: {
+        bottom: {
+          color: "000000",
+          space: 1,
+          size: Math.round(2 * scale),
+          style: BorderStyle.SINGLE
+        }
+      }
+    })
+  );
+
+  // Objective section
+  if (userData.resumeData?.summary) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "OBJECTIVE",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "000000",
+            font: "Times New Roman",
+            allCaps: true
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(6 * scale * 20) }
+      })
+    );
+
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: userData.resumeData.summary,
+            size: Math.round(10 * scale * 2),
+            color: "333333",
+            font: "Times New Roman",
+            italics: true
+          })
+        ],
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: Math.round(12 * scale * 20) }
+      })
+    );
+  }
+
+  // Professional Experience
+  if (userData.resumeData?.experience && userData.resumeData.experience.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "PROFESSIONAL EXPERIENCE",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "000000",
+            font: "Times New Roman",
+            allCaps: true
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(6 * scale * 20) },
+        border: {
+          bottom: {
+            color: "CCCCCC",
+            space: 1,
+            size: 4,
+            style: BorderStyle.SINGLE
+          }
+        }
+      })
+    );
+
+    limitExperience(userData.resumeData.experience).forEach(exp => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(exp, 'title'),
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: "000000",
+              font: "Times New Roman"
+            }),
+            new TextRun({
+              text: `    ${formatDate(exp.start)} - ${formatDate(exp.end)}`,
+              bold: true,
+              size: Math.round(9 * scale * 2),
+              color: "666666",
+              font: "Times New Roman"
+            })
+          ],
+          spacing: { before: Math.round(8 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(exp, 'company'),
+              size: Math.round(10 * scale * 2),
+              color: "333333",
+              font: "Times New Roman",
+              italics: true
+            })
+          ],
+          spacing: { after: Math.round(4 * scale * 20) }
+        })
+      );
+
+      if (exp.bullets && exp.bullets.length > 0) {
+        exp.bullets.forEach(bullet => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `• ${bullet}`,
+                  size: Math.round(9 * scale * 2),
+                  color: "333333",
+                  font: "Times New Roman"
+                })
+              ],
+              spacing: { after: Math.round(2 * scale * 20) },
+              indent: { left: Math.round(20 * scale * 20) }
+            })
+          );
+        });
+      }
+    });
+  }
+
+  // Education
+  if (userData.resumeData?.education && userData.resumeData.education.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "EDUCATION",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "000000",
+            font: "Times New Roman",
+            allCaps: true
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(6 * scale * 20) },
+        border: {
+          bottom: {
+            color: "CCCCCC",
+            space: 1,
+            size: 4,
+            style: BorderStyle.SINGLE
+          }
+        }
+      })
+    );
+
+    limitEducation(userData.resumeData.education, 2).forEach(edu => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(edu, 'area') || safeProp(edu, 'degree'),
+              bold: true,
+              size: Math.round(11 * scale * 2),
+              color: "000000",
+              font: "Times New Roman"
+            }),
+            new TextRun({
+              text: `    ${formatDate(edu.start)} - ${formatDate(edu.end)}`,
+              bold: true,
+              size: Math.round(9 * scale * 2),
+              color: "666666",
+              font: "Times New Roman"
+            })
+          ],
+          spacing: { before: Math.round(6 * scale * 20), after: Math.round(2 * scale * 20) }
+        })
+      );
+
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: safeProp(edu, 'institution') || safeProp(edu, 'school'),
+              size: Math.round(10 * scale * 2),
+              color: "333333",
+              font: "Times New Roman",
+              italics: true
+            })
+          ],
+          spacing: { after: Math.round(6 * scale * 20) }
+        })
+      );
+    });
+  }
+
+  // Technical Skills
+  if (userData.resumeData?.skills && userData.resumeData.skills.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "TECHNICAL SKILLS",
+            bold: true,
+            size: Math.round(12 * scale * 2),
+            color: "000000",
+            font: "Times New Roman",
+            allCaps: true
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: Math.round(12 * scale * 20), after: Math.round(6 * scale * 20) },
+        border: {
+          bottom: {
+            color: "CCCCCC",
+            space: 1,
+            size: 4,
+            style: BorderStyle.SINGLE
+          }
+        }
+      })
+    );
+
+    const skillsText = userData.resumeData.skills.join(" • ");
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: skillsText,
+            bold: true,
+            size: Math.round(9 * scale * 2),
+            color: "333333",
+            font: "Times New Roman"
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: Math.round(12 * scale * 20) }
+      })
+    );
+  }
+
+  return children;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -2937,8 +3718,17 @@ export default async function handler(req, res) {
 
     // Non-Pro users can only use Professional template and default color
     const isPro = String(userPlan || '').startsWith('pro');
-    const effectiveTemplate = !isPro ? 'professional' : template;
-    const effectiveAccent = !isPro ? '#6b7280' : accent;
+
+    // Define Pro-only templates (same as in ResumeTemplate.js)
+    const proOnlyTemplates = ['executive', 'tech', 'compact', 'classic'];
+
+    // Standard users can use most templates but not Pro-only ones
+    let effectiveTemplate = template;
+    if (!isPro && proOnlyTemplates.includes(template)) {
+      effectiveTemplate = 'professional'; // Fallback to professional for non-Pro users
+    }
+
+    const effectiveAccent = accent || '#6b7280';
 
     let documentChildren;
     
@@ -2957,6 +3747,15 @@ export default async function handler(req, res) {
         break;
       case 'executive':
         documentChildren = createExecutiveTemplate(userData, effectiveAccent);
+        break;
+      case 'tech':
+        documentChildren = createTechTemplate(userData, effectiveAccent);
+        break;
+      case 'compact':
+        documentChildren = createCompactTemplate(userData, effectiveAccent);
+        break;
+      case 'classic':
+        documentChildren = createClassicTemplate(userData, effectiveAccent);
         break;
       case 'professional':
       default:

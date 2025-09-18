@@ -7,12 +7,18 @@ TailorCV now supports high-quality DOCX exports for both resumes and cover lette
 ## Features
 
 ### Resume DOCX Export
-- **Template Support**: Full support for all three templates (Professional, Modern, Creative)
+- **Template Support**: Full support for all nine templates (Professional, Modern, Creative, Minimal, Two-Column, Executive, Tech, Compact, Classic)
 - **Styled Output**: Exact replica of web preview formatting with matching colors, fonts, and layout
 - **Template-Specific Styling**:
   - **Professional**: Arial font, clean layout with ▪ bullet points and accent-colored headers
   - **Modern**: Helvetica font, highlighted summary section with → arrow bullets and bordered experience items
   - **Creative**: Georgia serif font, centered layout with decorative lines, italicized headers and contact info
+  - **Minimal**: System font, clean minimal layout with subtle accents
+  - **Two-Column**: Side-by-side layout with colored sidebar and main content area
+  - **Executive**: Times font, formal business layout with borders and professional styling
+  - **Tech**: Inter font, timeline-based experience with colored backgrounds and tech-focused styling
+  - **Compact**: System font, space-efficient layout with grid-based content organization
+  - **Classic**: Times New Roman font, traditional formal layout with centered headers and classic styling
 
 ### Cover Letter DOCX Export
 - **Professional Format**: Business letter format with proper spacing
@@ -35,7 +41,7 @@ TailorCV now supports high-quality DOCX exports for both resumes and cover lette
   ```json
   {
     "userData": { /* Resume data object */ },
-    "template": "professional|modern|creative",
+    "template": "professional|modern|creative|minimal|two-column|executive|tech|compact|classic",
     "accent": "#2563eb" // Hex color code
   }
   ```

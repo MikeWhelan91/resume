@@ -94,9 +94,7 @@ export default function PricingPage() {
         'All premium templates',
         'DOCX + PDF downloads',
         'All color themes',
-        'Priority support',
-        'Advanced customization',
-        'Smart job matching'
+        'Priority support'
       ],
       buttonText: 'Start Pro Monthly',
       buttonVariant: 'primary',
@@ -116,8 +114,6 @@ export default function PricingPage() {
         'DOCX + PDF downloads',
         'All color themes',
         'Priority support',
-        'Advanced customization',
-        'Smart job matching',
         '42% savings vs monthly'
       ],
       buttonText: 'Start Pro Annual - €69/year',

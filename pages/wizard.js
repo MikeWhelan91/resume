@@ -14,9 +14,11 @@ export default function WizardPage(){
   const [template, setTemplate] = useState('classic');
   const [authCheck, setAuthCheck] = useState(null);
   const [checking, setChecking] = useState(false); // Start as false to show UI immediately
+  const [userGoal, setUserGoal] = useState('both'); // Track selected route
 
-  const handleWizardStart = (data) => {
+  const handleWizardStart = (data, route = 'both') => {
     setInitialData(data);
+    setUserGoal(route); // Store the selected route
     setShowWizard(true);
   };
 
@@ -182,6 +184,7 @@ export default function WizardPage(){
         template={template}
         onTemplateChange={setTemplate}
         onAuthCheck={checkAuthStatus}
+        initialUserGoal={userGoal}
       />
     </>
   );

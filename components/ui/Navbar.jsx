@@ -75,38 +75,48 @@ export default function Navbar() {
     });
   };
 
-  const getUsageStats = () => {
-    if ((userPlan === 'standard' || userPlan === 'free') && entitlement && downloadUsage) {
-      const usedFree = Math.max(0, 6 - (entitlement.freeCreditsThisMonth ?? 0));
+  const getDaysUntilNextMonth = () => {
+    const now = new Date();
+    const dublinTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Dublin"}));
+
+    // Get first day of next month
+    const nextMonth = new Date(dublinTime.getFullYear(), dublinTime.getMonth() + 1, 1);
+
+    // Calculate days difference
+    const timeDiff = nextMonth.getTime() - dublinTime.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    return daysDiff;
+  };
+
+  const getNextResetText = () => {
+    const days = getDaysUntilNextMonth();
+    if (days === 1) return "Tomorrow";
+    if (days <= 7) return `${days} days`;
+    if (days <= 14) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''}`;
+    return `${Math.floor(days / 7)} weeks`;
+  };
+
+  const getCreditStatus = () => {
+    if (String(userPlan || '').startsWith('pro')) {
       return {
-        generations: {
-          used: usedFree,
-          limit: 6,
-          period: 'month'
-        },
-        downloads: {
-          pdf: { used: downloadUsage.pdfDownloads || 0, limit: 'Document-based', period: null },
-          docx: { used: downloadUsage.docxDownloads || 0, limit: 0, period: null }
-        }
+        type: 'unlimited',
+        display: 'Unlimited credits'
       };
-    } else if (String(userPlan || '').startsWith('pro') && downloadUsage) {
+    } else if (userPlan === 'standard' && entitlement) {
+      const remaining = entitlement.freeCreditsThisMonth || 0;
       return {
-        generations: {
-          used: 'Unlimited',
-          limit: 'Unlimited',
-          period: null
-        },
-        downloads: {
-          pdf: { used: 'Unlimited', limit: 'Unlimited', period: null },
-          docx: { used: 'Unlimited', limit: 'Unlimited', period: null }
-        }
+        type: 'monthly',
+        remaining: remaining,
+        nextReset: getNextResetText(),
+        display: `${remaining} free credits remaining`
       };
     }
     return null;
   };
 
   const handleBillingClick = async () => {
-    if (userPlan === 'standard' || userPlan === 'free') {
+    if (userPlan === 'standard') {
       // Redirect to pricing page for upgrades
       router.push('/pricing');
     } else {
@@ -428,7 +438,7 @@ export default function Navbar() {
                       className="fixed inset-0 z-10"
                       onClick={() => setIsDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-3 z-20 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-3 z-20 overflow-hidden">
                       {/* User Info */}
                       <div className="px-4 py-4 border-b border-gray-200/50 dark:border-gray-800/50">
                         <div className="flex items-center space-x-3 mb-3">
@@ -462,55 +472,35 @@ export default function Navbar() {
                           </div>
                         )}
 
-                        {/* Usage Stats */}
+                        {/* Credit Status */}
                         {(() => {
-                          const stats = getUsageStats();
-                          if (!stats) return null;
+                          const creditInfo = getCreditStatus();
+                          if (!creditInfo) return null;
 
                           return (
                             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                               <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-1">
-                                <span>Usage Overview</span>
+                                <Coins className="w-3 h-3" />
+                                <span>Credit Status</span>
                               </div>
 
-                              {/* Generations */}
-                              <div className="flex justify-between items-center text-xs mb-2">
-                                <span className="text-gray-600 dark:text-gray-400">Generations</span>
-                                <span className="font-semibold text-gray-900 dark:text-white">
-                                  {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number'
-                                    ? `${stats.generations.used}/${stats.generations.limit}`
-                                    : `${stats.generations.used}`}
-                                  {stats.generations.period && ` per ${stats.generations.period}`}
-                                </span>
-                              </div>
-
-                              {/* Progress bar for finite limits */}
-                              {typeof stats.generations.used === 'number' && typeof stats.generations.limit === 'number' && (
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
-                                  <div
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300 shadow-sm"
-                                    style={{ width: `${Math.min(100, (stats.generations.used / stats.generations.limit) * 100)}%` }}
-                                  />
+                              {creditInfo.type === 'unlimited' ? (
+                                <div className="flex items-center justify-center py-2">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                      Unlimited credits
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-600 dark:text-gray-400">6 free credits in</span>
+                                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                                    {creditInfo.nextReset}
+                                  </span>
                                 </div>
                               )}
-
-                              {/* Downloads */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center text-xs">
-                                  <span className="text-gray-600 dark:text-gray-400">PDF Downloads</span>
-                                  <span className="font-semibold text-gray-900 dark:text-white">
-                                    {stats.downloads.pdf.limit === 0 ? 'Not available' :
-                                     `${stats.downloads.pdf.used}/${stats.downloads.pdf.limit}${stats.downloads.pdf.period ? ` per ${stats.downloads.pdf.period}` : ''}`}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs">
-                                  <span className="text-gray-600 dark:text-gray-400">DOCX Downloads</span>
-                                  <span className="font-semibold text-gray-900 dark:text-white">
-                                    {stats.downloads.docx.limit === 0 ? 'Not available' :
-                                     `${stats.downloads.docx.used}/${stats.downloads.docx.limit}${stats.downloads.docx.period ? ` per ${stats.downloads.docx.period}` : ''}`}
-                                  </span>
-                                </div>
-                              </div>
                             </div>
                           );
                         })()}
@@ -556,7 +546,6 @@ export default function Navbar() {
                             <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                               <Monitor className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                             </div>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Theme</span>
                             <div className="ml-auto">
                               <ThemeToggle />
                             </div>

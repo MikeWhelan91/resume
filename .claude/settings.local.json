@@ -40,7 +40,9 @@
       "Bash(git checkout:*)",
       "Bash(npx next lint:*)",
       "Bash(cmd /c:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(del test-db.js)"
     ],
     "deny": [],
     "ask": []

@@ -61,6 +61,7 @@ export default function ResultsPage() {
   const [showTrialSignup, setShowTrialSignup] = useState(false);
   const [signupType, setSignupType] = useState('post_generation');
   const [atsAnalysis, setAtsAnalysis] = useState(null);
+  const [jobMatchAnalysis, setJobMatchAnalysis] = useState(null);
   const [downloadCooldowns, setDownloadCooldowns] = useState({
     cv: 0,
     cvDocx: 0,
@@ -307,7 +308,7 @@ export default function ResultsPage() {
 
       // Start the download process
       await triggerDownload('/api/download-cv', 'resume.pdf', {
-        template,
+        template: userGoal === 'ats' ? 'ats' : template,
         accent,
         data: userData,
       });
@@ -418,7 +419,7 @@ export default function ResultsPage() {
 
       await triggerDownload('/api/export-resume-docx', `${(userData.resumeData?.name || userData.name || 'resume').replace(/\s+/g, '_')}_resume.docx`, {
         userData,
-        template,
+        template: userGoal === 'ats' ? 'ats' : template,
         accent
       });
     } catch (error) {
@@ -599,12 +600,24 @@ export default function ResultsPage() {
 
         if (savedData) {
           const parsedData = JSON.parse(savedData);
-          setUserData(parsedData);
+          // For ATS analysis mode, the actual resume data is nested under resumeData
+          if (parsedData.analysisOnly && parsedData.resumeData) {
+            console.log('🔍 Results Debug - Full parsedData:', JSON.stringify(parsedData, null, 2));
+            console.log('🔍 Results Debug - Extracted resumeData:', JSON.stringify(parsedData.resumeData, null, 2));
+            setUserData(parsedData.resumeData);
+          } else {
+            setUserData(parsedData);
+          }
           setContentUpdated(false);
 
           // Process ATS analysis if it exists
           if (parsedData.atsAnalysis) {
             setAtsAnalysis(parsedData.atsAnalysis);
+          }
+
+          // Process job match analysis if it exists
+          if (parsedData.jobMatchAnalysis) {
+            setJobMatchAnalysis(parsedData.jobMatchAnalysis);
           }
         } else {
           // Redirect if no data
@@ -681,7 +694,7 @@ export default function ResultsPage() {
         </div>
         <div className="bg-surface text-text shadow-lg rounded-lg overflow-hidden border border-border" style={{aspectRatio: '210/297', height: '400px', overflow: 'auto'}}>
           <div style={{ transform: 'scale(0.6)', transformOrigin: 'top left', width: '166.67%' }}>
-            <ResumeTemplate userData={userData} accent={accent} template={template} userPlan={userPlan} />
+            <ResumeTemplate userData={userData} accent={accent} template={userGoal === 'ats' ? 'ats' : template} userPlan={userPlan} />
           </div>
         </div>
 
@@ -806,6 +819,11 @@ export default function ResultsPage() {
         return {
           title: 'Your Tailored Cover Letter',
           description: 'Review and download your personalized cover letter, crafted for the specific role.'
+        };
+      case 'ats':
+        return {
+          title: 'CV Health Check Results',
+          description: 'See how ATS systems parse your CV and get specific recommendations to improve compatibility.'
         };
       case 'both':
       default:
@@ -1097,6 +1115,7 @@ export default function ResultsPage() {
             <div className={`grid gap-6 ${userGoal === 'both' ? 'lg:grid-cols-2' : 'lg:grid-cols-1 max-w-2xl mx-auto'} justify-items-center`}>
               {(userGoal === 'cv' || userGoal === 'both') && renderCVPreview()}
               {(userGoal === 'cover-letter' || userGoal === 'both') && renderCoverLetterPreview()}
+              {userGoal === 'ats' && renderCVPreview()}
             </div>
 
             {/* Download Section for Single Document Views */}
@@ -1106,14 +1125,14 @@ export default function ResultsPage() {
                   <div className="bg-surface rounded-lg border border-border p-6">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center">
                       <Download className="w-5 h-5 mr-2 text-indigo-600" />
-                      Download Your {userGoal === 'cv' ? terms.Resume : 'Cover Letter'}
+                      Download Your {userGoal === 'cv' ? terms.Resume : userGoal === 'ats' ? `ATS-Optimized ${terms.Resume}` : 'Cover Letter'}
                     </h3>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-muted">File Format</label>
                         <select
-                          value={userGoal === 'cv' ? resumeFormat : coverLetterFormat}
-                          onChange={(e) => userGoal === 'cv' ? setResumeFormat(e.target.value) : setCoverLetterFormat(e.target.value)}
+                          value={userGoal === 'cv' || userGoal === 'ats' ? resumeFormat : coverLetterFormat}
+                          onChange={(e) => userGoal === 'cv' || userGoal === 'ats' ? setResumeFormat(e.target.value) : setCoverLetterFormat(e.target.value)}
                           className="w-full bg-surface text-text border border-border rounded-lg px-4 py-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent"
                         >
                           <option value="pdf">PDF</option>
@@ -1146,45 +1165,45 @@ export default function ResultsPage() {
               </div>
             )}
 
-            {/* ATS Score Display Under Everything */}
-            {atsAnalysis && (userGoal === 'cv' || userGoal === 'both') && (
+            {/* Job Match Analysis Display for CV/Both modes */}
+            {jobMatchAnalysis && (userGoal === 'cv' || userGoal === 'both') && (
               <div className="max-w-4xl mx-auto">
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-text">Job Match Analysis</h3>
                     <div className="flex items-center space-x-2">
                       <div className={`text-3xl font-bold ${
-                        atsAnalysis.overallScore >= 80 ? 'text-green-600' :
-                        atsAnalysis.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                        jobMatchAnalysis.overallScore >= 80 ? 'text-green-600' :
+                        jobMatchAnalysis.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
                       }`}>
-                        {atsAnalysis.overallScore}%
+                        {jobMatchAnalysis.overallScore}%
                       </div>
                       <span className={`text-sm px-3 py-1 rounded-full font-medium ${
-                        atsAnalysis.overallScore >= 80 ? 'bg-green-100 text-green-800' :
-                        atsAnalysis.overallScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                        jobMatchAnalysis.overallScore >= 80 ? 'bg-green-100 text-green-800' :
+                        jobMatchAnalysis.overallScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {atsAnalysis.overallScore >= 80 ? 'Excellent' :
-                         atsAnalysis.overallScore >= 60 ? 'Good' : 'Needs Work'}
+                        {jobMatchAnalysis.overallScore >= 80 ? 'Excellent' :
+                         jobMatchAnalysis.overallScore >= 60 ? 'Good' : 'Needs Work'}
                       </span>
                     </div>
                   </div>
 
-                  {atsAnalysis.categories && (
+                  {jobMatchAnalysis.categories && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.keywordMatch?.score || 0}%</div>
+                        <div className="text-2xl font-bold text-blue-600">{jobMatchAnalysis.categories.keywordMatch?.score || 0}%</div>
                         <div className="text-sm text-muted">Keywords</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.contentDepth?.score || 0}%</div>
+                        <div className="text-2xl font-bold text-blue-600">{jobMatchAnalysis.categories.contentDepth?.score || 0}%</div>
                         <div className="text-sm text-muted">Content Depth</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.relevance?.score || 0}%</div>
+                        <div className="text-2xl font-bold text-blue-600">{jobMatchAnalysis.categories.relevance?.score || 0}%</div>
                         <div className="text-sm text-muted">Relevance</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{atsAnalysis.categories.completeness?.score || 0}%</div>
+                        <div className="text-2xl font-bold text-blue-600">{jobMatchAnalysis.categories.completeness?.score || 0}%</div>
                         <div className="text-sm text-muted">Completeness</div>
                       </div>
                     </div>
@@ -1192,11 +1211,11 @@ export default function ResultsPage() {
 
                   <div className="grid md:grid-cols-3 gap-6">
                     {/* Content Gaps */}
-                    {atsAnalysis.contentGaps && atsAnalysis.contentGaps.length > 0 && (
+                    {jobMatchAnalysis.contentGaps && jobMatchAnalysis.contentGaps.length > 0 && (
                       <div>
                         <h4 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-3">🎯 Content Gaps to Address</h4>
                           <ul className="space-y-2">
-                          {atsAnalysis.contentGaps.map((gap, index) => (
+                          {jobMatchAnalysis.contentGaps.map((gap, index) => (
                             <li key={index} className="text-sm text-orange-600 dark:text-orange-400">
                               • {gap}
                             </li>
@@ -1206,11 +1225,11 @@ export default function ResultsPage() {
                     )}
 
                     {/* Missing Keywords */}
-                    {atsAnalysis.missingKeywords && atsAnalysis.missingKeywords.length > 0 && (
+                    {jobMatchAnalysis.missingKeywords && jobMatchAnalysis.missingKeywords.length > 0 && (
                       <div>
                         <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">🔍 Missing Keywords from Job</h4>
                         <div className="flex flex-wrap gap-2">
-                          {atsAnalysis.missingKeywords.map((keyword, index) => (
+                          {jobMatchAnalysis.missingKeywords.map((keyword, index) => (
                             <span key={index} className="text-xs bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 px-2 py-1 rounded-full">
                               {keyword}
                             </span>
@@ -1220,11 +1239,11 @@ export default function ResultsPage() {
                     )}
 
                     {/* Recommendations */}
-                    {atsAnalysis.recommendations && atsAnalysis.recommendations.length > 0 && (
+                    {jobMatchAnalysis.recommendations && jobMatchAnalysis.recommendations.length > 0 && (
                       <div>
                         <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3">💡 Actionable Improvements</h4>
                         <ul className="space-y-2">
-                          {atsAnalysis.recommendations.map((rec, index) => (
+                          {jobMatchAnalysis.recommendations.map((rec, index) => (
                             <li key={index} className="text-sm text-green-600 dark:text-green-400">
                               • {rec}
                             </li>
@@ -1236,6 +1255,183 @@ export default function ResultsPage() {
 
                   <div className="mt-6 text-center text-sm text-blue-700 dark:text-blue-300">
                     ✨ This analysis was automatically generated based on your job description
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CV Parsing Results for ATS mode */}
+            {userGoal === 'ats' && userData && (
+              <div className="max-w-4xl mx-auto mb-8">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-text">CV Parsing Results</h3>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">What ATS systems extracted from your CV</div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Contact Information */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Contact Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Name:</span>
+                          <span className={userData.name ? 'text-green-600' : 'text-red-600'}>
+                            {userData.name ? `✅ ${userData.name}` : '❌ Not detected'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Email:</span>
+                          <span className={userData.email ? 'text-green-600' : 'text-red-600'}>
+                            {userData.email ? `✅ ${userData.email}` : '❌ Not detected'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Phone:</span>
+                          <span className={userData.phone ? 'text-green-600' : 'text-red-600'}>
+                            {userData.phone ? `✅ ${userData.phone}` : '❌ Not detected'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Location:</span>
+                          <span className={userData.location ? 'text-green-600' : 'text-yellow-600'}>
+                            {userData.location ? `✅ ${userData.location}` : '⚠️ Optional'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sections Detected */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Sections Detected</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Professional Summary:</span>
+                          <span className={userData.summary ? 'text-green-600' : 'text-yellow-600'}>
+                            {userData.summary ? '✅ Detected' : '⚠️ Missing'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Work Experience:</span>
+                          <span className={userData.experience?.length > 0 ? 'text-green-600' : 'text-red-600'}>
+                            {userData.experience?.length > 0 ? `✅ ${userData.experience.length} positions` : '❌ Not detected'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Skills:</span>
+                          <span className={userData.skills?.length > 0 ? 'text-green-600' : 'text-red-600'}>
+                            {userData.skills?.length > 0 ? `✅ ${userData.skills.length} skills` : '❌ Not detected'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Education:</span>
+                          <span className={userData.education?.length > 0 ? 'text-green-600' : 'text-yellow-600'}>
+                            {userData.education?.length > 0 ? `✅ ${userData.education.length} entries` : '⚠️ Missing'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Projects:</span>
+                          <span className={userData.projects?.length > 0 ? 'text-green-600' : 'text-yellow-600'}>
+                            {userData.projects?.length > 0 ? `✅ ${userData.projects.length} projects` : '⚠️ Optional'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ATS Compatibility Analysis Display for ATS mode */}
+            {atsAnalysis && userGoal === 'ats' && (
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-text">ATS Compatibility Analysis</h3>
+                    <div className="flex items-center space-x-2">
+                      <div className={`text-3xl font-bold ${
+                        atsAnalysis.overallScore >= 80 ? 'text-green-600' :
+                        atsAnalysis.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {atsAnalysis.overallScore}%
+                      </div>
+                      <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                        atsAnalysis.overallScore >= 80 ? 'bg-green-100 text-green-800' :
+                        atsAnalysis.overallScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {atsAnalysis.overallScore >= 80 ? 'ATS Optimized' :
+                         atsAnalysis.overallScore >= 60 ? 'Good Compatibility' : 'Needs ATS Work'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {atsAnalysis.categories && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{atsAnalysis.categories.keywordOptimization?.score || 0}%</div>
+                        <div className="text-sm text-muted">Keywords</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{atsAnalysis.categories.contentRelevance?.score || 0}%</div>
+                        <div className="text-sm text-muted">Relevance</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{atsAnalysis.categories.skillsAlignment?.score || 0}%</div>
+                        <div className="text-sm text-muted">Skills</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{atsAnalysis.categories.completeness?.score || 0}%</div>
+                        <div className="text-sm text-muted">Completeness</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* ATS Issues */}
+                    {atsAnalysis.issues && atsAnalysis.issues.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-3">⚠️ ATS Issues</h4>
+                          <ul className="space-y-2">
+                          {atsAnalysis.issues.map((issue, index) => (
+                            <li key={index} className="text-sm text-orange-600 dark:text-orange-400">
+                              • {issue}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Keyword Gaps */}
+                    {atsAnalysis.keywordGaps && atsAnalysis.keywordGaps.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">🔍 Keyword Gaps</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {atsAnalysis.keywordGaps.map((keyword, index) => (
+                            <span key={index} className="text-xs bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 px-2 py-1 rounded-full">
+                              {keyword.keyword || keyword}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ATS Recommendations */}
+                    {atsAnalysis.quickWins && atsAnalysis.quickWins.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3">💡 Quick ATS Wins</h4>
+                        <ul className="space-y-2">
+                          {atsAnalysis.quickWins.map((rec, index) => (
+                            <li key={index} className="text-sm text-green-600 dark:text-green-400">
+                              • {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 text-center text-sm text-purple-700 dark:text-purple-300">
+                    🤖 This ATS compatibility analysis helps ensure your resume passes automated screening systems
                   </div>
                 </div>
               </div>

@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
     // DOCX is available for Pro plans only
     if (!String(userPlan || '').startsWith('pro')) {
-      return res.status(402).json({ 
+      return res.status(402).json({
         error: 'Upgrade required',
         message: 'DOCX downloads are only available for Pro users. Upgrade to access this feature.'
       });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Briefcase, Palette, Users, Code, GraduationCap, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Briefcase, Palette, Users, Code, GraduationCap, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import SeoHead from '../../components/SeoHead';
 
@@ -121,6 +121,31 @@ export default function TemplateGuidelines() {
                     <div className="flex items-center space-x-2 text-sm">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       <span className="text-gray-700 dark:text-gray-300">DevOps & Engineering</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Templates Added */}
+                <div className="border border-emerald-200 dark:border-emerald-700 rounded-xl p-6 bg-emerald-50 dark:bg-emerald-900">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Templates</h3>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">Fresh designs based on open-source community templates.</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-gray-700 dark:text-gray-300">Tech - Timeline-based with sidebar</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-gray-700 dark:text-gray-300">Compact - Space-efficient design</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-gray-700 dark:text-gray-300">Classic - Traditional formal layout</span>
                     </div>
                   </div>
                 </div>

@@ -14,6 +14,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useError } from '../contexts/ErrorContext';
 import { useCreditContext } from '../contexts/CreditContext';
 import { InfoTooltip } from './ui/TooltipPortal';
+import { Upload } from 'lucide-react';
 
 const emptyResume = {
   name: '',
@@ -80,7 +81,7 @@ const schemas = {
   })
 };
 
-export default function ResumeWizard({ initialData, onComplete, autosaveKey, onAuthCheck }) {
+export default function ResumeWizard({ initialData, onComplete, autosaveKey, onAuthCheck, initialUserGoal = 'both' }) {
   const router = useRouter();
   const { data: session } = useSession();
   const { language, getTerminology } = useLanguage();
@@ -89,8 +90,19 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   const { entitlement, userPlan, dayPassUsage } = useCreditContext();
   const stepIds = ['goal', 'basics', 'skills', 'work', 'projects', 'education', 'review'];
   const stepLabels = ['Goal', 'Basics','Skills','Experience','Projects (Optional)','Education','Review'];
-  const [userGoal, setUserGoal] = useState('both'); // 'cv', 'cover-letter', 'both'
+
+  // Dynamic step arrays - ATS mode only has upload step, others skip goal selection
+  const getActiveStepIds = () => userGoal === 'ats' ? ['upload'] : stepIds.slice(1); // Remove 'goal' step
+  const getActiveStepLabels = () => userGoal === 'ats' ? ['Upload CV'] : stepLabels.slice(1); // Remove 'Goal' label
+  const [userGoal, setUserGoal] = useState(initialUserGoal); // 'cv', 'cover-letter', 'both', 'ats'
   const [step, setStep] = useState(0);
+
+  // Reset step if user changes to ATS mode and is on job description step
+  useEffect(() => {
+    if (userGoal === 'ats' && step === 6) {
+      setStep(5); // Move back to education step
+    }
+  }, [userGoal, step]);
 
   const isStandardPlan = (plan) => plan === 'standard' || plan === 'free';
 
@@ -115,7 +127,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
 
   const methods = useForm({ defaultValues: initialData || emptyResume, mode: 'onChange' });
-  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = methods;
+  const { register, handleSubmit, watch, setValue, getValues, reset, formState: { errors } } = methods;
 
   const [isValid, setIsValid] = useState(true);
   const [message, setMessage] = useState('');
@@ -165,17 +177,23 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
   useEffect(() => {
     const sub = watch(() => {
-      const key = stepIds[step];
-      if(key === 'goal'){
-        setIsValid(true);
-        setMessage('');
-        return;
-      }
-      if(key === 'review'){
+      const activeSteps = getActiveStepIds();
+      const key = activeSteps[step];
+      // Goal selection is now handled in WizardEntry, so no need to validate it here
+      if(step === activeSteps.length - 1){
+        // Final step validation
+        if (userGoal === 'ats') {
+          // For ATS mode, final step is upload - always valid (upload triggers immediately)
+          setIsValid(true);
+          setMessage('');
+          return;
+        }
+
+        // For other modes, validate job description and generation capability
         const jdValid = jd.trim().length > 0;
         const canGen = canGenerate();
         const ok = jdValid && canGen;
-        
+
         if (!jdValid) {
           setIsValid(false);
           setMessage('Job description required');
@@ -254,49 +272,27 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           ]);
           
           if (entitlementResponse.ok) {
-            const data = await entitlementResponse.json();
-            setEntitlement(data);
-            setUserPlan(data.plan);
+            // Entitlement data is managed by CreditContext
+            console.log('Entitlement data fetched successfully');
           }
           
-          if (dayPassResponse.ok) {
-            const dayPassData = await dayPassResponse.json();
-            setDayPassUsage(dayPassData);
-          }
+          // Day pass usage is managed by CreditContext
         } catch (error) {
           console.error('Error fetching entitlement:', error);
         }
       } else {
         // Anonymous user - fetch trial usage
         try {
-          const trialResponse = await fetch('/api/trial-usage');
-          if (trialResponse.ok) {
-            const trialData = await trialResponse.json();
-            setTrialUsage(trialData);
-          } else {
-            // Provide fallback trial usage data with correct structure
-            setTrialUsage({
-              generationsUsed: 1, // Assume they used 1 so they have 1 remaining
-              generationsLimit: 2,
-              canGenerate: true,
-              canDownload: true
-            });
-          }
+          // Trial usage is managed by CreditContext
+          console.log('Trial usage will be managed by CreditContext');
         } catch (error) {
           console.error('Error fetching trial usage:', error);
-          // Provide fallback trial usage data with correct structure
-          setTrialUsage({
-            generationsUsed: 1, // Assume they used 1 so they have 1 remaining
-            generationsLimit: 2,
-            canGenerate: true,
-            canDownload: true
-          });
         }
-        setTrialUsageLoading(false);
       }
     };
 
-    fetchTrialData();
+    // Data fetching is now handled by CreditContext
+    // fetchTrialData();
   }, [session]);
 
   // Check if user can generate and redirect/show error if not
@@ -356,8 +352,67 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
     return (getCreditsRemaining() || 0) > 0;
   };
 
-  function next() { if (step < stepIds.length -1) setStep(s => s + 1); }
-  function prev() { if (step > 0) setStep(s => s - 1); }
+  function next() {
+    const activeSteps = getActiveStepIds();
+    if (step < activeSteps.length - 1) {
+      setStep(s => s + 1);
+    }
+  }
+  function prev() {
+    if (step > 0) setStep(s => s - 1);
+  }
+
+  const handleCVUpload = async (file) => {
+    setIsGenerating(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const response = await fetch('/api/parse-resume', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const uploadedData = data.resumeData || emptyResume;
+
+        // Debug: Log what was extracted from the CV
+        console.log('🔍 CV Upload Debug - Extracted data:', JSON.stringify(uploadedData, null, 2));
+
+        // Skip to final step (analysis) for ATS mode
+        reset(uploadedData);
+        localStorage.setItem('userGoal', userGoal);
+
+        // Trigger analysis immediately
+        await analyzeUploadedCV(uploadedData);
+      } else {
+        showError(data.error || 'Failed to process CV', 'Upload Failed');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      showError('Failed to process CV. Please try again.', 'Upload Error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const analyzeUploadedCV = async (resumeData) => {
+    try {
+      // Create result data for analysis (no generation needed)
+      const resultData = {
+        resumeData,
+        analysisOnly: true
+      };
+
+      localStorage.setItem('resumeResult', JSON.stringify(resultData));
+      onComplete && onComplete(resultData);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      showError('Failed to analyze CV. Please try again.', 'Analysis Error');
+    }
+  };
   const saveDraftNow = async () => {
     const data = getValues();
     if (session?.user) {
@@ -469,7 +524,8 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   };
 
   async function submit(data) {
-    if(step !== stepIds.length -1) return;
+    const activeSteps = getActiveStepIds();
+    if(step !== activeSteps.length -1) return;
 
     console.log('Submit called with userGoal:', userGoal, 'session:', !!session?.user);
 
@@ -514,8 +570,9 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
       fd.append('userGoal', userGoal);
       fd.append('language', language);
       
-      // Save job description to localStorage for results page
+      // Save job description and userGoal to localStorage for results page
       localStorage.setItem('jobDescription', jd);
+      localStorage.setItem('userGoal', userGoal);
       
       const res = await fetch('/api/generate',{method:'POST', body:fd});
       const out = await res.json();
@@ -557,16 +614,17 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
       <form onSubmit={handleSubmit(submit)} className="space-y-8">
-        <StepNav 
-          steps={stepLabels} 
-          current={step} 
-          onChange={(i)=>{ if(i<=step || isValid) setStep(i); }} 
+        <StepNav
+          steps={getActiveStepLabels()}
+          current={step}
+          onChange={(i)=>{ if(i<=step || isValid) setStep(i); }}
           allowNext={isValid}
           showButtons={true}
           isGenerating={isGenerating}
           disabledMessage={message}
           onNext={() => {
-            if (step < stepIds.length - 1) {
+            const activeSteps = getActiveStepIds();
+            if (step < activeSteps.length - 1) {
               setStep(s => s + 1);
             } else {
               handleSubmit(submit)();
@@ -577,135 +635,47 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           }}
         />
       <div className="card p-6 bg-gray-50/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg animate-fade-in">
-        {step === 0 && (
-          <section className="space-y-6">
-            <header className="text-center space-y-3">
-              <div className="flex items-center justify-center">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">What do you want to create?</h2>
-              </div>
-              <p className="text-muted">Choose what you'd like to optimize based on the job description.</p>
+        {/* Old route selection removed - now handled in WizardEntry */}
+        {/* ATS CV Upload Interface - now step 0 since goal selection moved to WizardEntry */}
+        {userGoal === 'ats' && step === 0 && (
+          <section className="space-y-8">
+            <header className="text-center space-y-4 mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Upload Your CV</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">Upload your existing CV to get instant ATS compatibility analysis and improvement suggestions.</p>
             </header>
-            <div className="space-y-4">
-              {/* CV and Cover Letter options side by side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
-                <label className={`card p-4 transition-all duration-300 group border-2 ${
-                  canGenerateOption(1) ? 'cursor-pointer hover:shadow-lg hover:border-blue-200' : 'opacity-50 cursor-not-allowed'
-                }`} style={{backgroundColor: userGoal === 'cv' ? 'rgb(239 246 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(229 231 235)'}}>
-                  <input
-                    type="radio"
-                    name="goal"
-                    value="cv"
-                    checked={userGoal === 'cv'}
-                    onChange={(e) => canGenerateOption(1) && setUserGoal(e.target.value)}
-                    className="sr-only"
-                    disabled={!canGenerateOption(1)}
-                  />
-                  <div className="flex items-center space-x-4">
-                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cv' ? 'rgb(59 130 246)' : 'transparent'}}>
-                      {userGoal === 'cv' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-white">{terms.Resume} Only</div>
-                      <div className="text-sm text-muted">Optimise your {terms.resume} for the job description</div>
-                      {userPlan === 'standard' && (
-                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 credit</div>
-                      )}
-                      {!session && (
-                        <div className="text-xs font-bold" style={{color: '#2840A7'}}>Uses 1 trial generation</div>
-                      )}
-                      {!session && !canGenerateOption(1) && (
-                        <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
-                      )}
-                    </div>
-                  </div>
-                </label>
-                <label className={`card p-4 transition-all duration-300 group border-2 ${
-                  canGenerateOption(1) ? 'cursor-pointer hover:shadow-lg hover:border-purple-200' : 'opacity-50 cursor-not-allowed'
-                }`} style={{backgroundColor: userGoal === 'cover-letter' ? 'rgb(250 245 255)' : 'rgb(249 250 251)', borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(229 231 235)'}}>
-                  <input
-                    type="radio"
-                    name="goal"
-                    value="cover-letter"
-                    checked={userGoal === 'cover-letter'}
-                    onChange={(e) => canGenerateOption(1) && setUserGoal(e.target.value)}
-                    className="sr-only"
-                    disabled={!canGenerateOption(1)}
-                  />
-                  <div className="flex items-center space-x-4">
-                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'cover-letter' ? 'rgb(147 51 234)' : 'transparent'}}>
-                      {userGoal === 'cover-letter' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-white">Cover Letter Only</div>
-                      <div className="text-sm text-muted">Generate a tailored cover letter for the job</div>
-                      {userPlan === 'standard' && (
-                        <div className="text-xs text-purple-600 font-bold">Uses 1 credit</div>
-                      )}
-                      {!session && (
-                        <div className="text-xs text-purple-600 font-bold">Uses 1 trial generation</div>
-                      )}
-                      {!session && !canGenerateOption(1) && (
-                        <div className="text-xs text-red-500 font-bold mt-1">No generations remaining</div>
-                      )}
-                    </div>
-                  </div>
-                </label>
-              </div>
 
-              {/* Both option below spanning full width */}
-              <div className="max-w-2xl mx-auto">
-                <label className={`card p-4 transition-all duration-300 group border-2 ${
-                  canGenerateOption(2)
-                    ? 'cursor-pointer hover:shadow-lg hover:border-green-200'
-                    : 'cursor-not-allowed opacity-60'
-                }`} style={{
-                  backgroundColor: userGoal === 'both' ? 'rgb(240 253 244)' : canGenerateOption(2) ? 'rgb(249 250 251)' : 'rgb(243 244 246)',
-                  borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : canGenerateOption(2) ? 'rgb(229 231 235)' : 'rgb(209 213 219)'
-                }}>
-                  <input
-                    type="radio"
-                    name="goal"
-                    value="both"
-                    checked={userGoal === 'both'}
-                    onChange={(e) => canGenerateOption(2) && setUserGoal(e.target.value)}
-                    disabled={!canGenerateOption(2)}
-                    className="sr-only"
-                  />
-                  <div className="flex items-center space-x-4">
-                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'rgb(156 163 175)', backgroundColor: userGoal === 'both' ? 'rgb(34 197 94)' : 'transparent'}}>
-                      {userGoal === 'both' && <div className="w-2 h-2 bg-bg rounded-full"></div>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-white">Both {terms.Resume} and Cover Letter</div>
-                      <div className="text-sm text-muted">Get a complete application package</div>
-                      {userPlan === 'standard' && (
-                        <div className="text-xs text-green-600 font-bold">Uses 2 credits</div>
-                      )}
-                      {!session && (
-                        <div className="text-xs text-green-600 font-bold">dYZ_ FREE TRIAL - 2 generations included</div>
-                      )}
-
-
-                      {!session && (
-                        <div className="text-xs text-green-600 font-bold mt-1">Try before you sign up!</div>
-                      )}
-                      {!canGenerateOption(2) && (
-                        <div className="text-xs text-red-500 font-bold mt-1">
-                          {userPlan === 'standard' ?
-                            'Insufficient credits remaining (2 needed)' :
-                            `Insufficient generations remaining (${trialUsage ? Math.max(0, trialUsage.generationsLimit - trialUsage.generationsUsed) : 0}/2 needed)`
-                          }
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <div className="max-w-xl mx-auto">
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center space-y-4 hover:border-orange-400 transition-colors">
+                <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-orange-600" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Drop your CV here</h3>
+                  <p className="text-gray-500 dark:text-gray-400">or click to browse files</p>
+                  <p className="text-sm text-gray-400">Supports PDF, DOC, DOCX files up to 10MB</p>
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleCVUpload(file);
+                  }}
+                  className="hidden"
+                  id="cv-upload"
+                />
+                <label
+                  htmlFor="cv-upload"
+                  className="inline-flex items-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg cursor-pointer transition-colors"
+                >
+                  Choose File
                 </label>
               </div>
             </div>
           </section>
         )}
 
-        {step === 1 && (
+        {userGoal !== 'ats' && step === 0 && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Basic Information</h2>
@@ -763,7 +733,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           </section>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Skills & Expertise</h2>
@@ -773,7 +743,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           </section>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Work Experience</h2>
@@ -790,7 +760,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           </section>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Projects <span className="text-lg font-normal text-gray-500 dark:text-gray-400">(Optional)</span></h2>
@@ -810,7 +780,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           </section>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Education</h2>
@@ -827,7 +797,7 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
           </section>
         )}
 
-        {step === 6 && (
+        {step === 5 && userGoal !== 'ats' && (
           <section className="space-y-8">
             <header className="text-center space-y-4 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Job Description</h2>
@@ -875,7 +845,10 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
             <div className="space-y-2">
               <h3 className="text-xl font-semibold text-text">Generating Your Documents</h3>
               <p className="text-muted">
-                AI is analyzing your resume and the job description to create tailored documents. This may take a moment...
+                {userGoal === 'ats'
+                  ? 'Analyzing your CV for ATS compatibility and parsing data. This may take a moment...'
+                  : 'AI is analyzing your resume and the job description to create tailored documents. This may take a moment...'
+                }
               </p>
             </div>
             <div className="loading-dots">
