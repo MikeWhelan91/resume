@@ -400,10 +400,29 @@ export default function ResumeWizard({ initialData, onComplete, autosaveKey, onA
 
   const analyzeUploadedCV = async (resumeData) => {
     try {
-      // Create result data for analysis (no generation needed)
+      // Run ATS analysis on the uploaded CV
+      const analysisResponse = await fetch('/api/ats-analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          resumeData,
+          jobDescription: '' // ATS analysis doesn't need job description
+        })
+      });
+
+      const analysisResult = await analysisResponse.json();
+
+      if (!analysisResponse.ok) {
+        throw new Error(analysisResult.error || 'ATS analysis failed');
+      }
+
+      // Create result data with analysis included
       const resultData = {
         resumeData,
-        analysisOnly: true
+        analysisOnly: true,
+        atsAnalysis: analysisResult.analysis
       };
 
       localStorage.setItem('resumeResult', JSON.stringify(resultData));
