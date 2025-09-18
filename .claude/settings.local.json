@@ -42,7 +42,8 @@
       "Bash(cmd /c:*)",
       "Bash(powershell:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(del test-db.js)"
+      "Bash(del test-db.js)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

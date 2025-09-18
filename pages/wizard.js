@@ -45,7 +45,7 @@ export default function WizardPage(){
 
   async function handleComplete(result){
     localStorage.setItem('resumeResult', JSON.stringify(result));
-    
+
     // Auto-save the resume if user is logged in
     if (session?.user) {
       try {
@@ -63,8 +63,20 @@ export default function WizardPage(){
         // Don't block the user flow if auto-save fails
       }
     }
-    
-    router.push('/results');
+
+    // Route to appropriate results page based on user goal and result type
+    if (result.analysisOnly || userGoal === 'ats') {
+      router.push('/results/ats-analysis');
+    } else if (userGoal === 'cv') {
+      router.push('/results/cv');
+    } else if (userGoal === 'cover-letter') {
+      router.push('/results/cover-letter');
+    } else if (userGoal === 'both') {
+      router.push('/results/complete');
+    } else {
+      // Fallback to original results page
+      router.push('/results');
+    }
   }
 
   // Show entry screen if wizard hasn't been started

@@ -17,7 +17,7 @@ export default withLimiter(async function handler(req, res) {
   }
 
   const userId = session.user.id;
-  const { resumeData, jobDescription } = req.body;
+  let { resumeData, jobDescription } = req.body;
 
   if (!resumeData) {
     return res.status(400).json({ error: 'Resume data is required' });
